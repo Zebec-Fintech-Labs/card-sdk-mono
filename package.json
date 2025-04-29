@@ -1,0 +1,13 @@
+{
+	"name": "zebec-network",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "Ashish Sapkota",
+	"license": "MIT",
+	"private": true,
+	"workspaces": [
+		"exchange-card-sdk",
+		"solana-card-sdk",
+		"evm-card-sdk"
+	]
+}
