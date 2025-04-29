@@ -1,0 +1,61 @@
+{
+	"name": "@zebec-network/exchange-card-sdk",
+	"version": "1.1.9-beta.2",
+	"description": "An sdk for purchasing silver card in zebec",
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"author": "Ashish Sapkota",
+	"license": "MIT",
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "npm run clean && tsc",
+		"clean": "rimraf dist",
+		"format": "prettier --write .",
+		"test": "ts-mocha -p ./tsconfig.json -t 1000000",
+		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\""
+	},
+	"devDependencies": {
+		"@dashevo/dapi-client": "^1.8.0",
+		"@typechain/ethers-v6": "^0.5.1",
+		"@types/jsonwebtoken": "^9.0.7",
+		"@types/mocha": "^10.0.9",
+		"@types/node": "^22.7.9",
+		"dotenv": "^16.4.5",
+		"mocha": "11.2.2",
+		"prettier": "^3.3.3",
+		"rimraf": "^6.0.1",
+		"ts-mocha": "11.1.0",
+		"ts-node": "^10.9.2",
+		"typechain": "^8.3.2",
+		"typescript": "^5.6.3"
+	},
+	"dependencies": {
+		"@creit.tech/stellar-wallets-kit": "^1.7.1",
+		"@mempool/mempool.js": "^3.0.0",
+		"@polkadot/api": "^14.3.1",
+		"@polkadot/types": "^14.3.1",
+		"@polkadot/util": "^13.2.3",
+		"@stellar/stellar-sdk": "^13.1.0",
+		"@tonconnect/sdk": "^3.0.6",
+		"axios": "^1.7.7",
+		"bitcoinjs-lib": "^6.1.7",
+		"ethers": "^6.13.4",
+		"tonweb": "^0.0.66",
+		"xdb-digitalbits-sdk": "^8.2.2"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git"
+	},
+	"homepage": "https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git#README",
+	"keywords": [
+		"zebec",
+		"zebec fintech",
+		"zebec instant card"
+	],
+	"publishConfig": {
+		"access": "public"
+	}
+}
