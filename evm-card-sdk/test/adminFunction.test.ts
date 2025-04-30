@@ -3,7 +3,7 @@ import { describe } from "mocha";
 import { FeeTier, SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Sepolia;
+const chainId = SupportedChain.Polygon;
 
 const provider = getProvider(chainId);
 const signer = getSigners(provider)[0];
