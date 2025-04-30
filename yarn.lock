@@ -1706,27 +1706,6 @@
     "@wallet-standard/base" "^1.1.0"
     "@wallet-standard/features" "^1.1.0"
 
-"@solana/web3.js@1.98.0":
-  version "1.98.0"
-  resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-1.98.0.tgz#21ecfe8198c10831df6f0cfde7f68370d0405917"
-  integrity sha512-nz3Q5OeyGFpFCR+erX2f6JPt3sKhzhYcSycBCSPkWjzSVDh/Rr1FqTVMRe58FKO16/ivTUcuJjeS5MyBvpkbzA==
-  dependencies:
-    "@babel/runtime" "^7.25.0"
-    "@noble/curves" "^1.4.2"
-    "@noble/hashes" "^1.4.0"
-    "@solana/buffer-layout" "^4.0.1"
-    agentkeepalive "^4.5.0"
-    bigint-buffer "^1.1.5"
-    bn.js "^5.2.1"
-    borsh "^0.7.0"
-    bs58 "^4.0.1"
-    buffer "6.0.3"
-    fast-stable-stringify "^1.0.0"
-    jayson "^4.1.1"
-    node-fetch "^2.7.0"
-    rpc-websockets "^9.0.2"
-    superstruct "^2.0.2"
-
 "@solana/web3.js@2.0.0", "@solana/web3.js@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@solana/web3.js/-/web3.js-2.0.0.tgz#192918343982e1964269b3adb2567532c1e12c89"
@@ -2685,10 +2664,19 @@
     "@walletconnect/window-getters" "^1.0.1"
     tslib "1.14.1"
 
-"@zebec-network/core-utils@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@zebec-network/core-utils/-/core-utils-1.0.0.tgz#e84dc18953e04d28af0ed9c2d5dc7f102e37f260"
-  integrity sha512-IivnClGfg3MFwHf17X++iN9stnml2M5dEv9VbtOe6CuI43QG98VfN4ii7YMdvXOK+Mg8MP+giuVCmVf5udT+yQ==
+"@zebec-network/core-utils@^1.0.1", "@zebec-network/core-utils@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@zebec-network/core-utils/-/core-utils-1.0.2.tgz#59f08c0bf78ba4aa516aff5155d080b95107f3fc"
+  integrity sha512-21Yhhvr28gJboJVOPAglKP992owAqXpb3e8AmWSrTHwMAOadNHr9NAccdmj7oaRicO6DJifyP51trBGsc+2L/Q==
+
+"@zebec-network/solana-common@^1.0.1":
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/@zebec-network/solana-common/-/solana-common-1.0.1.tgz#fbebcb500488141025086d5bfed76a1922ba31b5"
+  integrity sha512-8FXHUg6rUevFWn+4IRQkb+fq7XdizWqhvpZlMalj+gk5l4CTGenmbbb4pbflxDqBKyJiuzjIyvnfr4HTpdMobg==
+  dependencies:
+    "@coral-xyz/anchor" "^0.29.0"
+    "@zebec-network/core-utils" "^1.0.2"
+    bignumber.js "^9.3.0"
 
 abstract-leveldown@~6.2.1:
   version "6.2.3"
@@ -3103,13 +3091,6 @@ big-integer@^1.6.48:
   version "1.6.52"
   resolved "https://registry.yarnpkg.com/big-integer/-/big-integer-1.6.52.tgz#60a887f3047614a8e1bffe5d7173490a97dc8c85"
   integrity sha512-QxD8cf2eVqJOOz63z6JIN9BzvVs/dlySa5HGSBH5xtR8dPteIRQnBxxKqkNTiT6jbDTF6jAfrd4oMcND9RGbQg==
-
-bigint-buffer@^1.1.5:
-  version "1.1.5"
-  resolved "https://registry.yarnpkg.com/bigint-buffer/-/bigint-buffer-1.1.5.tgz#d038f31c8e4534c1f8d0015209bf34b4fa6dd442"
-  integrity sha512-trfYco6AoZ+rKhKnxA0hgX0HAbVP/s808/EuDSe2JDzUnCp/xAsli35Orvk67UrTEcwuxZqYZDmfA2RXJgxVvA==
-  dependencies:
-    bindings "^1.3.0"
 
 bignumber.js@^4.0.0:
   version "4.1.0"
