@@ -2,8 +2,8 @@ import { describe, it } from "mocha";
 
 import {
 	InitOnRampUserCustodyParams,
+	OnRampServiceBuilder,
 	parsePublicKeyString,
-	ZebecCardServiceBuilder,
 } from "../../../src";
 import { getProviders } from "../../shared";
 
@@ -11,7 +11,7 @@ describe("initOnRampUserCustody()", () => {
 	const network = "devnet";
 	const providers = getProviders(network);
 	const provider = providers[4];
-	const service = new ZebecCardServiceBuilder()
+	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram()

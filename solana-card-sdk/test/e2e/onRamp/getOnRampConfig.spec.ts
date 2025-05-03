@@ -2,7 +2,7 @@ import { describe, it } from "mocha";
 
 import { Program } from "@coral-xyz/anchor";
 
-import { ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM, ZebecCardServiceBuilder } from "../../../src";
+import { OnRampServiceBuilder, ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM } from "../../../src";
 import { getProviders } from "../../shared";
 
 describe("getCardConfig", () => {
@@ -11,7 +11,7 @@ describe("getCardConfig", () => {
 	const wallets = providers.map((p) => p.wallet.publicKey.toString());
 	console.log("wallets:", wallets);
 
-	const service = new ZebecCardServiceBuilder()
+	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider()
 		.setProgram((provider) => new Program(ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM[network], provider))

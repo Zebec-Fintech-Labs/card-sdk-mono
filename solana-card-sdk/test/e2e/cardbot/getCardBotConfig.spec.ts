@@ -1,6 +1,6 @@
 import { describe, it } from "mocha";
 
-import { ZebecCardServiceBuilder } from "../../../src";
+import { CardBotServiceBuilder } from "../../../src";
 import { getProviders } from "../../shared";
 
 describe("getCardBotConfigInfo", () => {
@@ -9,7 +9,7 @@ describe("getCardBotConfigInfo", () => {
 	const wallets = providers.map((p) => p.wallet.publicKey.toString());
 	console.log("wallets:", wallets);
 
-	const service = new ZebecCardServiceBuilder()
+	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider()
 		.setProgram()

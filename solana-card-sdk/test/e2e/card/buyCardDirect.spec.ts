@@ -1,27 +1,30 @@
 import dotenv from "dotenv";
 import { describe, it } from "mocha";
 
+import { hashSHA256 } from "@zebec-network/core-utils";
+
 import {
 	BuyCardDirectParams,
 	CardType,
+	createAnchorProvider,
 	parseDecimalString,
-	parseEmailString,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 dotenv.config();
 describe("buyCardDirect", () => {
 	const network = "mainnet-beta";
-	const provider = getProviders(network)[1];
-	console.log("provider:", provider.wallet.publicKey.toString());
+	const wallet = getWallets(network)[1];
+	console.log("wallet:", wallet.publicKey.toString());
+	const connection = getConnection(network);
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
-		.setProvider(provider)
+		.setProvider(createAnchorProvider(connection, wallet))
 		.setProgram()
 		.build();
 
-	const buyerAddress = provider.publicKey.toString();
+	const buyerAddress = wallet.publicKey.toString();
 
 	// before(async () => {
 	// 	const params: DepositParams = {
@@ -34,19 +37,19 @@ describe("buyCardDirect", () => {
 	// 	await sleep(5000);
 	// });
 
-	it("transfer usdc from user vault to card vault", async () => {
+	it("purchase card", async () => {
 		const mintAddress = "De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU3k2jqnkmKc";
 		// const mintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
-		const amount = "100";
+		const amount = parseDecimalString("100");
 
 		const cardType: CardType = "silver";
-		const buyerEmail = parseEmailString("ashishspkt6566@gmail.com");
+		const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
 
 		const nextBuyerCounter = await service.getNextBuyerCounter();
 		console.debug("buyer counter", nextBuyerCounter);
 
 		const params: BuyCardDirectParams = {
-			amount: parseDecimalString(amount),
+			amount,
 			cardType,
 			nextBuyerCounter,
 			buyerAddress,
@@ -55,7 +58,7 @@ describe("buyCardDirect", () => {
 		};
 		const payload = await service.buyCardDirect(params);
 
-		const simulationResult = await payload.execute();
+		const simulationResult = await payload.simulate();
 		console.log("simulation:", simulationResult);
 
 		// const signature = await payload.execute({

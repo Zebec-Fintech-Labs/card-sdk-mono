@@ -2,16 +2,16 @@ import { describe, it } from "mocha";
 
 import {
 	BuyCardThroughBotParams,
+	CardBotServiceBuilder,
 	parseDecimalString,
 	parsePublicKeyString,
-	ZebecCardServiceBuilder,
 } from "../../../src";
 import { getProviders } from "../../shared";
 
 describe("buyCardThroughBot()", () => {
 	const network = "devnet";
 	const provider = getProviders(network)[4];
-	const service = new ZebecCardServiceBuilder()
+	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram()

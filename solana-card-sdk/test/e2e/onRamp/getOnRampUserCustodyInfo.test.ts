@@ -1,6 +1,6 @@
 import { describe, it } from "mocha";
 
-import { deriveOnRampUserCustodyPda, ZebecCardServiceBuilder } from "../../../src";
+import { deriveOnRampUserCustodyPda, OnRampServiceBuilder } from "../../../src";
 import { getProviders } from "../../shared";
 
 describe("getOnRampUserCustodyInfo()", () => {
@@ -10,7 +10,7 @@ describe("getOnRampUserCustodyInfo()", () => {
 	console.log("wallets:", wallets);
 
 	const provider = providers[0];
-	const service = new ZebecCardServiceBuilder()
+	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram()

@@ -3,8 +3,8 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import {
-	FeeTier,
 	parseDecimalString,
+	parseFeeTiers,
 	parsePercentString,
 	SetCardConfigParams,
 	ZEBEC_CARD_IDL,
@@ -30,22 +30,15 @@ describe("setCardConfig", () => {
 		const revenueFeePercent = "2.5";
 		const nativeFeePercent = "1.5";
 		const nonNativeFeePercent = "5";
-		const usdcAddress = "De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU3k2jqnkmKc";
 		const minCardAmount = "10";
 		const maxCardAmount = "1500";
 		const dailyCardPurchaseLimit = "1500";
 
-		const feeTiers = [
+		const feeTiers = parseFeeTiers([
 			{ minAmount: "5", maxAmount: "100", feePercent: "6.5" },
 			{ minAmount: "101", maxAmount: "500", feePercent: "3" },
 			{ minAmount: "501", maxAmount: "1500", feePercent: "0.5" },
-		].map<FeeTier>((ft) => {
-			return {
-				feePercent: parsePercentString(ft.feePercent),
-				maxAmount: parseDecimalString(ft.maxAmount),
-				minAmount: parseDecimalString(ft.minAmount),
-			};
-		});
+		]);
 
 		const params: SetCardConfigParams = {
 			revenueFeePercent: parsePercentString(revenueFeePercent),

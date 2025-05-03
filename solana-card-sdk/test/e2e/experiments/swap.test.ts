@@ -2,13 +2,13 @@ import BigNumber from "bignumber.js";
 import { describe } from "mocha";
 
 import { translateAddress, web3 } from "@coral-xyz/anchor";
-
 import {
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddressSync,
 	getMintDecimals,
-	parseQuoteInfo,
-} from "../../../src";
+} from "@zebec-network/solana-common";
+
+import { parseQuoteInfo } from "../../../src";
 import { JUP_SWAP_API } from "../../../src/constants";
 import { getConnection, getProviders } from "../../shared";
 

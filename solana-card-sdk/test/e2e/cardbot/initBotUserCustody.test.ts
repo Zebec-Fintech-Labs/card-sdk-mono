@@ -1,9 +1,9 @@
 import { describe, it } from "mocha";
 
 import {
+	CardBotServiceBuilder,
 	InitBotUserCustodyParams,
 	parsePublicKeyString,
-	ZebecCardServiceBuilder,
 } from "../../../src";
 import { getProviders } from "../../shared";
 
@@ -11,7 +11,7 @@ describe("initBotUserCustody()", () => {
 	const network = "devnet";
 	const providers = getProviders(network);
 	const provider = providers[4];
-	const service = new ZebecCardServiceBuilder()
+	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram()

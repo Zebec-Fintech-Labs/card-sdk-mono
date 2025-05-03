@@ -1,7 +1,9 @@
 import assert from "assert";
 import { describe, it } from "mocha";
 
-import { getBuyCardMemoFromParsedTransaction, hashSHA256, web3 } from "../../../src";
+import { hashSHA256 } from "@zebec-network/core-utils";
+
+import { getBuyCardMemoFromParsedTransaction, web3 } from "../../../src";
 import { getConnection } from "../../shared";
 
 describe("getBuyCardMemoFromParsedTransaction", () => {

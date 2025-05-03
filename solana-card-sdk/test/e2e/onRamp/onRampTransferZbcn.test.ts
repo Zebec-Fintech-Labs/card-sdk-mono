@@ -1,10 +1,13 @@
-import { describe, it } from "mocha";
+import {
+	describe,
+	it,
+} from "mocha";
 
 import {
+	OnRampServiceBuilder,
 	OnRampTransferZbcnParams,
 	parseDecimalString,
 	parsePublicKeyString,
-	ZebecCardServiceBuilder,
 } from "../../../src";
 import { getProviders } from "../../shared";
 
@@ -12,7 +15,7 @@ describe("onRampStake()", () => {
 	const network = "devnet";
 	const providers = getProviders(network);
 	const provider = providers[4];
-	const service = new ZebecCardServiceBuilder()
+	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram()

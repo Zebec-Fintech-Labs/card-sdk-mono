@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 import { describe, it } from "mocha";
 
 import { BN, BorshCoder, utils, web3 } from "@coral-xyz/anchor";
+import { bpsToPercent } from "@zebec-network/core-utils";
+import { USDC_DECIMALS } from "@zebec-network/solana-common";
 
-import { bpsToPercent, USDC_DECIMALS, ZEBEC_CARD_IDL } from "../../../src";
+import { ZEBEC_CARD_IDL } from "../../../src";
 
 const eventStructure = {
 	name: "SwapEvent",

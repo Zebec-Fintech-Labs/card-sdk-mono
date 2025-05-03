@@ -3,18 +3,19 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import {
+	CardBotServiceBuilder,
 	parsePublicKeyString,
 	SetNewBotAdminParams,
 	ZEBEC_CARD_IDL,
 	ZEBEC_CARD_PROGRAM,
-	ZebecCardServiceBuilder,
 } from "../../../src";
 import { getProviders } from "../../shared";
 
 describe("setBotAdmin()", () => {
 	const network = "devnet";
 	const provider = getProviders(network)[0];
-	const service = new ZebecCardServiceBuilder()
+
+	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
 		.setProgram((provider) => new Program(ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM[network], provider))

@@ -1,10 +1,11 @@
 import dotenv from "dotenv";
 import { describe, it } from "mocha";
 
+import { hashSHA256 } from "@zebec-network/core-utils";
+
 import {
 	CardType,
 	parseDecimalString,
-	parseEmailString,
 	parsePercentString,
 	SwapAndBuyCardDirectParams,
 	ZebecCardServiceBuilder,
@@ -43,7 +44,7 @@ describe("swapAndBuyCardDirect", () => {
 
 	it("transfer usdc from user vault to card vault", async () => {
 		const cardType: CardType = "silver";
-		const buyerEmail = parseEmailString("ashishspkt6566@gmail.com");
+		const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
 		const inputMintAddress = "ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU";
 		const outputMintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 		const inputAmount = parseDecimalString("5300");
