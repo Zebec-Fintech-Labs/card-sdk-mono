@@ -2664,18 +2664,24 @@
     "@walletconnect/window-getters" "^1.0.1"
     tslib "1.14.1"
 
-"@zebec-network/core-utils@^1.0.1", "@zebec-network/core-utils@^1.0.2":
+"@zebec-network/core-utils@^1.0.1":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@zebec-network/core-utils/-/core-utils-1.0.2.tgz#59f08c0bf78ba4aa516aff5155d080b95107f3fc"
   integrity sha512-21Yhhvr28gJboJVOPAglKP992owAqXpb3e8AmWSrTHwMAOadNHr9NAccdmj7oaRicO6DJifyP51trBGsc+2L/Q==
 
-"@zebec-network/solana-common@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@zebec-network/solana-common/-/solana-common-1.0.1.tgz#fbebcb500488141025086d5bfed76a1922ba31b5"
-  integrity sha512-8FXHUg6rUevFWn+4IRQkb+fq7XdizWqhvpZlMalj+gk5l4CTGenmbbb4pbflxDqBKyJiuzjIyvnfr4HTpdMobg==
+"@zebec-network/core-utils@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@zebec-network/core-utils/-/core-utils-1.0.3.tgz#406f9f5eea386059de919ebad65531bd6c675477"
+  integrity sha512-tDtgMzK0txGziT2Y39OAk4e2obCHXFrAXzol8feZ6UelwZW4qnZUClpzedyiuKjIYoNsswgTFUnN0cDMLnbdkw==
+  dependencies:
+    bignumber.js "^9.3.0"
+
+"@zebec-network/solana-common@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@zebec-network/solana-common/-/solana-common-1.0.2.tgz#f406116f19d9c628ff6840bbeaf372405eea9401"
+  integrity sha512-kZqylC9Pc3mLlo+PsSNivxoEi8G+wi0QEfZ5Tv/EtlqThnrWTC6+37TR9u8JyzumaG27Vjvff4tSH75O3jTAAQ==
   dependencies:
     "@coral-xyz/anchor" "^0.29.0"
-    "@zebec-network/core-utils" "^1.0.2"
     bignumber.js "^9.3.0"
 
 abstract-leveldown@~6.2.1:

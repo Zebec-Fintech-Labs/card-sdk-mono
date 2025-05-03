@@ -1,6 +1,6 @@
 {
 	"name": "@zebec-network/solana-card-sdk",
-	"version": "1.2.9",
+	"version": "1.0.0",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"author": "Ashish Sapkota",
@@ -23,8 +23,9 @@
 	},
 	"dependencies": {
 		"@coral-xyz/anchor": "^0.29.0",
-		"@zebec-network/solana-common": "^1.0.1",
-		"bignumber.js": "^9.1.2",
+		"@zebec-network/core-utils": "^1.0.3",
+		"@zebec-network/solana-common": "^1.0.2",
+		"bignumber.js": "^9.3.0",
 		"buffer": "^6.0.3",
 		"dotenv": "^16.4.4"
 	},
