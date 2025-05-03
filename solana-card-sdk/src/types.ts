@@ -1,4 +1,4 @@
-import { web3 } from "@coral-xyz/anchor";
+import { BN, web3 } from "@coral-xyz/anchor";
 
 import {
 	InvalidBigIntStringError,
@@ -83,3 +83,43 @@ export function parseEmailString(input: string) {
 	assertEmailString(input);
 	return input;
 }
+
+export type CardType = "silver" | "carbon";
+
+export type InstructionCardType = "reloadable" | "non_reloadable";
+
+export type ParsedFeeTier = {
+	minAmount: BN;
+	maxAmount: BN;
+	fee: BN;
+};
+
+export type ParsedTokenFeeStruct = {
+	tokenAddress: web3.PublicKey;
+	fee: BN;
+};
+
+export type ParsedTokenFeeList = ParsedTokenFeeStruct[];
+
+export type ParsedCardConfigInfo = {
+	index: BN;
+	zicOwner: web3.PublicKey;
+	nativeFee: BN;
+	nonNativeFee: BN;
+	revenueFee: BN;
+	usdcMint: web3.PublicKey;
+	revenueVault: web3.PublicKey;
+	commissionVault: web3.PublicKey;
+	cardVault: web3.PublicKey;
+	totalBought: BN;
+	dailyCardBuyLimit: BN;
+	providerConfig: ParsedProviderConfig;
+};
+
+export type ParsedProviderConfig = {
+	minCardAmount: BN;
+	maxCardAmount: BN;
+	feeTiers: {
+		tiers: ParsedFeeTier[];
+	};
+};

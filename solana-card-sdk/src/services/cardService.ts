@@ -2,23 +2,22 @@ import { BigNumber } from "bignumber.js";
 import { Buffer } from "buffer";
 
 import { Address, AnchorProvider, BN, Program, translateAddress, web3 } from "@coral-xyz/anchor";
+import { areDatesOfSameDay, bpsToPercent, percentToBps } from "@zebec-network/core-utils";
 import {
-	areDatesOfSameDay,
-	bpsToPercent,
+	ASSOCIATED_TOKEN_PROGRAM_ID,
 	createAssociatedTokenAccountInstruction,
 	getAssociatedTokenAddressSync,
 	getMintDecimals,
-	hashSHA256,
 	MEMO_PROGRAM_ID,
-	percentToBps,
 	SignTransactionFunction,
 	TEN_BIGNUM,
+	TOKEN_PROGRAM_ID,
 	TransactionPayload,
 	UNITS_PER_USDC,
 	WSOL,
 } from "@zebec-network/solana-common";
 
-import { CARD_LOOKUP_TABLE_ADDRESS, JUP_SWAP_API, ZEBEC_CARD_PROGRAM } from "./constants";
+import { CARD_LOOKUP_TABLE_ADDRESS, JUP_SWAP_API, ZEBEC_CARD_PROGRAM } from "../constants";
 import {
 	AmountOutOfRangeError,
 	AssociatedTokenAccountDoesNotExistsError,
@@ -26,280 +25,37 @@ import {
 	InvalidUsdcAddressError,
 	NotEnoughBalanceError,
 	QuoteResponseError,
-} from "./errors";
-import { ZEBEC_CARD_IDL, ZebecCardIdl } from "./idl";
+} from "../errors";
+import { ZEBEC_CARD_IDL, ZebecCardIdl } from "../idl";
 import {
-	ParsedCardConfigInfo,
-	ParsedFeeTier,
-	ParsedTokenFeeStruct,
-	ZebecCardInstructions,
-} from "./instructions";
-import {
-	deriveBotUserCustodyPda,
-	deriveCardBotConfigPda,
 	deriveCardConfigPda,
 	deriveCardPurchaseInfoPda,
-	deriveOnRampConfigPda,
-	deriveOnRampUserCustodyPda,
 	deriveTokenFeeMapPda,
 	deriveUserPurchaseRecordPda,
-} from "./pda";
-import { createReadonlyProvider, ReadonlyProvider } from "./provider";
+} from "../pda";
+import { createReadonlyProvider, ReadonlyProvider } from "../provider";
 import {
 	BigIntString,
+	CardType,
 	DecimalString,
-	EmailString,
+	InstructionCardType,
+	ParsedCardConfigInfo,
 	parseDecimalString,
+	ParsedFeeTier,
+	ParsedTokenFeeList,
+	ParsedTokenFeeStruct,
 	parsePercentString,
 	parsePublicKeyString,
 	PercentString,
 	PublicKeyString,
-} from "./types";
-import { parseQuoteInfo, sortFeeTierDesc } from "./utils";
-
-/**
- * Jupiter quote routes info
- */
-export type RouteInfo = {
-	swapInfo: {
-		ammKey: PublicKeyString;
-		label: string;
-		inputMint: PublicKeyString;
-		outputMint: PublicKeyString;
-		inAmount: BigIntString;
-		outAmount: BigIntString;
-		feeAmount: BigIntString;
-		feeMint: PublicKeyString;
-	};
-	percent: number;
-};
-
-/**
- * Juptier quote info
- */
-export type QuoteInfo =
-	| {
-			inputMint: PublicKeyString;
-			inAmount: BigIntString;
-			outputMint: PublicKeyString;
-			outAmount: BigIntString;
-			otherAmountThreshold: BigIntString;
-			swapMode: "ExactIn" | "ExactOut";
-			slippageBps: number;
-			platformFee: string | null;
-			priceImpactPct: PercentString;
-			routePlan: RouteInfo[];
-			contextSlot: number;
-			timeTaken: number;
-	  }
-	| {
-			error: string;
-	  };
-
-/**
- * Info stored in buyerPda
- */
-export type CardPurchaseInfo = {
-	address: PublicKeyString;
-	index: bigint;
-	buyerAddress: PublicKeyString;
-	amount: DecimalString;
-	purchaseAt: number;
-};
-
-export type FeeTier = {
-	minAmount: DecimalString;
-	maxAmount: DecimalString;
-	feePercent: PercentString;
-};
-
-export type ProviderConfig = {
-	minCardAmount: DecimalString;
-	maxCardAmount: DecimalString;
-	feeTiers: FeeTier[];
-};
-
-/**
- * Info stored in cardPda
- */
-export type CardConfigInfo = {
-	address: PublicKeyString;
-	index: bigint;
-	zicOwner: PublicKeyString;
-	nativeFeePercent: PercentString;
-	nonNativeFeePercent: PercentString;
-	revenueFeePercent: PercentString;
-	usdcMint: PublicKeyString;
-	revenueVault: PublicKeyString;
-	commissionVault: PublicKeyString;
-	cardVault: PublicKeyString;
-	totalCardSold: DecimalString;
-	providerConfig: ProviderConfig;
-	dailyCardPurchaseLimit: DecimalString;
-};
-
-export type TokenFeeRecord = {
-	tokenAddress: PublicKeyString;
-	fee: PercentString;
-};
-
-export type TokenFeeRecordList = TokenFeeRecord[];
-
-export type UserPurchaseRecordInfo = {
-	address: PublicKeyString;
-	owner: PublicKeyString;
-	lastCardBoughtTimestamp: number;
-	totalCardBoughtPerDay: DecimalString;
-};
-
-export type CardBotConfigInfo = {
-	botAdmin: PublicKeyString;
-};
-
-export type BotUserCustodyInfo = {
-	userId: string;
-	lastCardBoughtTimestamp: number;
-	totalCardBoughtPerDay: DecimalString;
-};
-
-export type OnRampConfigInfo = {
-	onRampAdmin: PublicKeyString;
-	zbcnToken: PublicKeyString;
-};
-
-export type OnRampUserCustodyInfo = {
-	userId: string;
-};
-
-export type InitCardConfigParams = {
-	zicOwnerAddress: Address;
-	cardVaultAddress: Address;
-	revenueVaultAddress: Address;
-	commissionVaultAddress: Address;
-	usdcAddress: Address;
-	revenueFeePercent: PercentString;
-	nativeFeePercent: PercentString;
-	nonNativeFeePercent: PercentString;
-	minCardAmount: DecimalString;
-	maxCardAmount: DecimalString;
-	dailyCardPurchaseLimit: DecimalString;
-	feeTiers: Array<FeeTier>;
-};
-
-export type SetCardConfigParams = {
-	zicOwnerAddress: Address;
-	newZicOwnerAddress: Address;
-	cardVaultAddress: Address;
-	revenueVaultAddress: Address;
-	commissionVaultAddress: Address;
-	revenueFeePercent: PercentString;
-	nativeFeePercent: PercentString;
-	nonNativeFeePercent: PercentString;
-	minCardAmount: DecimalString;
-	maxCardAmount: DecimalString;
-	dailyCardPurchaseLimit: DecimalString;
-	feeTiers: Array<FeeTier>;
-};
-
-export type SetCustomFeesParams = {
-	zicOwnerAddress: PublicKeyString;
-	tokenFeeList: TokenFeeRecordList;
-};
-
-export type DeleteCustomFeesParams = {
-	zicOwnerAddress: PublicKeyString;
-	tokenAddressList: PublicKeyString[];
-};
-
-export type SwapMode = "ExactOut" | "ExactIn";
-
-export type CardType = "silver" | "carbon";
-
-export type BuyCardDirectParams = {
-	buyerAddress: Address;
-	nextBuyerCounter: bigint;
-	amount: DecimalString;
-	cardType: CardType;
-	buyerEmail: EmailString;
-	mintAddress: Address;
-};
-
-export type SwapAndBuyCardDirectParams = {
-	quoteInfo: QuoteInfo;
-	buyerAddress: Address;
-	nextBuyerCounter: bigint;
-	cardType: CardType;
-	buyerEmail: EmailString;
-};
-
-export type GetQuoteInfoParams = {
-	inputMintAddress: Address;
-	outputMintAddress: Address;
-	inputAmount: DecimalString;
-	slippagePercent: PercentString;
-	swapMode?: SwapMode;
-};
-
-export type InitBotConfigParams = {
-	zicOwnerAddress: PublicKeyString;
-	botAdminAddress: PublicKeyString;
-};
-
-export type InitBotUserCustodyParams = {
-	botAdminAddress: PublicKeyString;
-	usdcMintAddress: PublicKeyString;
-	userId: string;
-};
-
-export type SetNewBotAdminParams = {
-	newBotAdminAddress: PublicKeyString;
-	zicOwnerAddress: PublicKeyString;
-};
-
-export type BuyCardThroughBotParams = {
-	botAdminAddress: PublicKeyString;
-	usdcMintAddress: PublicKeyString;
-	userId: string;
-	cardType: CardType;
-	amount: DecimalString;
-};
-
-export type InitOnRampConfigParams = {
-	zicOwnerAddress: PublicKeyString;
-	onRampAdminAddress: PublicKeyString;
-	zbcnAddress: PublicKeyString;
-};
-
-export type InitOnRampUserCustodyParams = {
-	onRampAdminAddress: PublicKeyString;
-	userId: string;
-};
-
-export type SetNewOnRampAdminParams = {
-	zicOwnerAddress: PublicKeyString;
-	newOnRampAdminAddress: PublicKeyString;
-};
-
-export type OnRampTransferZbcnParams = {
-	onRampAdminAddress: PublicKeyString;
-	senderUserId: string;
-	receiverAddress: PublicKeyString;
-	amount: DecimalString;
-	durationInDays: number;
-};
-
-export type CardPurchaseEvent = {
-	index: bigint;
-	from: PublicKeyString;
-	to: PublicKeyString;
-	amount: DecimalString;
-};
+} from "../types";
+import { parseQuoteInfo, sortFeeTierDesc } from "../utils";
 
 type ProgramCreateFunction = (provider: ReadonlyProvider | AnchorProvider) => Program<ZebecCardIdl>;
 
 /**
- * StakeServiceBuilder is a builder class for creating a StakeService instance.
- * It allows you to set the network, provider, and program to use.
+ * ZebecCardServiceBuilder is a builder class for creating a ZebecCardService instance.
+ * It allows you to set the network, provider and program used to build service.
  */
 export class ZebecCardServiceBuilder {
 	private _program: Program<ZebecCardIdl> | undefined;
@@ -428,15 +184,214 @@ export class ZebecCardServiceBuilder {
 	}
 }
 
-export class ZebecCardService {
-	readonly instructions: ZebecCardInstructions;
+/**
+ * Jupiter quote routes info
+ */
+export type RouteInfo = {
+	swapInfo: {
+		ammKey: PublicKeyString;
+		label: string;
+		inputMint: PublicKeyString;
+		outputMint: PublicKeyString;
+		inAmount: BigIntString;
+		outAmount: BigIntString;
+		feeAmount: BigIntString;
+		feeMint: PublicKeyString;
+	};
+	percent: number;
+};
 
+/**
+ * Juptier quote info
+ */
+export type QuoteInfo =
+	| {
+			inputMint: PublicKeyString;
+			inAmount: BigIntString;
+			outputMint: PublicKeyString;
+			outAmount: BigIntString;
+			otherAmountThreshold: BigIntString;
+			swapMode: "ExactIn" | "ExactOut";
+			slippageBps: number;
+			platformFee: string | null;
+			priceImpactPct: PercentString;
+			routePlan: RouteInfo[];
+			contextSlot: number;
+			timeTaken: number;
+	  }
+	| {
+			error: string;
+	  };
+
+/**
+ * Info stored in buyerPda
+ */
+export type CardPurchaseInfo = {
+	address: PublicKeyString;
+	index: bigint;
+	buyerAddress: PublicKeyString;
+	amount: DecimalString;
+	purchaseAt: number;
+};
+
+export type FeeTier = {
+	minAmount: DecimalString;
+	maxAmount: DecimalString;
+	feePercent: PercentString;
+};
+
+export type ProviderConfig = {
+	minCardAmount: DecimalString;
+	maxCardAmount: DecimalString;
+	feeTiers: FeeTier[];
+};
+
+/**
+ * Info stored in cardPda
+ */
+export type CardConfigInfo = {
+	address: PublicKeyString;
+	index: bigint;
+	zicOwner: PublicKeyString;
+	nativeFeePercent: PercentString;
+	nonNativeFeePercent: PercentString;
+	revenueFeePercent: PercentString;
+	usdcMint: PublicKeyString;
+	revenueVault: PublicKeyString;
+	commissionVault: PublicKeyString;
+	cardVault: PublicKeyString;
+	totalCardSold: DecimalString;
+	providerConfig: ProviderConfig;
+	dailyCardPurchaseLimit: DecimalString;
+};
+
+export type TokenFeeRecord = {
+	tokenAddress: PublicKeyString;
+	fee: PercentString;
+};
+
+export type TokenFeeRecordList = TokenFeeRecord[];
+
+export type UserPurchaseRecordInfo = {
+	address: PublicKeyString;
+	owner: PublicKeyString;
+	lastCardBoughtTimestamp: number;
+	totalCardBoughtPerDay: DecimalString;
+};
+
+export type InitCardConfigParams = {
+	zicOwnerAddress: Address;
+	cardVaultAddress: Address;
+	revenueVaultAddress: Address;
+	commissionVaultAddress: Address;
+	usdcAddress: Address;
+	revenueFeePercent: PercentString;
+	nativeFeePercent: PercentString;
+	nonNativeFeePercent: PercentString;
+	minCardAmount: DecimalString;
+	maxCardAmount: DecimalString;
+	dailyCardPurchaseLimit: DecimalString;
+	feeTiers: Array<FeeTier>;
+};
+
+export type SetCardConfigParams = {
+	zicOwnerAddress: Address;
+	newZicOwnerAddress: Address;
+	cardVaultAddress: Address;
+	revenueVaultAddress: Address;
+	commissionVaultAddress: Address;
+	revenueFeePercent: PercentString;
+	nativeFeePercent: PercentString;
+	nonNativeFeePercent: PercentString;
+	minCardAmount: DecimalString;
+	maxCardAmount: DecimalString;
+	dailyCardPurchaseLimit: DecimalString;
+	feeTiers: Array<FeeTier>;
+};
+
+export type SetCustomFeesParams = {
+	zicOwnerAddress: PublicKeyString;
+	tokenFeeList: TokenFeeRecordList;
+};
+
+export type DeleteCustomFeesParams = {
+	zicOwnerAddress: PublicKeyString;
+	tokenAddressList: PublicKeyString[];
+};
+
+export type SwapMode = "ExactOut" | "ExactIn";
+
+export type BuyCardDirectParams = {
+	buyerAddress: Address;
+	nextBuyerCounter: bigint;
+	amount: DecimalString;
+	cardType: CardType;
+	buyerEmail: string;
+	mintAddress: Address;
+};
+
+export type SwapAndBuyCardDirectParams = {
+	quoteInfo: QuoteInfo;
+	buyerAddress: Address;
+	nextBuyerCounter: bigint;
+	cardType: CardType;
+	buyerEmail: string;
+};
+
+export type GetQuoteInfoParams = {
+	inputMintAddress: Address;
+	outputMintAddress: Address;
+	inputAmount: DecimalString;
+	slippagePercent: PercentString;
+	swapMode?: SwapMode;
+};
+
+export type CardPurchaseEvent = {
+	index: bigint;
+	from: PublicKeyString;
+	to: PublicKeyString;
+	amount: DecimalString;
+};
+
+export type InitCardConfigInstructionData = {
+	cardVault: web3.PublicKey;
+	revenueVault: web3.PublicKey;
+	commissionVault: web3.PublicKey;
+	revenueFee: BN;
+	nativeFee: BN;
+	nonNativeFee: BN;
+	maxCardAmount: BN;
+	minCardAmount: BN;
+	dailyCardPurchaseLimit: BN;
+	feeTiers: ParsedFeeTier[];
+};
+
+export type SetCardConfigInstructionData = {
+	newZicOwner: web3.PublicKey;
+	cardVault: web3.PublicKey;
+	revenueVault: web3.PublicKey;
+	commissionVault: web3.PublicKey;
+	revenueFee: BN;
+	nativeFee: BN;
+	nonNativeFee: BN;
+	maxCardAmount: BN;
+	minCardAmount: BN;
+	dailyCardPurchaseLimit: BN;
+	feeTiers: ParsedFeeTier[];
+};
+
+export type BuyCardDirectInstructionData = {
+	amount: BN;
+	cardType: InstructionCardType;
+	index: BN;
+	sourceTokenAddress?: web3.PublicKey;
+};
+
+export class ZebecCardService {
 	constructor(
 		readonly provider: ReadonlyProvider | AnchorProvider,
 		readonly program: Program<ZebecCardIdl>,
-	) {
-		this.instructions = new ZebecCardInstructions(this.program);
-	}
+	) {}
 
 	private async _createPayload(
 		payerKey: web3.PublicKey,
@@ -449,13 +404,13 @@ export class ZebecCardService {
 
 		const provider = this.provider;
 
-		if (provider instanceof ReadonlyProvider) {
-			throw new Error("Provider is readonly. Cannot be used for creating transaction payload.");
-		}
+		let signTransaction: SignTransactionFunction | undefined;
 
-		const signTransaction: SignTransactionFunction = async (tx) => {
-			return provider.wallet.signTransaction(tx);
-		};
+		if (provider instanceof AnchorProvider) {
+			signTransaction = async (tx) => {
+				return provider.wallet.signTransaction(tx);
+			};
+		}
 
 		return new TransactionPayload(
 			this.provider.connection,
@@ -466,6 +421,165 @@ export class ZebecCardService {
 			addressLookupTableAccounts,
 			signTransaction,
 		);
+	}
+
+	async getInitCardConfigsInstruction(
+		cardPda: web3.PublicKey,
+		usdcToken: web3.PublicKey,
+		zicOwner: web3.PublicKey,
+		data: InitCardConfigInstructionData,
+	): Promise<web3.TransactionInstruction> {
+		const {
+			revenueFee,
+			nativeFee,
+			nonNativeFee,
+			cardVault,
+			revenueVault,
+			commissionVault,
+			maxCardAmount,
+			minCardAmount,
+			feeTiers,
+			dailyCardPurchaseLimit,
+		} = data;
+
+		return this.program.methods
+			.initCardConfigs({
+				cardVault,
+				commissionVault,
+				nativeFee,
+				nonNativeFee,
+				revenueFee,
+				revenueVault,
+				maxCardAmount,
+				minCardAmount,
+				feeTier: feeTiers,
+				dailyCardBuyLimit: dailyCardPurchaseLimit,
+			})
+			.accounts({
+				associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+				cardPda,
+				systemProgram: web3.SystemProgram.programId,
+				tokenProgram: TOKEN_PROGRAM_ID,
+				usdcToken,
+				zicOwner,
+			})
+			.instruction();
+	}
+
+	async getSetCardConfigsInstruction(
+		cardPda: web3.PublicKey,
+		zicOwner: web3.PublicKey,
+		data: SetCardConfigInstructionData,
+	): Promise<web3.TransactionInstruction> {
+		const {
+			revenueFee,
+			nativeFee,
+			nonNativeFee,
+			cardVault,
+			revenueVault,
+			commissionVault,
+			feeTiers,
+			maxCardAmount,
+			minCardAmount,
+			dailyCardPurchaseLimit,
+			newZicOwner,
+		} = data;
+
+		return this.program.methods
+			.setCardConfigs({
+				zicOwner: newZicOwner,
+				cardVault,
+				commissionVault,
+				revenueVault,
+				nativeFee,
+				nonNativeFee,
+				revenueFee,
+				maxCardAmount,
+				minCardAmount,
+				dailyCardBuyLimit: dailyCardPurchaseLimit,
+				feeTier: feeTiers,
+			})
+			.accounts({
+				cardPda,
+				zicOwner,
+			})
+			.instruction();
+	}
+
+	async getBuyCardDirectInstruction(
+		buyerPda: web3.PublicKey,
+		cardPda: web3.PublicKey,
+		cardVault: web3.PublicKey,
+		cardVaultAta: web3.PublicKey,
+		feeMapPda: web3.PublicKey,
+		revenueVault: web3.PublicKey,
+		revenueVaultAta: web3.PublicKey,
+		usdcToken: web3.PublicKey,
+		user: web3.PublicKey,
+		userAta: web3.PublicKey,
+		userPurchaseRecord: web3.PublicKey,
+		buyCardData: BuyCardDirectInstructionData,
+	) {
+		const { amount, cardType, index, sourceTokenAddress } = buyCardData;
+
+		return this.program.methods
+			.buyCardDirect({
+				amount,
+				cardType,
+				index,
+				sourceTokenAddress: sourceTokenAddress ? sourceTokenAddress : usdcToken,
+			})
+			.accounts({
+				associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+				buyerPda,
+				cardPda,
+				cardVault,
+				cardVaultAta,
+				feeMapPda,
+				revenueVault,
+				revenueVaultAta,
+				systemProgram: web3.SystemProgram.programId,
+				tokenProgram: TOKEN_PROGRAM_ID,
+				usdcToken,
+				user,
+				userAta,
+				vaultPda: userPurchaseRecord,
+			})
+			.instruction();
+	}
+
+	async getSetCustomFeesInstruction(
+		cardPda: web3.PublicKey,
+		feeMapPda: web3.PublicKey,
+		zicOwner: web3.PublicKey,
+		tokenFeeList: ParsedTokenFeeList,
+	) {
+		return this.program.methods
+			.setCustomFees(tokenFeeList)
+			.accounts({
+				cardPda,
+				feeMapPda,
+				systemProgram: web3.SystemProgram.programId,
+				zicOwner,
+			})
+			.instruction();
+	}
+
+	async getDeleteCustomFeesInstruction(
+		cardPda: web3.PublicKey,
+		feeMapPda: web3.PublicKey,
+		zicOwner: web3.PublicKey,
+		tokenFeeList: web3.PublicKey[],
+	) {
+		return this.program.methods
+			.deleteCustomFees(tokenFeeList)
+			.accounts({
+				cardPda,
+				feeMapPda,
+				systemProgram: web3.SystemProgram.programId,
+				zicOwner,
+			})
+			.instruction();
 	}
 
 	async initCardConfig(params: InitCardConfigParams): Promise<TransactionPayload> {
@@ -508,23 +622,18 @@ export class ZebecCardService {
 		sortFeeTierDesc(feeTiers);
 
 		const ixs = [];
-		const ix = await this.instructions.getInitCardConfigsInstruction(
-			cardConfig,
-			usdcToken,
-			zicOwner,
-			{
-				revenueVault,
-				cardVault,
-				commissionVault,
-				nativeFee,
-				nonNativeFee,
-				revenueFee,
-				feeTiers,
-				maxCardAmount,
-				minCardAmount,
-				dailyCardPurchaseLimit,
-			},
-		);
+		const ix = await this.getInitCardConfigsInstruction(cardConfig, usdcToken, zicOwner, {
+			revenueVault,
+			cardVault,
+			commissionVault,
+			nativeFee,
+			nonNativeFee,
+			revenueFee,
+			feeTiers,
+			maxCardAmount,
+			minCardAmount,
+			dailyCardPurchaseLimit,
+		});
 
 		ixs.push(ix);
 
@@ -637,7 +746,7 @@ export class ZebecCardService {
 		sortFeeTierDesc(feeTiers);
 
 		const ixs = [];
-		const ix = await this.instructions.getSetCardConfigsInstruction(cardConfig, zicOwner, {
+		const ix = await this.getSetCardConfigsInstruction(cardConfig, zicOwner, {
 			newZicOwner,
 			revenueFee,
 			nativeFee,
@@ -723,7 +832,7 @@ export class ZebecCardService {
 			fee: new BN(percentToBps(tokenFee.fee)),
 		}));
 
-		const ix = await this.instructions.getSetCustomFeesInstruction(
+		const ix = await this.getSetCustomFeesInstruction(
 			cardConfigPda,
 			tokenFeeMapPda,
 			zicOwner,
@@ -740,7 +849,7 @@ export class ZebecCardService {
 
 		const tokenList = params.tokenAddressList.map((tokenAddress) => translateAddress(tokenAddress));
 
-		const ix = await this.instructions.getDeleteCustomFeesInstruction(
+		const ix = await this.getDeleteCustomFeesInstruction(
 			cardConfigPda,
 			tokenFeeMapPda,
 			zicOwner,
@@ -893,7 +1002,7 @@ export class ZebecCardService {
 		const parsedAmount = new BN(amount.toFixed(0, BigNumber.ROUND_DOWN));
 		const index = new BN(params.nextBuyerCounter.toString());
 
-		const buyCardDirectIx = await this.instructions.getBuyCardDirectInstruction(
+		const buyCardDirectIx = await this.getBuyCardDirectInstruction(
 			cardPurchaseInfoPda,
 			cardConfig,
 			cardVault,
@@ -913,7 +1022,7 @@ export class ZebecCardService {
 			},
 		);
 
-		const emailHash = await hashSHA256(params.buyerEmail.toString());
+		const emailHash = params.buyerEmail.toString();
 
 		const memoIx = new web3.TransactionInstruction({
 			keys: [
@@ -966,7 +1075,7 @@ export class ZebecCardService {
 		const parsedAmount = new BN(amount.times(UNITS_PER_USDC).toFixed(0));
 		const index = new BN(params.nextBuyerCounter.toString());
 
-		const ix = await this.instructions.getBuyCardDirectInstruction(
+		const ix = await this.getBuyCardDirectInstruction(
 			cardPurchaseInfoPda,
 			cardConfig,
 			cardVault,
@@ -985,8 +1094,6 @@ export class ZebecCardService {
 			},
 		);
 
-		const emailHash = await hashSHA256(params.buyerEmail.toString());
-
 		const memoIx = new web3.TransactionInstruction({
 			keys: [
 				{
@@ -996,7 +1103,7 @@ export class ZebecCardService {
 				},
 			],
 			programId: MEMO_PROGRAM_ID,
-			data: Buffer.from(JSON.stringify({ buyer: emailHash }), "utf-8"),
+			data: Buffer.from(JSON.stringify({ buyer: params.buyerEmail }), "utf-8"),
 		});
 
 		const payload = await this._createPayload(user, [ix, memoIx]);
@@ -1064,292 +1171,6 @@ export class ZebecCardService {
 				amount.div(UNITS_PER_USDC).toFixed(),
 			);
 		}
-	}
-
-	async initBotConfig(params: InitBotConfigParams) {
-		const zicOwner = translateAddress(params.zicOwnerAddress);
-		const botAdmin = translateAddress(params.botAdminAddress);
-
-		const cardBotConfig = deriveCardBotConfigPda(this.program.programId);
-		const cardConfig = deriveCardConfigPda(this.program.programId);
-
-		const ix = await this.instructions.getInitBotConfigInstruction(
-			cardBotConfig,
-			cardConfig,
-			zicOwner,
-			{
-				botAdmin,
-			},
-		);
-
-		return this._createPayload(zicOwner, [ix], []);
-	}
-
-	async initBotUserCustody(params: InitBotUserCustodyParams) {
-		const { userId } = params;
-		const botAdmin = translateAddress(params.botAdminAddress);
-		const usdcToken = translateAddress(params.usdcMintAddress);
-		const cardBotConfig = deriveCardBotConfigPda(this.program.programId);
-		const userCustody = deriveBotUserCustodyPda(userId, this.program.programId);
-		const userCustodyAta = getAssociatedTokenAddressSync(usdcToken, userCustody, true);
-
-		const ix = await this.instructions.getInitBotUserCustodyInstruction(
-			botAdmin,
-			cardBotConfig,
-			usdcToken,
-			userCustody,
-			userCustodyAta,
-			{
-				userId,
-			},
-		);
-
-		return this._createPayload(botAdmin, [ix], []);
-	}
-
-	async setBotAdmin(params: SetNewBotAdminParams) {
-		const newBotAdmin = translateAddress(params.newBotAdminAddress);
-		const zicOwner = translateAddress(params.zicOwnerAddress);
-
-		const cardBotConfig = deriveCardBotConfigPda(this.program.programId);
-		const cardConfig = deriveCardConfigPda(this.program.programId);
-
-		const ix = await this.instructions.getSetBotAdminInstruction(
-			cardBotConfig,
-			cardConfig,
-			zicOwner,
-			{ newAdmin: newBotAdmin },
-		);
-
-		return this._createPayload(zicOwner, [ix], []);
-	}
-
-	async buyCardThroughBot(params: BuyCardThroughBotParams) {
-		const { userId, cardType } = params;
-		const botAdmin = translateAddress(params.botAdminAddress);
-		const usdcToken = translateAddress(params.usdcMintAddress);
-		const cardBotConfig = deriveCardBotConfigPda(this.program.programId);
-		const cardConfig = deriveCardConfigPda(this.program.programId);
-		const feeMapPda = deriveTokenFeeMapPda(this.program.programId);
-		const userCustody = deriveBotUserCustodyPda(userId, this.program.programId);
-		const userCustodyAta = getAssociatedTokenAddressSync(usdcToken, userCustody, true);
-
-		const cardConfigInfo = await this.program.account.card.fetch(cardConfig);
-		const cardVault = cardConfigInfo.cardVault;
-		const revenueVault = cardConfigInfo.revenueVault;
-
-		const cardVaultAta = getAssociatedTokenAddressSync(usdcToken, cardVault, true);
-		const revenueVaultAta = getAssociatedTokenAddressSync(usdcToken, revenueVault, true);
-
-		const amount = BigNumber(params.amount)
-			.times(UNITS_PER_USDC)
-			.decimalPlaces(0, BigNumber.ROUND_DOWN);
-
-		this._checkAmountIsWithinProviderRange(cardConfigInfo, amount, true);
-
-		await this._checkAmountIsWithinDailyCardLimitForBot(cardConfigInfo, userCustody, amount, true);
-
-		const ix = await this.instructions.getBuyCardBotInstruction(
-			botAdmin,
-			cardBotConfig,
-			cardConfig,
-			cardVault,
-			cardVaultAta,
-			feeMapPda,
-			revenueVault,
-			revenueVaultAta,
-			usdcToken,
-			userCustody,
-			userCustodyAta,
-			{
-				amount: new BN(amount.toFixed()),
-				sourceTokenAddress: usdcToken,
-				userId,
-				cardType: cardType === "carbon" ? "reloadable" : "non_reloadable",
-			},
-		);
-
-		const memoIx = new web3.TransactionInstruction({
-			keys: [
-				{
-					pubkey: botAdmin,
-					isSigner: true,
-					isWritable: true,
-				},
-			],
-			programId: MEMO_PROGRAM_ID,
-			data: Buffer.from(JSON.stringify({ userId }), "utf-8"),
-		});
-
-		return this._createPayload(botAdmin, [ix, memoIx], []);
-	}
-
-	private async _checkAmountIsWithinDailyCardLimitForBot(
-		cardConfigInfo: ParsedCardConfigInfo,
-		botUserCustody: web3.PublicKey,
-		amount: BigNumber,
-		amountParsed = true,
-	) {
-		const dailyCardBuyLimit = BigNumber(cardConfigInfo.dailyCardBuyLimit.toString());
-		amount = amountParsed
-			? amount
-			: amount.times(UNITS_PER_USDC).decimalPlaces(0, BigNumber.ROUND_DOWN);
-
-		const botUserCustodyInfo = await this.program.account.cardCustodyData.fetchNullable(
-			botUserCustody,
-			"confirmed",
-		);
-
-		if (!botUserCustodyInfo) {
-			console.debug("No user purchase record exists.");
-			return;
-		}
-
-		const today = new Date();
-		const lastCardBoughtDate = new Date(botUserCustodyInfo.dateTimeInUnix.toNumber() * 1000);
-
-		let cardBoughtInADay = BigNumber(0);
-		if (areDatesOfSameDay(today, lastCardBoughtDate)) {
-			cardBoughtInADay = BigNumber(botUserCustodyInfo.totalBoughtPerDay.toString()).plus(amount);
-		} else {
-			cardBoughtInADay = amount;
-		}
-
-		if (cardBoughtInADay.isGreaterThan(dailyCardBuyLimit)) {
-			throw new DailyCardLimitReachedError(
-				dailyCardBuyLimit.div(UNITS_PER_USDC).toFixed(),
-				cardBoughtInADay.div(UNITS_PER_USDC).toFixed(),
-			);
-		}
-	}
-
-	async initOnRampConfig(params: InitOnRampConfigParams) {
-		const zicOwner = translateAddress(params.zicOwnerAddress);
-		const onRampAdmin = translateAddress(params.onRampAdminAddress);
-		const zbcnToken = translateAddress(params.zbcnAddress);
-
-		const cardConfig = deriveCardConfigPda(this.program.programId);
-		const onRampConfig = deriveOnRampConfigPda(this.program.programId);
-
-		const ix = await this.instructions.getInitOnRampInstruction(
-			zicOwner,
-			cardConfig,
-			onRampConfig,
-			{
-				admin: onRampAdmin,
-				zbcnToken,
-			},
-		);
-
-		return this._createPayload(zicOwner, [ix]);
-	}
-
-	async setOnRampAdmin(params: SetNewOnRampAdminParams) {
-		const zicOwner = translateAddress(params.zicOwnerAddress);
-		const onRampAdmin = translateAddress(params.newOnRampAdminAddress);
-		const cardConfig = deriveCardConfigPda(this.program.programId);
-		const onRampConfig = deriveOnRampConfigPda(this.program.programId);
-
-		const ix = await this.instructions.getSetOnRampAdminInstruction(
-			cardConfig,
-			onRampConfig,
-			zicOwner,
-			{
-				newAdmin: onRampAdmin,
-			},
-		);
-
-		return this._createPayload(zicOwner, [ix], []);
-	}
-
-	async initOnRampUserCustody(params: InitOnRampUserCustodyParams) {
-		const { userId } = params;
-		const onRampAdmin = translateAddress(params.onRampAdminAddress);
-		const onRampConfig = deriveOnRampConfigPda(this.program.programId);
-		const onRampUserCustody = deriveOnRampUserCustodyPda(userId, this.program.programId);
-
-		const onRampConfigInfo = await this.program.account.onRamp.fetch(onRampConfig, "confirmed");
-		const zbcnToken = onRampConfigInfo.zbcnToken;
-
-		if (!onRampAdmin.equals(onRampConfigInfo.admin)) {
-			throw new Error("Invalid onRamp admin account.");
-		}
-
-		const onRampUserCustodyZbcnAccount = getAssociatedTokenAddressSync(
-			zbcnToken,
-			onRampUserCustody,
-			true,
-		);
-
-		const ix = await this.instructions.getInitOnRampUserCustodyInstruction(
-			onRampAdmin,
-			onRampConfig,
-			onRampUserCustody,
-			onRampUserCustodyZbcnAccount,
-			zbcnToken,
-			{
-				userId,
-			},
-		);
-
-		return this._createPayload(onRampAdmin, [ix], []);
-	}
-
-	async onRampTransferZbcn(params: OnRampTransferZbcnParams) {
-		const { senderUserId, onRampAdminAddress } = params;
-		const onRampAdmin = translateAddress(onRampAdminAddress);
-		const receiver = translateAddress(params.receiverAddress);
-
-		const onRampConfig = deriveOnRampConfigPda(this.program.programId);
-		const onRampConfigInfo = await this.program.account.onRamp.fetch(onRampConfig, "confirmed");
-		const zbcnToken = onRampConfigInfo.zbcnToken;
-
-		if (!onRampAdmin.equals(onRampConfigInfo.admin)) {
-			throw new Error("Invalid onRamp admin");
-		}
-
-		const onRampUserCustody = deriveOnRampUserCustodyPda(senderUserId, this.program.programId);
-		const onRampUserCustodyZbcnAccount = getAssociatedTokenAddressSync(
-			zbcnToken,
-			onRampUserCustody,
-			true,
-		);
-
-		const receiverZbcnAccount = getAssociatedTokenAddressSync(zbcnToken, receiver, true);
-
-		const zbcnDecimals = await getMintDecimals(this.provider.connection, zbcnToken);
-
-		const amount = new BN(
-			BigNumber(params.amount).times(TEN_BIGNUM.pow(zbcnDecimals)).toFixed(0, BigNumber.ROUND_DOWN),
-		);
-
-		const ix = await this.instructions.getOnRampTransferZbcnInstruction(
-			onRampAdmin,
-			onRampConfig,
-			onRampUserCustody,
-			onRampUserCustodyZbcnAccount,
-			receiver,
-			receiverZbcnAccount,
-			zbcnToken,
-			{
-				amount,
-				userId: senderUserId,
-			},
-		);
-
-		const memoIx = new web3.TransactionInstruction({
-			keys: [
-				{
-					pubkey: onRampAdmin,
-					isSigner: true,
-					isWritable: true,
-				},
-			],
-			programId: MEMO_PROGRAM_ID,
-			data: Buffer.from(JSON.stringify({ durationInDays: params.durationInDays }), "utf-8"),
-		});
-
-		return this._createPayload(onRampAdmin, [ix, memoIx]);
 	}
 
 	async getQuoteInfo(params: GetQuoteInfoParams) {
@@ -1485,55 +1306,6 @@ export class ZebecCardService {
 		}));
 
 		return tokenFeeList;
-	}
-
-	async getCardBotConfigInfo(
-		commitment: web3.Commitment = "confirmed",
-	): Promise<CardBotConfigInfo> {
-		const cardBotConfig = deriveCardBotConfigPda(this.program.programId);
-		const decoded = await this.program.account.cardBot.fetch(cardBotConfig, commitment);
-
-		return {
-			botAdmin: parsePublicKeyString(decoded.botAdmin),
-		};
-	}
-
-	async getBotUserCustodyInfo(
-		userCustody: Address,
-		commitment: web3.Commitment = "confirmed",
-	): Promise<BotUserCustodyInfo> {
-		const decoded = await this.program.account.cardCustodyData.fetch(userCustody, commitment);
-
-		const totalCardBoughtPerDay = parseDecimalString(
-			BigNumber(decoded.totalBoughtPerDay.toString()).div(UNITS_PER_USDC).toFixed(),
-		);
-		return {
-			lastCardBoughtTimestamp: decoded.dateTimeInUnix.toNumber(),
-			totalCardBoughtPerDay,
-			userId: decoded.userId,
-		};
-	}
-
-	async getOnRampConfigInfo(commitment: web3.Commitment = "confirmed"): Promise<OnRampConfigInfo> {
-		const onRampConfig = deriveOnRampConfigPda(this.program.programId);
-
-		const decoded = await this.program.account.onRamp.fetch(onRampConfig, commitment);
-
-		return {
-			onRampAdmin: parsePublicKeyString(decoded.admin),
-			zbcnToken: parsePublicKeyString(decoded.zbcnToken),
-		};
-	}
-
-	async getOnRampUserCustodyInfo(
-		onRampUserCustody: Address,
-		commitment: web3.Commitment = "confirmed",
-	): Promise<OnRampUserCustodyInfo> {
-		const decoded = await this.program.account.onRampCustody.fetch(onRampUserCustody, commitment);
-
-		return {
-			userId: decoded.userId,
-		};
 	}
 
 	async getAllCardPurchaseInfo(buyerAddress: Address): Promise<Array<CardPurchaseInfo>> {

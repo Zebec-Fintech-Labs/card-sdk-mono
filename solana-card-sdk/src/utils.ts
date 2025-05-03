@@ -3,11 +3,11 @@ import assert from "assert";
 import { web3 } from "@coral-xyz/anchor";
 import { MEMO_PROGRAM_ID } from "@zebec-network/solana-common";
 
-import { ParsedFeeTier } from "./instructions";
-import { FeeTier, QuoteInfo, RouteInfo } from "./service";
+import { FeeTier, QuoteInfo, RouteInfo } from "./services/cardService";
 import {
 	parseBigIntString,
 	parseDecimalString,
+	ParsedFeeTier,
 	parsePercentString,
 	parsePublicKeyString,
 } from "./types";
