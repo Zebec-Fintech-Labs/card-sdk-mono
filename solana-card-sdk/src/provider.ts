@@ -2,11 +2,11 @@ import { Address, AnchorProvider, translateAddress, web3 } from "@coral-xyz/anch
 
 export class ReadonlyProvider {
 	readonly connection: web3.Connection;
-	readonly walletAddress?: web3.PublicKey;
+	readonly publicKey?: web3.PublicKey;
 
 	constructor(connection: web3.Connection, walletAddress?: Address) {
 		this.connection = connection;
-		this.walletAddress = walletAddress ? translateAddress(walletAddress) : undefined;
+		this.publicKey = walletAddress ? translateAddress(walletAddress) : undefined;
 	}
 }
 
