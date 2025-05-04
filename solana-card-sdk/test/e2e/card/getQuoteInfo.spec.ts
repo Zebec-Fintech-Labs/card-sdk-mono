@@ -1,13 +1,14 @@
 import { describe, it } from "mocha";
 
 import {
+	createAnchorProvider,
 	GetQuoteInfoParams,
 	parseDecimalString,
 	parsePercentString,
 	QuoteInfo,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 const solanaMainnetTokens = [
 	{
@@ -284,10 +285,12 @@ const solanaMainnetTokens = [
 
 describe("getQuoteInfo", () => {
 	const network = "mainnet-beta";
-	const provider = getProviders(network)[0];
+
+	const connection = getConnection(network);
+	const wallet = getWallets(network)[0];
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
-		.setProvider(provider)
+		.setProvider(createAnchorProvider(connection, wallet))
 		.setProgram()
 		.build();
 

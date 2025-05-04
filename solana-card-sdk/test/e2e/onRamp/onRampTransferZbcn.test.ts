@@ -1,20 +1,20 @@
-import {
-	describe,
-	it,
-} from "mocha";
+import { describe, it } from "mocha";
 
 import {
+	createAnchorProvider,
 	OnRampServiceBuilder,
 	OnRampTransferZbcnParams,
 	parseDecimalString,
 	parsePublicKeyString,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("onRampStake()", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const provider = providers[4];
+	const connection = getConnection(network);
+	const wallet = getWallets(network)[4];
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

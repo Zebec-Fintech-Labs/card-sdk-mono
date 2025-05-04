@@ -3,12 +3,11 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import { OnRampServiceBuilder, ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM } from "../../../src";
-import { getProviders } from "../../shared";
+import { getWallets } from "../../shared";
 
 describe("getCardConfig", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const wallets = providers.map((p) => p.wallet.publicKey.toString());
+	const wallets = getWallets(network);
 	console.log("wallets:", wallets);
 
 	const service = new OnRampServiceBuilder()

@@ -3,17 +3,21 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import {
+	createAnchorProvider,
 	OnRampServiceBuilder,
 	parsePublicKeyString,
 	SetNewOnRampAdminParams,
 	ZEBEC_CARD_IDL,
 	ZEBEC_CARD_PROGRAM,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("setOnRampAdmin()", () => {
 	const network = "devnet";
-	const provider = getProviders(network)[0];
+	const connection = getConnection(network);
+	const wallet = getWallets(network)[4];
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

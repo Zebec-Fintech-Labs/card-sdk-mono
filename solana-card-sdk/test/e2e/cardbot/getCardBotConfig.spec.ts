@@ -1,12 +1,11 @@
 import { describe, it } from "mocha";
 
 import { CardBotServiceBuilder } from "../../../src";
-import { getProviders } from "../../shared";
+import { getWallets } from "../../shared";
 
 describe("getCardBotConfigInfo", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const wallets = providers.map((p) => p.wallet.publicKey.toString());
+	const wallets = getWallets(network);
 	console.log("wallets:", wallets);
 
 	const service = new CardBotServiceBuilder()

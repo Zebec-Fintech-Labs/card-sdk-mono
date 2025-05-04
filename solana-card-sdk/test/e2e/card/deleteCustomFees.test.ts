@@ -1,15 +1,18 @@
 import { describe, it } from "mocha";
 
 import {
+	createAnchorProvider,
 	DeleteCustomFeesParams,
 	parsePublicKeyString,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("deleteCustomFees()", () => {
 	const network = "devnet";
-	const provider = getProviders(network)[0];
+	const wallet = getWallets(network)[0];
+	const connection = getConnection(network);
+	const provider = createAnchorProvider(connection, wallet);
 
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)

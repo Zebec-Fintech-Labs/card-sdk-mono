@@ -1,11 +1,14 @@
 import { describe, it } from "mocha";
 
-import { ZebecCardServiceBuilder } from "../../../src";
-import { getProviders } from "../../shared";
+import { createReadonlyProvider, ZebecCardServiceBuilder } from "../../../src";
+import { getConnection, getWallets } from "../../shared";
 
 describe("getQuoteInfo", () => {
 	const network = "devnet";
-	const provider = getProviders(network)[1];
+	const wallet = getWallets(network)[0];
+	const connection = getConnection(network);
+
+	const provider = createReadonlyProvider(connection, wallet.publicKey);
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)
@@ -13,7 +16,7 @@ describe("getQuoteInfo", () => {
 		.build();
 
 	it("initialize card config and vaults", async () => {
-		const buyerAddress = provider.publicKey;
+		const buyerAddress = provider.publicKey!;
 		const infos = await service.getAllCardPurchaseInfo(buyerAddress);
 
 		console.log("infos:", infos);

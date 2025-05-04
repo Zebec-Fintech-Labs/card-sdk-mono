@@ -2,12 +2,12 @@ import { describe, it } from "mocha";
 
 import { ZebecCardServiceBuilder } from "../../../src";
 import { deriveReloadableCardPda, deriveTokenFeeMapPda } from "../../../src/pda";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("getCustomTokenFees()", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const wallets = providers.map((p) => p.wallet.publicKey.toString());
+	const connection = getConnection(network);
+	const wallets = getWallets(network);
 	console.log("wallets:", wallets);
 
 	const service = new ZebecCardServiceBuilder()

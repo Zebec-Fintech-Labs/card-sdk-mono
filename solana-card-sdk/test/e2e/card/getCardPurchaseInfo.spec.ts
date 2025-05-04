@@ -6,12 +6,12 @@ import {
 	deriveCardPurchaseInfoPda,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getConnection, getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("getCardPurchaseInfo", () => {
 	const network = "devnet";
 	const connection = getConnection(network);
-	const buyerPubkey = getProviders(network)[2].publicKey;
+	const buyerPubkey = getWallets(network)[2].publicKey;
 	const provider = createReadonlyProvider(connection, buyerPubkey);
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)

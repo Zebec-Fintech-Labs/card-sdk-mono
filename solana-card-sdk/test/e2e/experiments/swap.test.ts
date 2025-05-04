@@ -10,17 +10,17 @@ import {
 
 import { parseQuoteInfo } from "../../../src";
 import { JUP_SWAP_API } from "../../../src/constants";
-import { getConnection, getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("swap with different feepayer and swapper", () => {
 	const network = "mainnet-beta";
 	const connection = getConnection(network);
-	const provider = getProviders(network);
-	console.log("provider:", provider[2].publicKey.toString());
-	console.log("provider:", provider[1].publicKey.toString());
+	const wallets = getWallets(network);
+	console.log("wallets:", wallets[2].publicKey.toString());
+	console.log("wallets:", wallets[1].publicKey.toString());
 
 	it("should be possible", async () => {
-		const user = provider[1].publicKey;
+		const user = wallets[1].publicKey;
 		const inputAmount = "27";
 		const slippagePercent = "0.3";
 		const swapMode = "ExactIn";
@@ -88,18 +88,18 @@ describe("swap with different feepayer and swapper", () => {
 		ixs.unshift(
 			createAssociatedTokenAccountInstruction(
 				// fee payer
-				provider[2].publicKey,
+				wallets[2].publicKey,
 				// associated token account
-				getAssociatedTokenAddressSync(outputMint, provider[1].publicKey),
+				getAssociatedTokenAddressSync(outputMint, wallets[1].publicKey),
 				// owner
-				provider[1].publicKey,
+				wallets[1].publicKey,
 				// mint
 				outputMint,
 			),
 		);
 
 		const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-		message.payerKey = provider[2].publicKey;
+		message.payerKey = wallets[2].publicKey;
 		message.recentBlockhash = blockhash;
 		message.instructions = ixs;
 
@@ -108,8 +108,8 @@ describe("swap with different feepayer and swapper", () => {
 		);
 
 		// sign transaction
-		const signedTx = await provider[1].wallet.signTransaction(tx);
-		const signedTx1 = await provider[2].wallet.signTransaction(signedTx);
+		const signedTx = await wallets[1].signTransaction(tx);
+		const signedTx1 = await wallets[2].signTransaction(signedTx);
 
 		// const simResult = await connection.simulateTransaction(signedTx1, { commitment: "confirmed" });
 		// console.log("simResult:", simResult.value);

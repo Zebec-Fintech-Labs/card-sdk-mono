@@ -2,15 +2,18 @@ import { describe, it } from "mocha";
 
 import {
 	CardBotServiceBuilder,
+	createAnchorProvider,
 	InitBotUserCustodyParams,
 	parsePublicKeyString,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("initBotUserCustody()", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const provider = providers[4];
+	const wallet = getWallets(network)[4];
+	const connection = getConnection(network);
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

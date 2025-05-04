@@ -3,14 +3,18 @@ import { describe, it } from "mocha";
 import {
 	BuyCardThroughBotParams,
 	CardBotServiceBuilder,
+	createAnchorProvider,
 	parseDecimalString,
 	parsePublicKeyString,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("buyCardThroughBot()", () => {
 	const network = "devnet";
-	const provider = getProviders(network)[4];
+	const wallet = getWallets(network)[4];
+	const connection = getConnection(network);
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new CardBotServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

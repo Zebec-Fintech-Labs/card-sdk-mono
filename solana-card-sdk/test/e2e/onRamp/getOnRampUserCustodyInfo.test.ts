@@ -1,15 +1,19 @@
 import { describe, it } from "mocha";
 
-import { deriveOnRampUserCustodyPda, OnRampServiceBuilder } from "../../../src";
-import { getProviders } from "../../shared";
+import {
+	createReadonlyProvider,
+	deriveOnRampUserCustodyPda,
+	OnRampServiceBuilder,
+} from "../../../src";
+import { getConnection, getWallets } from "../../shared";
 
 describe("getOnRampUserCustodyInfo()", () => {
 	const network = "devnet";
-	const providers = getProviders(network);
-	const wallets = providers.map((p) => p.wallet.publicKey.toString());
-	console.log("wallets:", wallets);
+	const wallet = getWallets(network)[0];
+	const connection = getConnection(network);
 
-	const provider = providers[0];
+	const provider = createReadonlyProvider(connection, wallet.publicKey);
+
 	const service = new OnRampServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

@@ -5,22 +5,26 @@ import { hashSHA256 } from "@zebec-network/core-utils";
 
 import {
 	CardType,
+	createAnchorProvider,
 	parseDecimalString,
 	parsePercentString,
 	SwapAndBuyCardDirectParams,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 dotenv.config();
 describe("swapAndBuyCardDirect", () => {
 	const network = "mainnet-beta";
-	const providers = getProviders(network);
+	const wallets = getWallets(network);
 	console.log(
 		"wallets:",
-		providers.map((provider) => provider.publicKey.toString()),
+		wallets.map((w) => w.publicKey.toString()),
 	);
-	const provider = providers[1];
+	const wallet = wallets[1];
+	const connection = getConnection(network);
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

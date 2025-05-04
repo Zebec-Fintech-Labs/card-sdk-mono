@@ -3,6 +3,7 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import {
+	createAnchorProvider,
 	parsePercentString,
 	parsePublicKeyString,
 	SetCustomFeesParams,
@@ -10,11 +11,14 @@ import {
 	ZEBEC_CARD_PROGRAM,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("setCustomFees", () => {
 	const network = "devnet";
-	const provider = getProviders(network)[0];
+	const wallet = getWallets(network)[0];
+	const connection = getConnection(network);
+	const provider = createAnchorProvider(connection, wallet);
+
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
 		.setProvider(provider)

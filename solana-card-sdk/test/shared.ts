@@ -20,8 +20,6 @@ export function sleep(ms: number) {
 }
 
 export function getWallets(cluster?: web3.Cluster) {
-	const connection = getConnection(cluster);
-
 	const SECRET_KEYS =
 		cluster && cluster === "mainnet-beta"
 			? process.env.MAINNET_SECRET_KEYS

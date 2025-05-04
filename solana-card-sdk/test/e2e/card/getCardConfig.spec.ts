@@ -1,12 +1,11 @@
 import { describe, it } from "mocha";
 
 import { CardConfigInfo, ZebecCardServiceBuilder } from "../../../src";
-import { getProviders } from "../../shared";
+import { getWallets } from "../../shared";
 
 describe("getCardConfig", () => {
 	const network = "mainnet-beta";
-	const providers = getProviders(network);
-	const wallets = providers.map((p) => p.wallet.publicKey.toString());
+	const wallets = getWallets(network);
 	console.log("wallets:", wallets);
 
 	const service = new ZebecCardServiceBuilder()

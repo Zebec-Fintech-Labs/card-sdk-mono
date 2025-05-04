@@ -3,6 +3,7 @@ import { describe, it } from "mocha";
 import { Program } from "@coral-xyz/anchor";
 
 import {
+	createAnchorProvider,
 	InitCardConfigParams,
 	parseDecimalString,
 	parseFeeTiers,
@@ -11,14 +12,15 @@ import {
 	ZEBEC_CARD_PROGRAM,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("initCardConfig", () => {
 	const network = "mainnet-beta";
-	const provider = getProviders(network)[0];
+	const connection = getConnection(network);
+	const wallet = getWallets(network)[0];
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
-		.setProvider(provider)
+		.setProvider(createAnchorProvider(connection, wallet))
 		.setProgram((provider) => new Program(ZEBEC_CARD_IDL, ZEBEC_CARD_PROGRAM[network], provider))
 		.build();
 
@@ -43,7 +45,7 @@ describe("initCardConfig", () => {
 		]);
 
 		/** for mainnet */
-		const zicOwnerAddress = provider.publicKey.toString();
+		const zicOwnerAddress = wallet.publicKey.toString();
 		const cardVaultAddress = "5Eu8577bGqoRPNbCmJfJk2wUfN8FwuVPEThNFygaaFH9";
 		const revenueVaultAddress = "3UksGKzKJZtbpzW9o2yhtUVCYpKn5c91XqmSEgJG1j4B";
 		const commissionVaultAddress = "3UksGKzKJZtbpzW9o2yhtUVCYpKn5c91XqmSEgJG1j4B";

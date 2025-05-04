@@ -6,12 +6,12 @@ import {
 	UserPurchaseRecordInfo,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getConnection, getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("getUserPurchaseRecordInfo", () => {
 	const network = "devnet";
 	const connection = getConnection(network);
-	const buyerPubkey = getProviders(network)[1].publicKey;
+	const buyerPubkey = getWallets(network)[1].publicKey;
 	const provider = createReadonlyProvider(connection, buyerPubkey);
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)

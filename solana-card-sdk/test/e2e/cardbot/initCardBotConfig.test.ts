@@ -10,12 +10,12 @@ import {
 	ZEBEC_CARD_IDL,
 	ZEBEC_CARD_PROGRAM,
 } from "../../../src";
-import { getConnection, getProviders } from "../../shared";
+import { getConnection, getWallets } from "../../shared";
 
 describe("initBotConfig()", () => {
 	const network: web3.Cluster = "mainnet-beta";
 	const connection = getConnection(network);
-	const { wallet } = getProviders(network)[0];
+	const wallet = getWallets(network)[4];
 
 	const provider = createAnchorProvider(connection, wallet);
 
