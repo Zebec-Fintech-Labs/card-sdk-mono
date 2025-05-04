@@ -9,10 +9,10 @@
 		"dist"
 	],
 	"keywords": [
-		"zebec",
-		"zebec fintech",
+		"zebec network",
 		"card",
-		"silver card"
+		"silver card",
+		"card bot"
 	],
 	"scripts": {
 		"build": "npm run clean && tsc",
@@ -43,7 +43,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Zebec-Fintech-Labs/zebec-card-sdk.git"
+		"url": "git+https://github.com/Zebec-Fintech-Labs/card-sdk-mono.git"
 	},
-	"homepage": "https://github.com/Zebec-Fintech-Labs/zebec-card-sdk#README"
+	"homepage": "https://github.com/Zebec-Fintech-Labs/card-sdk-mono/tree/main/solana-card-sdk#README"
 }
