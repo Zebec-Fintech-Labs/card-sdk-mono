@@ -38,6 +38,11 @@ export const DIGITALBITS_RPC_URL: Record<"Production" | "Sandbox", string> = {
 	Sandbox: "https://horizon.futurenet.xdbchain.com",
 };
 
+export const XRPL_RPC_URL: Record<"Production" | "Sandbox", string> = {
+	Production: "wss://xrplcluster.com",
+	Sandbox: "wss://s.altnet.rippletest.net:51233",
+};
+
 export const XDB_PASSPHRASE: Record<"Production" | "Sandbox", string> = {
 	Production: "LiveNet Global XDBChain Network ; November 2023",
 	Sandbox: "Futurenet XDBChain Network ; October 2023",
