@@ -43,7 +43,8 @@
 		"bitcoinjs-lib": "^6.1.7",
 		"ethers": "^6.13.4",
 		"tonweb": "^0.0.66",
-		"xdb-digitalbits-sdk": "^8.2.2"
+		"xdb-digitalbits-sdk": "^8.2.2",
+		"xrpl": "^4.2.5"
 	},
 	"repository": {
 		"type": "git",
