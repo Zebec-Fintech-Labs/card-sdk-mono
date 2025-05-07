@@ -2800,7 +2800,7 @@
   dependencies:
     bignumber.js "^9.3.0"
 
-"@zebec-network/solana-common@^1.0.5":
+"@zebec-network/solana-common@^1.0.4":
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/@zebec-network/solana-common/-/solana-common-1.0.5.tgz#fc030a1cedececdbbe7716ade74870f11f92085a"
   integrity sha512-31W/eMP5LKepNFSI74y9bHDAJvfM59QMJpsU00dF3ET2YYtxxFl1QDtnLThwY102h0gliIk3Bj8gOSi0hiYXsQ==
