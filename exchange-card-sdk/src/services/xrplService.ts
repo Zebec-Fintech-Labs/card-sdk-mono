@@ -111,9 +111,8 @@ export class XRPLService {
 			throw new Error("Invalid wallet address");
 		}
 
-		// const fetchVault = await this.fetchVault("RLUSD");
-		// const destination = fetchVault.address;
-		const destination = "rMThEjLdpZCaXWtqRvMUjHwzg92HEH8V5";
+		const fetchVault = await this.fetchVault("RLUSD");
+		const destination = fetchVault.address;
 		console.log("destination:", destination);
 
 		if (!isValidAddress(destination)) {
