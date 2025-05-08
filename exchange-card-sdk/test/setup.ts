@@ -1,7 +1,9 @@
-import { Keyring } from "@polkadot/api";
 import assert from "assert";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
+import { Wallet } from "xrpl";
+
+import { Keyring } from "@polkadot/api";
 import { Keypair } from "@stellar/stellar-sdk";
 
 dotenv.config();
@@ -70,4 +72,14 @@ export function getStellarSigner() {
 	const keypair = Keypair.fromSecret(privateKey);
 
 	return keypair;
+}
+
+export function getXRPLWallet() {
+	dotenv.config();
+
+	const secret = process.env.XRPL_SECRET;
+	assert(secret, "Missing env var XRPL_SECRET");
+	const wallet = Wallet.fromSecret(secret);
+
+	return wallet;
 }
