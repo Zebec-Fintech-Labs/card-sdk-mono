@@ -56,4 +56,15 @@ describe("XRPL Service", () => {
 			// assert(response, "Response should not be null");
 		});
 	});
+
+	describe("fetchVault", () => {
+		it("fetch Vault Address", async () => {
+			let vaultAddress = await service.fetchVault("XRP");
+			console.log("vaultAddress:", vaultAddress);
+
+			vaultAddress = await service.fetchVault("RLUSD");
+			console.log("vaultAddress:", vaultAddress);
+			// assert(response, "Response should not be null");
+		});
+	});
 });
