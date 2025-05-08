@@ -1,6 +1,7 @@
 import {
 	BaseTransaction,
 	Client,
+	isValidAddress,
 	Payment,
 	SubmittableTransaction,
 	Transaction,
@@ -12,7 +13,7 @@ import { XRPL_RPC_URL } from "../constants";
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
 
-interface XRPLWallet {
+export interface XRPLWallet {
 	address: string;
 	signTransaction: (transaction: SubmittableTransaction | BaseTransaction) => Promise<string>;
 }
@@ -28,7 +29,7 @@ export class XRPLService {
 	) {
 		const sandbox = options?.sandbox ? options.sandbox : false;
 		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
-		const xrplNetwork = sandbox ? XRPL_RPC_URL.Production : XRPL_RPC_URL.Sandbox;
+		const xrplNetwork = sandbox ? XRPL_RPC_URL.Sandbox : XRPL_RPC_URL.Production;
 		this.client = new Client(xrplNetwork);
 	}
 
@@ -37,8 +38,8 @@ export class XRPLService {
 	 *
 	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
 	 */
-	async fetchQuote(): Promise<Quote> {
-		const res = await this.apiService.fetchQuote("XRP");
+	async fetchQuote(symbol = "XRP"): Promise<Quote> {
+		const res = await this.apiService.fetchQuote(symbol);
 		return res as Quote;
 	}
 
@@ -47,22 +48,37 @@ export class XRPLService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault("XRP");
+	async fetchVault(symbol = "XRP"): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVault(symbol);
 		return data;
 	}
 
 	async transferXRP(params: {
-		walletAddress: string;
+		walletAddress?: string;
 		amount: string;
 	}): Promise<TxResponse<Transaction>> {
-		const { walletAddress, amount } = params;
+		console.debug("walletAddress:", params.walletAddress);
+		const walletAddress = params.walletAddress ? params.walletAddress : this.wallet.address;
+
+		if (!isValidAddress(walletAddress)) {
+			throw new Error("Invalid wallet address");
+		}
+
+		const fetchVault = await this.fetchVault();
+		const destination = fetchVault.address;
+		console.debug("destination:", destination);
+
+		if (!isValidAddress(destination)) {
+			throw new Error("Invalid destination address");
+		}
+
+		const amountInDrops = xrpToDrops(params.amount);
 
 		const transaction: Payment = {
 			TransactionType: "Payment",
-			Account: this.wallet.address,
-			Destination: walletAddress,
-			Amount: xrpToDrops(amount),
+			Account: walletAddress,
+			Destination: destination,
+			Amount: amountInDrops,
 		};
 
 		await this.client.connect();
@@ -74,7 +90,6 @@ export class XRPLService {
 
 			return response;
 		} catch (error) {
-			console.error("Error from XRPL Client:", error);
 			throw error;
 		} finally {
 			await this.client.disconnect();
@@ -82,23 +97,41 @@ export class XRPLService {
 	}
 
 	async transferTokens(params: {
-		walletAddress: string;
+		walletAddress?: string;
 		amount: string;
 		token: {
 			currency: string;
 			issuer: string;
+			ticker: number;
 		};
 	}): Promise<TxResponse<Transaction>> {
-		const { walletAddress, amount, token } = params;
+		const walletAddress = params.walletAddress ? params.walletAddress : this.wallet.address;
+		console.log("walletAddress:", params.walletAddress);
+		if (!isValidAddress(walletAddress)) {
+			throw new Error("Invalid wallet address");
+		}
+
+		// const fetchVault = await this.fetchVault("RLUSD");
+		// const destination = fetchVault.address;
+		const destination = "rMThEjLdpZCaXWtqRvMUjHwzg92HEH8V5";
+		console.log("destination:", destination);
+
+		if (!isValidAddress(destination)) {
+			throw new Error("Invalid destination address");
+		}
+
+		const amount = BigNumber(params.amount)
+			.times(BigNumber(10).pow(params.token.ticker))
+			.toFixed(0);
 
 		const transaction: Payment = {
 			TransactionType: "Payment",
-			Account: this.wallet.address,
-			Destination: walletAddress,
+			Account: walletAddress,
+			Destination: destination,
 			Amount: {
-				currency: token.currency,
+				currency: params.token.currency,
 				value: amount,
-				issuer: token.issuer,
+				issuer: params.token.issuer,
 			},
 		};
 
@@ -111,7 +144,70 @@ export class XRPLService {
 
 			return response;
 		} catch (error) {
-			console.error("Error from XRPL Client:", error);
+			throw error;
+		} finally {
+			await this.client.disconnect();
+		}
+	}
+
+	async getXRPBalance(walletAddress?: string) {
+		const address = walletAddress ? walletAddress : this.wallet.address;
+		if (!isValidAddress(address)) {
+			throw new Error("Invalid wallet address");
+		}
+
+		await this.client.connect();
+
+		try {
+			const balance = await this.client.getXrpBalance(address, {
+				ledger_hash: "validated",
+			});
+			return balance;
+		} catch (error) {
+			throw error;
+		} finally {
+			await this.client.disconnect();
+		}
+	}
+
+	async getTokenBalances(walletAddress?: string) {
+		const address = walletAddress ? walletAddress : this.wallet.address;
+		if (!isValidAddress(address)) {
+			throw new Error("Invalid wallet address");
+		}
+
+		await this.client.connect();
+
+		try {
+			const balances = await this.client.getBalances(address, {
+				ledger_index: "validated",
+			});
+
+			return balances;
+		} catch (error) {
+			throw error;
+		} finally {
+			await this.client.disconnect();
+		}
+	}
+
+	async getDecimalsOfCurrency(currencyHolder: string, currency: string) {
+		await this.client.connect();
+
+		try {
+			const response = await this.client.getBalances(currencyHolder, {
+				ledger_index: "validated",
+			});
+
+			const row = response.find((l) => l.currency === currency);
+			if (!row) {
+				throw new Error("Currency not found in holders account");
+			}
+
+			// just a work around. change this if found a better way to get decimals
+			const splits = row.value.split(".");
+			return splits.length === 2 ? splits[1].length : 0; // if it returns zero, then it is a whole number and it's a problem !!!
+		} catch (error) {
 			throw error;
 		} finally {
 			await this.client.disconnect();
