@@ -20,7 +20,7 @@ export interface XRPLWallet {
 
 export class XRPLService {
 	private apiService: ZebecCardAPIService;
-	private client: Client;
+	readonly client: Client;
 
 	constructor(
 		readonly wallet: XRPLWallet,
@@ -111,8 +111,9 @@ export class XRPLService {
 			throw new Error("Invalid wallet address");
 		}
 
-		const fetchVault = await this.fetchVault("RLUSD");
-		const destination = fetchVault.address;
+		// const fetchVault = await this.fetchVault("RLUSD");
+		// const destination = fetchVault.address;
+		const destination = "rfjCgVJbLoNRqenrJMXxEGyJyoAygJzU2B";
 		console.log("destination:", destination);
 
 		if (!isValidAddress(destination)) {
@@ -149,26 +150,6 @@ export class XRPLService {
 		}
 	}
 
-	async getXRPBalance(walletAddress?: string) {
-		const address = walletAddress ? walletAddress : this.wallet.address;
-		if (!isValidAddress(address)) {
-			throw new Error("Invalid wallet address");
-		}
-
-		await this.client.connect();
-
-		try {
-			const balance = await this.client.getXrpBalance(address, {
-				ledger_hash: "validated",
-			});
-			return balance;
-		} catch (error) {
-			throw error;
-		} finally {
-			await this.client.disconnect();
-		}
-	}
-
 	async getTokenBalances(walletAddress?: string) {
 		const address = walletAddress ? walletAddress : this.wallet.address;
 		if (!isValidAddress(address)) {
@@ -183,29 +164,6 @@ export class XRPLService {
 			});
 
 			return balances;
-		} catch (error) {
-			throw error;
-		} finally {
-			await this.client.disconnect();
-		}
-	}
-
-	async getDecimalsOfCurrency(currencyHolder: string, currency: string) {
-		await this.client.connect();
-
-		try {
-			const response = await this.client.getBalances(currencyHolder, {
-				ledger_index: "validated",
-			});
-
-			const row = response.find((l) => l.currency === currency);
-			if (!row) {
-				throw new Error("Currency not found in holders account");
-			}
-
-			// just a work around. change this if found a better way to get decimals
-			const splits = row.value.split(".");
-			return splits.length === 2 ? splits[1].length : 0; // if it returns zero, then it is a whole number and it's a problem !!!
 		} catch (error) {
 			throw error;
 		} finally {
