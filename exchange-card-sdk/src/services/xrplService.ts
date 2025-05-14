@@ -5,6 +5,7 @@ import {
 	Payment,
 	SubmittableTransaction,
 	Transaction,
+	TrustSet,
 	TxResponse,
 	xrpToDrops,
 } from "xrpl";
@@ -102,7 +103,6 @@ export class XRPLService {
 		token: {
 			currency: string;
 			issuer: string;
-			ticker: number;
 		};
 	}): Promise<TxResponse<Transaction>> {
 		const walletAddress = params.walletAddress ? params.walletAddress : this.wallet.address;
@@ -111,18 +111,13 @@ export class XRPLService {
 			throw new Error("Invalid wallet address");
 		}
 
-		// const fetchVault = await this.fetchVault("RLUSD");
-		// const destination = fetchVault.address;
-		const destination = "rfjCgVJbLoNRqenrJMXxEGyJyoAygJzU2B";
+		const fetchVault = await this.fetchVault("RLUSD");
+		const destination = fetchVault.address;
 		console.log("destination:", destination);
 
 		if (!isValidAddress(destination)) {
 			throw new Error("Invalid destination address");
 		}
-
-		const amount = BigNumber(params.amount)
-			.times(BigNumber(10).pow(params.token.ticker))
-			.toFixed(0);
 
 		const transaction: Payment = {
 			TransactionType: "Payment",
@@ -130,8 +125,47 @@ export class XRPLService {
 			Destination: destination,
 			Amount: {
 				currency: params.token.currency,
-				value: amount,
+				value: params.amount,
 				issuer: params.token.issuer,
+			},
+		};
+
+		await this.client.connect();
+
+		try {
+			const preparedTx = await this.client.autofill(transaction);
+			const signedTx = await this.wallet.signTransaction(preparedTx);
+			const response = await this.client.submitAndWait(signedTx);
+
+			return response;
+		} catch (error) {
+			throw error;
+		} finally {
+			await this.client.disconnect();
+		}
+	}
+
+	async createTrustLine(params: {
+		walletAddress?: string;
+		amount: string;
+		token: {
+			currency: string;
+			issuer: string;
+		};
+	}): Promise<TxResponse<Transaction>> {
+		const walletAddress = params.walletAddress ? params.walletAddress : this.wallet.address;
+
+		if (!isValidAddress(walletAddress)) {
+			throw new Error("Invalid wallet address");
+		}
+
+		const transaction: TrustSet = {
+			TransactionType: "TrustSet",
+			Account: walletAddress,
+			LimitAmount: {
+				currency: params.token.currency,
+				issuer: params.token.issuer,
+				value: params.amount,
 			},
 		};
 

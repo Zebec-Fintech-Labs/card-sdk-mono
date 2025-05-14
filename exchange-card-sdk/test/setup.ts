@@ -79,7 +79,9 @@ export function getXRPLWallet() {
 
 	const secret = process.env.XRPL_SECRET;
 	assert(secret, "Missing env var XRPL_SECRET");
-	const wallet = Wallet.fromSecret(secret);
+
+	// const seeds = secret.split(" ");
+	const wallet = Wallet.fromMnemonic(secret);
 
 	return wallet;
 }
