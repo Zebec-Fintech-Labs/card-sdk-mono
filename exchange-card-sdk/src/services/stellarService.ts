@@ -9,7 +9,7 @@ import {
 	TransactionBuilder,
 } from "@stellar/stellar-sdk";
 
-import { STELLAR_RPC_URL, USDC_ISSUER } from "../constants";
+import { STELLAR_RPC_URL, STELLAR_USDC_ISSUER } from "../constants";
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
 
@@ -167,7 +167,7 @@ export class StellarService {
 		// Create USDC asset object
 		const usdcAsset = new Asset(
 			"USDC",
-			this.sandbox ? USDC_ISSUER.Sandbox : USDC_ISSUER.Production,
+			this.sandbox ? STELLAR_USDC_ISSUER.Sandbox : STELLAR_USDC_ISSUER.Production,
 		);
 
 		// Check Wallet balance

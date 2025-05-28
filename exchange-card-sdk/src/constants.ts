@@ -1,51 +1,16 @@
-import { SupportedChain } from "./chains";
-
-export const ZEBEC_CARD_ADDRESS: Record<SupportedChain, string> = {
-	[SupportedChain.Sepolia]: "0x00d90625CcaB01eA0e589DFd3C99972180CE609A",
-	[SupportedChain.Base]: "0x1bF6419D8555EafaE79142D309534e8aBd54aBa3",
-	[SupportedChain.Mainnet]: "0xB4f6E946E12200F4E0ba3B352B8DbF0a66635b53",
-	[SupportedChain.Bsc]: "0x1bF6419D8555EafaE79142D309534e8aBd54aBa3",
-	[SupportedChain.BscTestnet]: "0x9061E6eB59890D33C94B9f517c3dba30621fAB2f",
-	[SupportedChain.Polygon]: "",
-};
-
-export const USDC_ADDRESS: Record<SupportedChain, string> = {
-	[SupportedChain.Sepolia]: "0x94a9D9AC8a22534E3FaCa9F4e7F2E2cf85d5E4C8",
-	[SupportedChain.Base]: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
-	[SupportedChain.Mainnet]: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
-	[SupportedChain.Bsc]: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
-	[SupportedChain.BscTestnet]: "0xF8Dc6f35a10244213096D86c376491042594a84e",
-	[SupportedChain.Polygon]: "",
-};
-
 export const CARD_API_URL: Record<"Production" | "Sandbox", string> = {
 	Production: "https://cex.card.zebec.io",
 	Sandbox: "https://cex.card.zebec.io",
 };
 
-export const TAO_RPC_URL: Record<"Production" | "Sandbox", string> = {
-	Production: "wss://entrypoint-finney.opentensor.ai",
-	Sandbox: "wss://test.finney.opentensor.ai",
-};
-
-export const TON_RPC_URL: Record<"Production" | "Sandbox", string> = {
-	Production: "https://toncenter.com/api/v2/jsonRPC",
-	Sandbox: "https://testnet.toncenter.com/api/v2/jsonRPC",
-};
-
-export const DIGITALBITS_RPC_URL: Record<"Production" | "Sandbox", string> = {
-	Production: "https://horizon.livenet.xdbchain.com",
-	Sandbox: "https://horizon.futurenet.xdbchain.com",
+export const NEAR_RPC_URL: Record<"Production" | "Sandbox", string> = {
+	Production: process.env.NEAR_RPC_URL ? process.env.NEAR_RPC_URL : "https://rpc.mainnet.near.org",
+	Sandbox: "https://rpc.testnet.near.org",
 };
 
 export const XRPL_RPC_URL: Record<"Production" | "Sandbox", string> = {
 	Production: "wss://xrplcluster.com",
 	Sandbox: "wss://s.altnet.rippletest.net:51233",
-};
-
-export const XDB_PASSPHRASE: Record<"Production" | "Sandbox", string> = {
-	Production: "LiveNet Global XDBChain Network ; November 2023",
-	Sandbox: "Futurenet XDBChain Network ; October 2023",
 };
 
 export const STELLAR_RPC_URL: Record<"Production" | "Sandbox", string> = {
@@ -54,7 +19,7 @@ export const STELLAR_RPC_URL: Record<"Production" | "Sandbox", string> = {
 };
 
 // Add USDC asset constants
-export const USDC_ISSUER = {
+export const STELLAR_USDC_ISSUER = {
 	Sandbox: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
 	Production: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
 } as const;
