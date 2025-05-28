@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import { describe, it } from "mocha";
 
+// import { describe, it } from "mocha";
 import { hashSHA256 } from "@zebec-network/core-utils";
 
 import {
@@ -10,11 +10,11 @@ import {
 	parseDecimalString,
 	ZebecCardServiceBuilder,
 } from "../../../src";
-import { getConnection, getWallets } from "../../shared";
+import { getConnection, getTxUrl, getWallets } from "../../shared";
 
 dotenv.config();
 describe("buyCardDirect", () => {
-	const network = "mainnet-beta";
+	const network = "devnet";
 	const wallet = getWallets(network)[1];
 	console.log("wallet:", wallet.publicKey.toString());
 	const connection = getConnection(network);
@@ -58,13 +58,13 @@ describe("buyCardDirect", () => {
 		};
 		const payload = await service.buyCardDirect(params);
 
-		const simulationResult = await payload.simulate();
-		console.log("simulation:", simulationResult);
+		// const simulationResult = await payload.simulate();
+		// console.log("simulation:", simulationResult);
 
-		// const signature = await payload.execute({
-		// 	commitment: "confirmed",
-		// 	preflightCommitment: "confirmed",
-		// });
-		// console.log("signature", getTxUrl(signature, network));
+		const signature = await payload.execute({
+			commitment: "confirmed",
+			preflightCommitment: "confirmed",
+		});
+		console.log("signature", getTxUrl(signature, network));
 	});
 });
