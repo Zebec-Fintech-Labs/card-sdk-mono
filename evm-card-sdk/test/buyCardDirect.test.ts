@@ -4,7 +4,7 @@ import { describe } from "mocha";
 import { SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.PolygonAmoy;
+const chainId = SupportedChain.Sepolia;
 const provider = getProvider(chainId);
 
 const signers = getSigners(provider);
@@ -12,7 +12,7 @@ console.log(
 	"signer ==>",
 	signers.map((s) => s.address),
 );
-const signer = signers[signers.length - 1];
+const signer = signers[1];
 
 const service = new ZebecCardService(signer, chainId);
 
@@ -23,7 +23,9 @@ describe("ZebecCardService: buycardDirect", () => {
 				"user balance: ",
 				ethers.formatEther((await signer.provider?.getBalance(signer.address)) || 0n),
 			);
-			const amount = "100";
+			console.log("token balance:", await service.usdcToken.balanceOf(signer));
+
+			const amount = "30";
 			const token = await service.usdcToken.getAddress();
 			const spender = await service.zebecCard.getAddress();
 			console.log("amount: ", amount);
