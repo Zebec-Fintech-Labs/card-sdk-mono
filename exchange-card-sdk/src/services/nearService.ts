@@ -1,7 +1,9 @@
+import assert from "assert";
 import { BigNumber } from "bignumber.js";
 
 import { JsonRpcProvider, Provider } from "@near-js/providers";
-import { NEAR_NOMINATION_EXP } from "@near-js/utils";
+import { CodeResult, FinalExecutionOutcome } from "@near-js/types";
+import { parseNearAmount } from "@near-js/utils";
 
 import { NEAR_RPC_URL } from "../constants";
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
@@ -120,12 +122,10 @@ export interface Transaction {
 
 export interface NearWallet {
 	signerId: string;
-	signAndSendTransaction: (
-		transaction: Transaction,
-	) => Promise<{ transaction: Transaction; signature: string }>;
+	signAndSendTransaction: (transaction: Transaction) => Promise<FinalExecutionOutcome>;
 }
 
-export class XRPLService {
+export class NearService {
 	private apiService: ZebecCardAPIService;
 	readonly provider: Provider;
 
@@ -163,17 +163,15 @@ export class XRPLService {
 	async transferNear(params: {
 		signerId?: string;
 		amount: string;
-	}): Promise<{ signature: string }> {
-		console.debug("walletAddress:", params.signerId);
+	}): Promise<FinalExecutionOutcome> {
 		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
 
 		const fetchVault = await this.fetchVault();
 		const destination = fetchVault.address;
 		console.debug("destination:", destination);
 
-		const parsedAmount = BigNumber(params.amount)
-			.times(BigNumber(10).pow(NEAR_NOMINATION_EXP))
-			.toFixed(0);
+		const parsedAmount = parseNearAmount(params.amount);
+		assert(parsedAmount, "Amount might be missing.");
 
 		const action: TransferAction = {
 			type: "Transfer",
@@ -182,30 +180,38 @@ export class XRPLService {
 			},
 		};
 
-		const { signature } = await this.wallet.signAndSendTransaction({
+		const outcome = await this.wallet.signAndSendTransaction({
 			signerId: signerId,
 			receiverId: destination,
 			actions: [action],
 		});
 
-		return { signature };
+		return outcome;
 	}
 
 	async transferTokens(params: {
 		signerId?: string;
 		amount: string;
 		tokenContractId: string;
-	}): Promise<{ signature: string }> {
+	}): Promise<FinalExecutionOutcome> {
 		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
-		console.log("walletAddress:", params.signerId);
 
-		const fetchVault = await this.fetchVault("NEAR_USD");
+		const fetchVault = await this.fetchVault("NEAR-USDC");
 		const destination = fetchVault.address;
-		console.log("destination:", destination);
+		console.debug("destination:", destination);
 
-		const USDC_DECIMALS = 6;
+		const metadataResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			finality: "final",
+			account_id: params.tokenContractId,
+			method_name: "ft_metadata",
+			args_base64: Buffer.from(JSON.stringify({})).toString("base64"),
+		});
+		const metadata = JSON.parse(Buffer.from(metadataResult.result).toString());
+		const tokenDecimals = metadata.decimals;
+
 		const parsedAmount = BigNumber(params.amount)
-			.times(BigNumber(10).pow(USDC_DECIMALS))
+			.times(BigNumber(10).pow(tokenDecimals))
 			.toFixed(0);
 		const GAS = "30000000000000";
 		const secutityDeposit = "1";
@@ -221,12 +227,54 @@ export class XRPLService {
 			secutityDeposit,
 		);
 
-		const { signature } = await this.wallet.signAndSendTransaction({
+		const outcome = await this.wallet.signAndSendTransaction({
 			signerId: signerId,
 			receiverId: params.tokenContractId,
 			actions: [action],
 		});
 
-		return { signature };
+		return outcome;
+	}
+
+	async getNearBalance(params: { signerId?: string }) {
+		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
+
+		const result = await this.provider.query({
+			request_type: "view_account",
+			account_id: signerId,
+			finality: "final",
+		});
+
+		return { ...result };
+	}
+
+	async getTokenBalance(params: { tokenContractId: string; signerId?: string }) {
+		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
+		const metadataResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			finality: "final",
+			account_id: params.tokenContractId,
+			method_name: "ft_metadata",
+			args_base64: Buffer.from(JSON.stringify({})).toString("base64"),
+		});
+
+		const result = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			finality: "final",
+			account_id: params.tokenContractId,
+			method_name: "ft_balance_of",
+			args_base64: Buffer.from(
+				JSON.stringify({
+					account_id: signerId,
+				}),
+			).toString("base64"),
+		});
+
+		const metadata = JSON.parse(Buffer.from(metadataResult.result).toString());
+		const decimals = metadata.decimals;
+
+		const data = JSON.parse(Buffer.from(result.result).toString());
+
+		return BigNumber(data).div(BigNumber(10).pow(decimals)).toFixed();
 	}
 }

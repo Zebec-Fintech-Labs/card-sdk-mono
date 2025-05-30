@@ -18,6 +18,9 @@
 	},
 	"devDependencies": {
 		"@dashevo/dapi-client": "^1.8.0",
+		"@near-js/accounts": "^2.0.1",
+		"@near-js/keystores": "^2.0.1",
+		"@near-js/signers": "^2.0.1",
 		"@typechain/ethers-v6": "^0.5.1",
 		"@types/jsonwebtoken": "^9.0.7",
 		"@types/mocha": "^10.0.9",
