@@ -60,7 +60,11 @@ describe("NearService", () => {
 	});
 
 	it("should transfer fungible token", async () => {
-		const tokenContractId = "usdn.testnet";
+		const tokenContractId = "3e2210e1184b45b64c8a434c0a7e7b23cc04ea7eb7a6c3c32520d03d4afcb8af";
+
+		// const registrationSig = await service.registerUserToTokenContract({ tokenContractId });
+		// console.log("Registration Signature:", registrationSig);
+
 		const signature = await service.transferTokens({
 			amount: "1",
 			tokenContractId,

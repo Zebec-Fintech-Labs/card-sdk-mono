@@ -189,16 +189,121 @@ export class NearService {
 		return outcome;
 	}
 
+	async registerAccountInTokenContract(params: { signerId?: string; tokenContractId: string }) {
+		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
+
+		const storageBalanceBoundsResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			account_id: params.tokenContractId,
+			method_name: "storage_balance_bounds",
+			args_base64: Buffer.from(JSON.stringify({})).toString("base64"),
+			finality: "optimistic",
+		});
+
+		const storageBalanceBounds = JSON.parse(
+			Buffer.from(storageBalanceBoundsResult.result).toString(),
+		);
+
+		console.debug("storageBalanceBounds:", storageBalanceBounds);
+
+		const storageBalanceResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			account_id: params.tokenContractId,
+			method_name: "storage_balance_of",
+			args_base64: Buffer.from(JSON.stringify({ account_id: signerId })).toString("base64"),
+			finality: "optimistic",
+		});
+
+		const storageBalance = JSON.parse(Buffer.from(storageBalanceResult.result).toString());
+
+		console.debug("storageBalance:", storageBalance);
+
+		const GAS = "30000000000000";
+
+		if (
+			!storageBalance ||
+			BigNumber(storageBalance.available).isLessThan(storageBalanceBounds.min)
+		) {
+			const action = createFunctionCall(
+				"storage_deposit",
+				{
+					account_id: signerId,
+					registration_only: false,
+				},
+				GAS,
+				storageBalanceBounds.min,
+			);
+
+			const outcome = await this.wallet.signAndSendTransaction({
+				signerId: signerId,
+				receiverId: params.tokenContractId,
+				actions: [action],
+			});
+
+			return outcome;
+		}
+
+		return null;
+	}
+
 	async transferTokens(params: {
 		signerId?: string;
 		amount: string;
 		tokenContractId: string;
 	}): Promise<FinalExecutionOutcome> {
 		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
+		console.log("signerId:", signerId);
 
 		const fetchVault = await this.fetchVault("NEAR-USDC");
 		const destination = fetchVault.address;
 		console.debug("destination:", destination);
+
+		let actions: Action[] = [];
+
+		const GAS = "30000000000000";
+
+		const storageBalanceBoundsResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			account_id: params.tokenContractId,
+			method_name: "storage_balance_bounds",
+			args_base64: Buffer.from(JSON.stringify({})).toString("base64"),
+			finality: "optimistic",
+		});
+
+		const storageBalanceBounds = JSON.parse(
+			Buffer.from(storageBalanceBoundsResult.result).toString(),
+		);
+
+		console.debug("storageBalanceBounds:", storageBalanceBounds);
+
+		const storageBalanceResult = await this.provider.query<CodeResult>({
+			request_type: "call_function",
+			account_id: params.tokenContractId,
+			method_name: "storage_balance_of",
+			args_base64: Buffer.from(JSON.stringify({ account_id: destination })).toString("base64"),
+			finality: "optimistic",
+		});
+
+		const storageBalance = JSON.parse(Buffer.from(storageBalanceResult.result).toString());
+
+		console.debug("storageBalance:", storageBalance);
+
+		if (
+			!storageBalance ||
+			BigNumber(storageBalance.available).isLessThan(storageBalanceBounds.min)
+		) {
+			const action = createFunctionCall(
+				"storage_deposit",
+				{
+					account_id: destination,
+					registration_only: false,
+				},
+				GAS,
+				storageBalanceBounds.max ? storageBalanceBounds.max : storageBalanceBounds.min,
+			);
+
+			actions.push(action);
+		}
 
 		const metadataResult = await this.provider.query<CodeResult>({
 			request_type: "call_function",
@@ -208,15 +313,15 @@ export class NearService {
 			args_base64: Buffer.from(JSON.stringify({})).toString("base64"),
 		});
 		const metadata = JSON.parse(Buffer.from(metadataResult.result).toString());
+
 		const tokenDecimals = metadata.decimals;
 
 		const parsedAmount = BigNumber(params.amount)
 			.times(BigNumber(10).pow(tokenDecimals))
 			.toFixed(0);
-		const GAS = "30000000000000";
 		const secutityDeposit = "1";
 
-		const action = createFunctionCall(
+		const transferAction = createFunctionCall(
 			"ft_transfer",
 			{
 				receiver_id: destination,
@@ -227,10 +332,12 @@ export class NearService {
 			secutityDeposit,
 		);
 
+		actions.push(transferAction);
+
 		const outcome = await this.wallet.signAndSendTransaction({
 			signerId: signerId,
 			receiverId: params.tokenContractId,
-			actions: [action],
+			actions,
 		});
 
 		return outcome;
