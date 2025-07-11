@@ -90,3 +90,5 @@ export const ATOKEN_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Polygon]: "0x0000000000000000000000000000000000000000",
 	[SupportedChain.PolygonAmoy]: "0x0000000000000000000000000000000000000000",
 };
+
+export const DEFAULT_GAS_LIMIT = 3000000; // Default gas limit for transactions

@@ -20,6 +20,7 @@ import {
 	ZebecCard__factory,
 } from "./artifacts";
 import {
+	DEFAULT_GAS_LIMIT,
 	ODYSSEY_CHAIN_IDS,
 	parseSupportedChain,
 	USDC_ADDRESS,
@@ -85,9 +86,11 @@ export type SwapData = {
 	gasPrice: string;
 };
 
-export type SwapAndBuyCardParams = Omit<SwapData, "gas" | "gasPrice"> & {
+export type SwapAndBuyCardParams = {
+	swapData: Omit<SwapData, "gas" | "gasPrice">;
 	cardType: CardType;
 	buyerEmail: string;
+	overrides?: ethers.Overrides;
 };
 
 export type SwapAndBuyCardParamsOdyssey = {
@@ -95,6 +98,7 @@ export type SwapAndBuyCardParamsOdyssey = {
 	buyerEmail: string;
 	ether: string;
 	slippage: number;
+	overrides?: ethers.Overrides;
 };
 
 /**
@@ -143,9 +147,16 @@ export class ZebecCardService {
 	 */
 	async setNativeFee(params: {
 		feeInPercent: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const feeInBps = BigInt(percentToBps(params.feeInPercent));
-		return this.zebecCard.setNativeFee(feeInBps);
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+
+		return this.zebecCard.setNativeFee(feeInBps, overrides);
 	}
 
 	/**
@@ -158,9 +169,15 @@ export class ZebecCardService {
 	 */
 	async setNonNativeFee(params: {
 		feeInPercent: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const feeInBps = BigInt(percentToBps(params.feeInPercent));
-		return this.zebecCard.setNonNativeFee(feeInBps);
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setNonNativeFee(feeInBps, overrides);
 	}
 
 	/**
@@ -173,9 +190,15 @@ export class ZebecCardService {
 	 */
 	async setRevenueFee(params: {
 		feeInPercent: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const feeInBps = BigInt(percentToBps(params.feeInPercent));
-		return this.zebecCard.setRevenueFee(feeInBps);
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setRevenueFee(feeInBps, overrides);
 	}
 
 	/**
@@ -188,8 +211,13 @@ export class ZebecCardService {
 	 */
 	async setRevenueVault(params: {
 		vaultAddress: ethers.AddressLike;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
-		return this.zebecCard.setRevenueVault(params.vaultAddress);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setRevenueVault(params.vaultAddress, overrides);
 	}
 
 	/**
@@ -202,8 +230,13 @@ export class ZebecCardService {
 	 */
 	async setCommissionVault(params: {
 		vaultAddress: ethers.AddressLike;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
-		return this.zebecCard.setComissionVault(params.vaultAddress);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+		return this.zebecCard.setComissionVault(params.vaultAddress, overrides);
 	}
 
 	/**
@@ -214,8 +247,13 @@ export class ZebecCardService {
 	 */
 	async setCardVault(params: {
 		vaultAddress: ethers.AddressLike;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
-		return this.zebecCard.setCardVault(params.vaultAddress);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setCardVault(params.vaultAddress, overrides);
 	}
 
 	/**
@@ -224,8 +262,13 @@ export class ZebecCardService {
 	 */
 	async setUsdcAddress(params: {
 		tokenAddress: ethers.AddressLike;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
-		return this.zebecCard.setUsdcAddress(params.tokenAddress);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setUsdcAddress(params.tokenAddress, overrides);
 	}
 
 	/**
@@ -233,11 +276,15 @@ export class ZebecCardService {
 	 */
 	async setMinCardAmount(params: {
 		minCardAmount: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const decimals = await this.usdcToken.decimals();
 		const minCardAmount = ethers.parseUnits(params.minCardAmount, decimals);
-
-		return this.zebecCard.setMinCardAmount(minCardAmount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setMinCardAmount(minCardAmount, overrides);
 	}
 
 	/**
@@ -245,11 +292,16 @@ export class ZebecCardService {
 	 */
 	async setMaxCardAmount(params: {
 		maxCardAmount: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const decimals = await this.usdcToken.decimals();
 		const maxCardAmount = ethers.parseUnits(params.maxCardAmount, decimals);
 
-		return this.zebecCard.setMaxCardAmount(maxCardAmount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setMaxCardAmount(maxCardAmount, overrides);
 	}
 
 	/**
@@ -257,11 +309,16 @@ export class ZebecCardService {
 	 */
 	async setDailyCardPurchaseLimit(params: {
 		dailyCardPurchaseLimit: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const decimals = await this.usdcToken.decimals();
 		const dailyCardPurchaseLimit = ethers.parseUnits(params.dailyCardPurchaseLimit, decimals);
 
-		return this.zebecCard.setDailyCardBuyLimit(dailyCardPurchaseLimit);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setDailyCardBuyLimit(dailyCardPurchaseLimit, overrides);
 	}
 
 	/**
@@ -271,21 +328,33 @@ export class ZebecCardService {
 		minAmount: string;
 		maxAmount: string;
 		feePercent: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const decimals = await this.usdcToken.decimals();
 		const minAmount = ethers.parseUnits(params.minAmount, decimals);
 		const maxAmount = ethers.parseUnits(params.maxAmount, decimals);
 		const fee = percentToBps(params.feePercent);
 
-		return (this.zebecCard as OdysseyZebecCard).setFee(minAmount, maxAmount, fee);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as OdysseyZebecCard).setFee(minAmount, maxAmount, fee, overrides);
 	}
 
 	/**
 	 * Sets fee tiers only be invoked by admin
 	 */
-	async setFeeTiers(params: { feeTiers: FeeTier[] }): Promise<ethers.ContractTransactionResponse> {
+	async setFeeTiers(params: {
+		feeTiers: FeeTier[];
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
 		const parsedFeeTiers = await this._parseFeeTiers(params.feeTiers);
-		return this.zebecCard.setFeeArray(parsedFeeTiers);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setFeeArray(parsedFeeTiers, overrides);
 	}
 
 	private async _parseFeeTiers(feeTiers: FeeTier[]) {
@@ -300,19 +369,31 @@ export class ZebecCardService {
 		});
 	}
 
-	async setCustomFee(params: { tokenAddress: string; fee: number | string }) {
+	async setCustomFee(params: {
+		tokenAddress: string;
+		fee: number | string;
+		overrides?: ethers.Overrides;
+	}) {
 		const fee = percentToBps(params.fee.toString());
-		return this.zebecCard.setCustomTokenFee(params.tokenAddress, fee);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.zebecCard.setCustomTokenFee(params.tokenAddress, fee, overrides);
 	}
 
-	async getCustomFee(params: { tokenAddress: string }) {
+	async getCustomFee(params: { tokenAddress: string; overrides?: ethers.Overrides }) {
 		const fee = await this.zebecCard.getCustomTokenFee(params.tokenAddress);
 		return bpsToPercent(fee.toString());
 	}
 
-	async setReloadableFee(params: { fee: string | number }) {
+	async setReloadableFee(params: { fee: string | number; overrides?: ethers.Overrides }) {
 		const fee = percentToBps(params.fee.toString());
-		return (this.zebecCard as ZebecCard).setReloadableFee(fee);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).setReloadableFee(fee, overrides);
 	}
 
 	/**
@@ -320,14 +401,22 @@ export class ZebecCardService {
 	 * @param params
 	 * @returns
 	 */
-	async depositUsdc(params: { amount: string }): Promise<ethers.ContractTransactionResponse> {
+	async depositUsdc(params: {
+		amount: string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
 
 		const decimals = await this.usdcToken.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
-		return (this.zebecCard as ZebecCard).depositUsdc(parsedAmount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+
+		return (this.zebecCard as ZebecCard).depositUsdc(parsedAmount, overrides);
 	}
 
 	/**
@@ -335,14 +424,21 @@ export class ZebecCardService {
 	 * @param params
 	 * @returns
 	 */
-	async withdraw(params: { amount: string }): Promise<ethers.ContractTransactionResponse> {
+	async withdraw(params: {
+		amount: string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
 
 		const decimals = await this.usdcToken.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
-		return (this.zebecCard as ZebecCard).withdraw(parsedAmount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).withdraw(parsedAmount, overrides);
 	}
 
 	/**
@@ -354,6 +450,7 @@ export class ZebecCardService {
 		amount: string;
 		cardType: CardType;
 		buyerEmail: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
@@ -411,7 +508,16 @@ export class ZebecCardService {
 		}
 
 		const emailHash = await hashSHA256(params.buyerEmail);
-		return (this.zebecCard as ZebecCard).buyCard(parsedAmount, params.cardType, emailHash);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).buyCard(
+			parsedAmount,
+			params.cardType,
+			emailHash,
+			overrides,
+		);
 	}
 
 	/**
@@ -420,12 +526,15 @@ export class ZebecCardService {
 	 * @param overrides
 	 * @returns
 	 */
-	async swapAndDeposit(params: Omit<SwapData, "gas" | "gasPrice">, overrides?: ethers.Overrides) {
+	async swapAndDeposit(params: {
+		swapData: Omit<SwapData, "gas" | "gasPrice">;
+		overrides?: ethers.Overrides;
+	}) {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
 
-		const { swapParams, ether } = params;
+		const { swapParams, ether } = params.swapData;
 
 		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
 		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
@@ -444,13 +553,22 @@ export class ZebecCardService {
 		};
 		const routeData = swapParams.routeData;
 
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 		return (this.zebecCard as ZebecCard).swapAndDeposit(executor, description, routeData, {
 			value: ethers.parseEther(ether),
 			...overrides,
 		});
 	}
 
-	async buyCardDirect(params: { amount: string; cardType: CardType; buyerEmail: string }) {
+	async buyCardDirect(params: {
+		amount: string;
+		cardType: CardType;
+		buyerEmail: string;
+		overrides?: ethers.Overrides;
+	}) {
 		const decimals = await this.usdcToken.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
 
@@ -492,20 +610,38 @@ export class ZebecCardService {
 		}
 
 		const emailHash = await hashSHA256(params.buyerEmail);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 
-		return this.zebecCard.buyCardDirect(
-			parsedAmount,
-			params.cardType === "carbon" ? "reloadable" : "non_reloadable",
-			emailHash,
-		);
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			return (this.zebecCard as OdysseyZebecCard).buyCardDirect(
+				parsedAmount,
+				params.cardType === "carbon" ? "reloadable" : "non_reloadable",
+				emailHash,
+				overrides,
+			);
+		} else {
+			return (this.zebecCard as ZebecCard).buyCardDirect(
+				parsedAmount,
+				params.cardType === "carbon" ? "reloadable" : "non_reloadable",
+				emailHash,
+				overrides,
+			);
+		}
 	}
 
-	async swapAndBuyCardDirect(params: SwapAndBuyCardParams, overrides?: ethers.Overrides) {
+	async swapAndBuyCardDirect(params: SwapAndBuyCardParams) {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
 
-		const { buyerEmail, cardType, swapParams, ether } = params;
+		const {
+			buyerEmail,
+			cardType,
+			swapData: { swapParams, ether },
+		} = params;
 
 		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
 		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
@@ -576,6 +712,10 @@ export class ZebecCardService {
 
 		const emailHash = await hashSHA256(buyerEmail);
 
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 		return (this.zebecCard as ZebecCard).swapAndBuy(
 			executor,
 			description,
@@ -589,12 +729,16 @@ export class ZebecCardService {
 		);
 	}
 
-	async swapAndBuyCardOdyssey(params: SwapAndBuyCardParamsOdyssey, overrides?: ethers.Overrides) {
+	async swapAndBuyCardOdyssey(params: SwapAndBuyCardParamsOdyssey) {
 		const swapEtherAmount = ethers.parseEther(params.ether);
 		const minAmount = await (this.zebecCard as OdysseyZebecCard).getMinimumUSDCAmount(
 			swapEtherAmount,
 			params.slippage,
 		);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 		return (this.zebecCard as OdysseyZebecCard).swapAndBuy(
 			params.cardType === "carbon" ? "reloadable" : "non_reloadable",
 			params.buyerEmail,
@@ -617,7 +761,10 @@ export class ZebecCardService {
 	 * @param params
 	 * @returns
 	 */
-	async generateYield(params: { amount: string }): Promise<ethers.ContractTransactionResponse> {
+	async generateYield(params: {
+		amount: string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
@@ -625,7 +772,12 @@ export class ZebecCardService {
 		const decimals = await this.usdcToken.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
 
-		return (this.zebecCard as ZebecCard).generateYield(parsedAmount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+
+		return (this.zebecCard as ZebecCard).generateYield(parsedAmount, overrides);
 	}
 
 	/**
@@ -648,15 +800,22 @@ export class ZebecCardService {
 	 * @param params
 	 * @returns
 	 */
-	async withdrawYield(params: { amount: string }): Promise<ethers.ContractTransactionResponse> {
+	async withdrawYield(params: {
+		amount: string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
 		}
 
 		const decimals = await this.usdcToken.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 
-		return (this.zebecCard as ZebecCard).withdrawYield(parsedAmount);
+		return (this.zebecCard as ZebecCard).withdrawYield(parsedAmount, overrides);
 	}
 
 	/**
@@ -754,14 +913,18 @@ export class ZebecCardService {
 		token: string;
 		spender: ethers.AddressLike;
 		amount: string;
+		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse | null> {
 		const token = Token__factory.connect(params.token, this.signer);
 		const decimals = await token.decimals();
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
 		const allowance = await token.allowance(this.signer, params.spender);
-
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
 		if (allowance < parsedAmount) {
-			return await token.approve(params.spender, parsedAmount);
+			return await token.approve(params.spender, parsedAmount, overrides);
 		}
 
 		return null;
@@ -772,9 +935,15 @@ export class ZebecCardService {
 	 * @param param
 	 * @returns
 	 */
-	async wrapEth(param: { amount: string }): Promise<ethers.ContractTransactionResponse> {
-		const parsedAmount = ethers.parseEther(param.amount);
-
-		return this.weth.deposit({ value: parsedAmount });
+	async wrapEth(params: {
+		amount: string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		const parsedAmount = ethers.parseEther(params.amount);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return this.weth.deposit({ value: parsedAmount, ...overrides });
 	}
 }
