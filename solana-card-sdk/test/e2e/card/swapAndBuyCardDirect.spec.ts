@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import { describe, it } from "mocha";
 
+// import { describe, it } from "mocha";
 import { hashSHA256 } from "@zebec-network/core-utils";
 
 import {
@@ -47,7 +47,7 @@ describe("swapAndBuyCardDirect", () => {
 	// });
 
 	it("transfer usdc from user vault to card vault", async () => {
-		const cardType: CardType = "silver";
+		const cardType: CardType = "carbon";
 		const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
 		const inputMintAddress = "ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU";
 		const outputMintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -77,14 +77,14 @@ describe("swapAndBuyCardDirect", () => {
 
 		const payload = await service.swapAndBuyCardDirect(params);
 
-		// const result = await payload.simulate({ commitment: "confirmed" });
+		const result = await payload.simulate({ commitment: "confirmed" });
 
-		// console.log("result", result);
+		console.log("result", result);
 
-		const signature = await payload.execute({
-			commitment: "confirmed",
-			preflightCommitment: "confirmed",
-		});
-		console.log("signature", signature);
+		// const signature = await payload.execute({
+		// commitment: "confirmed",
+		// preflightCommitment: "confirmed",
+		// });
+		// console.log("signature", signature);
 	});
 });

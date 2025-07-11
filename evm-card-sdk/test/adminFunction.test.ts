@@ -3,7 +3,7 @@ import { describe } from "mocha";
 import { FeeTier, SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Polygon;
+const chainId = SupportedChain.Sepolia;
 
 const provider = getProvider(chainId);
 const signer = getSigners(provider)[0];
@@ -37,7 +37,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setRevenueVault()", () => {
 		it("Should update revenue vault", async () => {
-			const vaultAddress = "";
+			const vaultAddress = "0x5d00f4cde0EB3760176Ed3C26a7e155183232C3d";
 			const response = await service.setRevenueVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -46,7 +46,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setCommissionVault()", () => {
 		it("Should update commission vault", async () => {
-			const vaultAddress = "";
+			const vaultAddress = "0x71d184Bd15DE33C8A17918D3Eb2337dB9bf337B4";
 			const response = await service.setCommissionVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -55,7 +55,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setCardVault()", () => {
 		it("Should update card vault", async () => {
-			const vaultAddress = "";
+			const vaultAddress = "0xDeb5fDF3ec8428D776e9b637eCd30f1c8ef10efD";
 			const response = await service.setCardVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -73,7 +73,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setMinCardAmount()", () => {
 		it("Should update min card amount", async () => {
-			const minCardAmount = "5";
+			const minCardAmount = "10";
 			const response = await service.setMinCardAmount({ minCardAmount });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);

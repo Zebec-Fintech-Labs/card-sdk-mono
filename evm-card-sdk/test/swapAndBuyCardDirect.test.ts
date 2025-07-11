@@ -3,9 +3,9 @@ import { describe } from "mocha";
 import { SupportedChain, USDC_ADDRESS, ZebecCardService } from "../src";
 import { fetchSwapData, getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Bsc;
+const chainId = SupportedChain.Base;
 const provider = getProvider(chainId);
-const signer = getSigners(provider)[0];
+const signer = getSigners(provider)[2];
 const service = new ZebecCardService(signer, chainId);
 
 describe("ZebecCardService: swapAndBuyCardDirect", () => {
@@ -43,9 +43,9 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 			}
 
 			const response = await service.swapAndBuyCardDirect({
-				...data,
 				cardType: "silver",
 				buyerEmail: "user@gmail.com",
+				swapData: data,
 			});
 			const receipt2 = await response.wait();
 			console.log("swap and buycard hash:", receipt2?.hash);

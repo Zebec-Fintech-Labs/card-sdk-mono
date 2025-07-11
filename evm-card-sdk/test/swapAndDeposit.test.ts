@@ -55,7 +55,7 @@ describe("ZebecCardService: swap and deposit", () => {
 
 			console.log("card balance:", await service.getUserBalance({ userAddress: signer }));
 
-			const response = await service.swapAndDeposit(data);
+			const response = await service.swapAndDeposit({ swapData: data });
 			const receipt1 = await response.wait();
 			console.log("swap and deposit hash:", receipt1?.hash);
 

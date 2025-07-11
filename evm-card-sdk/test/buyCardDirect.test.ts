@@ -46,7 +46,7 @@ describe("ZebecCardService: buycardDirect", () => {
 
 			const response = await service.buyCardDirect({
 				amount,
-				cardType: "silver",
+				cardType: "carbon",
 				buyerEmail: "user@gmail.com",
 			});
 

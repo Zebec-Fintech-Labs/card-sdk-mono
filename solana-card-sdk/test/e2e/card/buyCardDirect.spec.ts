@@ -42,7 +42,7 @@ describe("buyCardDirect", () => {
 		// const mintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 		const amount = parseDecimalString("100");
 
-		const cardType: CardType = "silver";
+		const cardType: CardType = "carbon";
 		const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
 
 		const nextBuyerCounter = await service.getNextBuyerCounter();
