@@ -27,7 +27,7 @@
 		"@zebec-network/solana-common": "^1.0.6",
 		"bignumber.js": "^9.3.0",
 		"buffer": "^6.0.3",
-		"dotenv": "^16.4.4"
+		"dotenv": "^17.2.0"
 	},
 	"devDependencies": {
 		"@solana/spl-token": "^0.4.13",
