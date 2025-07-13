@@ -1,6 +1,7 @@
 // import { ethers } from "ethers";
 // import { Keyring } from "@polkadot/api";
 
+import algosdk from "algosdk";
 import assert from "assert";
 import dotenv from "dotenv";
 import { Wallet } from "xrpl";
@@ -135,4 +136,14 @@ export function getNearAccounts(sandbox: boolean = true) {
 	}
 
 	return accounts;
+}
+
+export function getAlgorandAccount() {
+	dotenv.config();
+	const mnemonic = process.env.ALGORAND_MNEMONIC;
+	assert(mnemonic, "Missing env var ALGORAND_MNEMONIC");
+
+	const account = algosdk.mnemonicToSecretKey(mnemonic);
+
+	return account;
 }
