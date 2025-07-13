@@ -2,6 +2,7 @@ import algosdk from "algosdk";
 import { BigNumber } from "bignumber.js";
 
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
+import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
 
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
@@ -12,18 +13,6 @@ export interface TransferConfig {
 	note?: string;
 }
 
-// Network configurations
-const NETWORK_CONFIG = {
-	testnet: {
-		server: "https://testnet-api.algonode.cloud",
-		port: "443",
-	},
-	mainnet: {
-		server: "https://mainnet-api.algonode.cloud",
-		port: "443",
-	},
-} as const;
-
 export interface AlgorandWallet {
 	address: algosdk.Address;
 	signTransaction: (txn: algosdk.Transaction) => Promise<Uint8Array<ArrayBufferLike>>;
@@ -32,7 +21,6 @@ export interface AlgorandWallet {
 export class AlgorandService {
 	readonly algodClient: algosdk.Algodv2;
 	readonly algorandClient: AlgorandClient;
-	readonly networkConfig: (typeof NETWORK_CONFIG)[keyof typeof NETWORK_CONFIG];
 	private apiService: ZebecCardAPIService;
 
 	constructor(
@@ -43,8 +31,9 @@ export class AlgorandService {
 		},
 	) {
 		const network = sdkOptions?.sandbox ? "testnet" : "mainnet";
-		this.networkConfig = NETWORK_CONFIG[network];
-		this.algodClient = new algosdk.Algodv2(this.networkConfig.server, this.networkConfig.port);
+		this.algodClient = ClientManager.getAlgodClient(
+			ClientManager.getAlgoNodeConfig(network, "algod"),
+		);
 		this.algorandClient = AlgorandClient.fromClients({
 			algod: this.algodClient,
 		});
