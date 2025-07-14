@@ -139,7 +139,6 @@ export function getNearAccounts(sandbox: boolean = true) {
 }
 
 export function getAlgorandAccount() {
-	dotenv.config();
 	const mnemonic = process.env.ALGORAND_MNEMONIC;
 	assert(mnemonic, "Missing env var ALGORAND_MNEMONIC");
 

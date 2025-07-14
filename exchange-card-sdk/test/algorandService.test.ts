@@ -3,6 +3,8 @@ import { getAlgorandAccount } from "./setup";
 
 const senderAccount = getAlgorandAccount();
 
+console.log("Sender Account:", senderAccount.addr.toString());
+
 const algorandWallet: AlgorandWallet = {
 	address: senderAccount.addr,
 	signTransaction: async (txn) => {
