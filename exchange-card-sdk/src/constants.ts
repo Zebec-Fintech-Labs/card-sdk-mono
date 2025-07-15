@@ -18,6 +18,16 @@ export const STELLAR_RPC_URL: Record<"Production" | "Sandbox", string> = {
 	Sandbox: "https://horizon-testnet.stellar.org",
 };
 
+export const XDB_RPC_URL: Record<"Production" | "Sandbox", string> = {
+	Production: "https://horizon.livenet.xdbchain.com/",
+	Sandbox: "https://horizon.futurenet.xdbchain.com/",
+};
+
+export const XDB_NETWORK = {
+	PUBLIC: "LiveNet Global XDBChain Network ; November 2023",
+	TESTNET: "Futurenet XDBChain Network ; October 2023",
+} as const;
+
 // Add USDC asset constants
 export const STELLAR_USDC_ISSUER = {
 	Sandbox: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
