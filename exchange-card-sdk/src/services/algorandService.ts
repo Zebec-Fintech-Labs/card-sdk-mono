@@ -15,7 +15,7 @@ export interface TransferConfig {
 
 export interface AlgorandWallet {
 	address: algosdk.Address;
-	signTransaction: (txn: algosdk.Transaction) => Promise<Uint8Array<ArrayBufferLike>>;
+	signAndSendTransaction: (txn: algosdk.Transaction) => Promise<string>;
 }
 
 export class AlgorandService {
@@ -79,8 +79,9 @@ export class AlgorandService {
 				);
 			}
 
-			const vault = await this.fetchVault("ALGO");
-			const recipientAddress = vault.address;
+			// const vault = await this.fetchVault("ALGO");
+			// const recipientAddress = vault.address;
+			const recipientAddress = "K6ZWFT3XZ2YJK6XOUNPK4PP6PUX6CN2QMEY22EBDYXMKMLYRDEHSMSCNYM";
 
 			// Validate recipient address
 			if (!algosdk.isValidAddress(recipientAddress)) {
@@ -97,27 +98,12 @@ export class AlgorandService {
 				amount: parsedAmount,
 				note: config.note ? new Uint8Array(Buffer.from(config.note)) : undefined,
 				suggestedParams: suggestedParams,
-				closeRemainderTo: this.wallet.address,
 			});
 
 			// Sign the transaction
-			const signedTxn = await this.wallet.signTransaction(paymentTxn);
+			const txId = await this.wallet.signAndSendTransaction(paymentTxn);
 
-			// Submit the transaction
-			const txResponse = await this.algodClient.sendRawTransaction(signedTxn).do();
-
-			// Wait for confirmation
-			const WAIT_ROUNDS = 4;
-			const confirmedTxn = await algosdk.waitForConfirmation(
-				this.algodClient,
-				txResponse.txid,
-				WAIT_ROUNDS, // Wait for 4 rounds
-			);
-
-			console.log("Transaction confirmed in round:", confirmedTxn.confirmedRound);
-			console.log("Transaction ID:", txResponse.txid);
-
-			return txResponse.txid;
+			return txId;
 		} catch (error) {
 			console.error("Transfer failed:", error);
 			throw error;
