@@ -9,7 +9,7 @@ const senderAccount = getAlgorandAccount();
 
 console.log("Sender Account:", senderAccount.addr.toString());
 const algorandWallet: AlgorandWallet = {
-	address: senderAccount.addr,
+	address: senderAccount.addr.toString(),
 	signAndSendTransaction: async (txn) => {
 		const signedTxn = txn.signTxn(senderAccount.sk);
 
