@@ -36,7 +36,6 @@
 	},
 	"dependencies": {
 		"@algorandfoundation/algokit-utils": "^9.1.1",
-		"@creit.tech/stellar-wallets-kit": "^1.7.1",
 		"@mempool/mempool.js": "^3.0.0",
 		"@near-js/crypto": "^2.0.1",
 		"@near-js/providers": "^2.0.1",

@@ -1,4 +1,3 @@
-import { StellarWalletsKit } from "@creit.tech/stellar-wallets-kit";
 import {
 	Asset,
 	Horizon,
@@ -13,9 +12,13 @@ import { STELLAR_RPC_URL, STELLAR_USDC_ISSUER } from "../constants";
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
 
+export interface StellarWallet {
+	address: string;
+	signTransaction: (txXdr: string) => Promise<string>;
+}
 export class StellarService {
 	private apiService: ZebecCardAPIService;
-	private server: Horizon.Server;
+	readonly server: Horizon.Server;
 	private sandbox: boolean;
 
 	/**
@@ -26,7 +29,7 @@ export class StellarService {
 	 * @param sdkOptions - Optional configuration for the SDK.
 	 */
 	constructor(
-		readonly kit: StellarWalletsKit,
+		readonly wallet: StellarWallet,
 		apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
@@ -83,16 +86,15 @@ export class StellarService {
 	async transferXLM(amount: string): Promise<string> {
 		// Fetch deposit address
 		const vault = await this.fetchVault();
-		const accountAddress = await this.kit.getAddress();
 
 		// Prepare transaction
-		const account = await this.server.loadAccount(accountAddress.address);
+		const account = await this.server.loadAccount(this.wallet.address);
 		const fee = await this.server.fetchBaseFee();
 
 		const memo = Memo.id(vault.tag?.toString() || "");
 
 		// Check Wallet balance
-		const balance = await this.getWalletBalance(accountAddress.address);
+		const balance = await this.getWalletBalance(this.wallet.address);
 		if (Number(balance) < Number(amount)) {
 			throw new Error("Insufficient balance");
 		}
@@ -114,7 +116,7 @@ export class StellarService {
 			.build();
 
 		// Sign the transaction
-		const { signedTxXdr } = await this.kit.signTransaction(transaction.toXDR());
+		const signedTxXdr = await this.wallet.signTransaction(transaction.toXDR());
 		const tx = TransactionBuilder.fromXDR(
 			signedTxXdr,
 			this.sandbox ? Networks.TESTNET : Networks.PUBLIC,
@@ -158,10 +160,9 @@ export class StellarService {
 	async transferUSDC(amount: string): Promise<string> {
 		// Fetch deposit address
 		const vault = await this.fetchUSDCVault();
-		const accountAddress = await this.kit.getAddress();
 
 		// Prepare transaction
-		const account = await this.server.loadAccount(accountAddress.address);
+		const account = await this.server.loadAccount(this.wallet.address);
 		const fee = await this.server.fetchBaseFee();
 
 		// Create USDC asset object
@@ -171,7 +172,7 @@ export class StellarService {
 		);
 
 		// Check Wallet balance
-		const balance = await this.getTokenBalance(accountAddress.address, usdcAsset);
+		const balance = await this.getTokenBalance(this.wallet.address, usdcAsset);
 		if (Number(balance) < Number(amount)) {
 			throw new Error("Insufficient USDC balance");
 		}
@@ -192,7 +193,7 @@ export class StellarService {
 			.build();
 
 		// Sign the transaction
-		const { signedTxXdr } = await this.kit.signTransaction(transaction.toXDR());
+		const signedTxXdr = await this.wallet.signTransaction(transaction.toXDR());
 		const tx = TransactionBuilder.fromXDR(
 			signedTxXdr,
 			this.sandbox ? Networks.TESTNET : Networks.PUBLIC,
