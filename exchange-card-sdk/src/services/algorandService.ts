@@ -14,7 +14,7 @@ export interface TransferConfig {
 }
 
 export interface AlgorandWallet {
-	address: algosdk.Address;
+	address: string;
 	signAndSendTransaction: (txn: algosdk.Transaction) => Promise<string>;
 }
 
