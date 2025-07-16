@@ -79,9 +79,8 @@ export class AlgorandService {
 				);
 			}
 
-			// const vault = await this.fetchVault("ALGO");
-			// const recipientAddress = vault.address;
-			const recipientAddress = "K6ZWFT3XZ2YJK6XOUNPK4PP6PUX6CN2QMEY22EBDYXMKMLYRDEHSMSCNYM";
+			const vault = await this.fetchVault("ALGO");
+			const recipientAddress = vault.address;
 
 			// Validate recipient address
 			if (!algosdk.isValidAddress(recipientAddress)) {

@@ -75,17 +75,14 @@ export class XDBService {
 	 */
 	async transferXDB(amount: string): Promise<string> {
 		// Fetch deposit address
-		// const vault = await this.fetchVault("XDB");
-		// const recipientAddress = vault.address;
-		// const tag = vault.tag || "Zebec Card Purchase";
-		const tag = "Zebec Card Purchase"; // Example tag, replace with actual vault tag if needed
-		const recipientAddress = "GCSD36EP7FILL5D3SFL7ZYLGI3I5SFJTYZBV6OPJKYLS74VD6WBSCBKO"; // Example address, replace with actual vault address
+		const vault = await this.fetchVault("XDB");
+		const recipientAddress = vault.address;
+		const tag = vault.tag || "0";
 
 		// Prepare transaction
 		const account = await this.server.loadAccount(this.wallet.address);
 		const fee = await this.server.fetchBaseFee();
 
-		// const memo = Memo.id(vault.tag?.toString() || "");
 		const memo = Memo.id(tag);
 
 		// Check Wallet balance
