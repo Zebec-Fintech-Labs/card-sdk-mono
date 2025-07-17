@@ -19,7 +19,7 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 		it("Should transfer balance from user's wallet to revenue vault", async () => {
 			// const brett = "0x532f27101965dd16442E59d40670FaF5eBB142E4";
 			const mgames = "0xD92B53EF83afAf0d0A0167cF7aC5951AD1994824";
-			const amount = "1900";
+			const amount = "1862.095959";
 			const spender = await service.zebecCard.getAddress();
 			// const WETH = "0x4200000000000000000000000000000000000006";
 
