@@ -60,18 +60,8 @@ export class StellarService {
 	 *
 	 * @returns {Promise<string>} A promise that resolves to the Vault address.
 	 */
-	async fetchVault() {
-		const data = await this.apiService.fetchVault("XLM");
-		return data;
-	}
-
-	/**
-	 * Fetches the Vault address.
-	 *
-	 * @returns {Promise<string>} A promise that resolves to the Vault address.
-	 */
-	async fetchUSDCVault() {
-		const data = await this.apiService.fetchVault("xlm-usdc");
+	async fetchVault(symbol = "XLM") {
+		const data = await this.apiService.fetchVault(symbol);
 		return data;
 	}
 
@@ -159,7 +149,7 @@ export class StellarService {
 	 */
 	async transferUSDC(amount: string): Promise<string> {
 		// Fetch deposit address
-		const vault = await this.fetchUSDCVault();
+		const vault = await this.fetchVault("XLM-USDC");
 
 		// Prepare transaction
 		const account = await this.server.loadAccount(this.wallet.address);
