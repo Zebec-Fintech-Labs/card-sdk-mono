@@ -1,15 +1,33 @@
 import algosdk from "algosdk";
-import { BigNumber } from "bignumber.js";
 
 import { AlgorandClient } from "@algorandfoundation/algokit-utils";
 import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
 
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
+import {
+	formatAlgo,
+	formatAlgorandAsset,
+	getAssetDecimals,
+	parseAlgo,
+	parseAlgorandAsset,
+} from "../utils";
 
-// Configuration interface
+/**
+ * Configuration interface for algo transfers
+ * */
 export interface TransferConfig {
 	amount: number | string; // Amount in Algos
+	note?: string;
+}
+
+/**
+ * Configuration interface for USDC transfers
+ * */
+export interface TokenTransferConfig {
+	/** Asset ID for Asset (e.g. for USDC 31566704) */
+	assetId: number;
+	amount: number | string; // Amount in USDC
 	note?: string;
 }
 
@@ -22,6 +40,7 @@ export class AlgorandService {
 	readonly algodClient: algosdk.Algodv2;
 	readonly algorandClient: AlgorandClient;
 	private apiService: ZebecCardAPIService;
+	private readonly network: "mainnet" | "testnet";
 
 	constructor(
 		readonly wallet: AlgorandWallet,
@@ -30,9 +49,9 @@ export class AlgorandService {
 			sandbox?: boolean;
 		},
 	) {
-		const network = sdkOptions?.sandbox ? "testnet" : "mainnet";
+		this.network = sdkOptions?.sandbox ? "testnet" : "mainnet";
 		this.algodClient = ClientManager.getAlgodClient(
-			ClientManager.getAlgoNodeConfig(network, "algod"),
+			ClientManager.getAlgoNodeConfig(this.network, "algod"),
 		);
 		this.algorandClient = AlgorandClient.fromClients({
 			algod: this.algodClient,
@@ -67,15 +86,15 @@ export class AlgorandService {
 	 */
 	async transferAlgo(config: TransferConfig): Promise<string> {
 		try {
-			const parsedAmount = algoToMicroAlgo(config.amount);
+			const parsedAmount = parseAlgo(config.amount);
 
 			// Check if sender has sufficient balance
 			const senderBalance = await this.getAccountBalanceInMicroAlgo(this.wallet.address);
-			const minBalance = algoToMicroAlgo(0.1); // Minimum account balance
+			const minBalance = parseAlgo(0.1); // Minimum account balance
 
 			if (senderBalance < parsedAmount + minBalance) {
 				throw new Error(
-					`Insufficient balance. Need ${microAlgoToAlgo(parsedAmount + minBalance)} ALGO, have ${microAlgoToAlgo(senderBalance)} ALGO`,
+					`Insufficient balance. Need ${formatAlgo(parsedAmount + minBalance)} ALGO, have ${formatAlgo(senderBalance)} ALGO`,
 				);
 			}
 
@@ -110,13 +129,152 @@ export class AlgorandService {
 	}
 
 	/**
+	 * Transfer USDC (ASA token) from wallet to vault
+	 * @param config USDC transfer configuration
+	 * @returns Transaction ID if successful
+	 */
+	async transferAsset(config: TokenTransferConfig) {
+		try {
+			const assetDecimals = await getAssetDecimals(this.algodClient, config.assetId);
+			// const usdcConfig = USDC_ASSET_CONFIG[this.network];
+			const parsedAmount = parseAlgorandAsset(config.amount, assetDecimals);
+
+			// Check if sender has sufficient USDC balance
+			const senderAssetBalance = await this.getAssetBalanceInMicroUnit(
+				this.wallet.address,
+				config.assetId,
+			);
+
+			if (senderAssetBalance < parsedAmount) {
+				throw new Error(
+					`Insufficient Asset balance. Need ${formatAlgorandAsset(parsedAmount, assetDecimals)} Asset, have ${formatAlgorandAsset(senderAssetBalance, assetDecimals)} Asset`,
+				);
+			}
+
+			// Check if sender has sufficient ALGO for transaction fees
+			const senderAlgoBalance = await this.getAccountBalanceInMicroAlgo(this.wallet.address);
+			const minAlgoForFees = parseAlgo(0.002); // Minimum ALGO for transaction fees
+
+			if (senderAlgoBalance < minAlgoForFees) {
+				throw new Error(
+					`Insufficient ALGO for transaction fees. Need at least ${formatAlgo(minAlgoForFees)} ALGO for fees`,
+				);
+			}
+
+			const vault = await this.fetchVault("ALGO-USDC");
+			const recipientAddress = vault.address;
+
+			// Validate recipient address
+			if (!algosdk.isValidAddress(recipientAddress)) {
+				throw new Error("Invalid recipient address");
+			}
+
+			// // Check if recipient is opted into USDC asset
+			const recipientOptedIn = await this.isOptedIntoAsset(recipientAddress, config.assetId);
+			if (!recipientOptedIn) {
+				throw new Error("Recipient address is not opted into USDC asset");
+			}
+
+			// Get suggested transaction parameters
+			const suggestedParams = await this.algodClient.getTransactionParams().do();
+
+			// Create asset transfer transaction
+			const assetTransferTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+				sender: this.wallet.address,
+				receiver: recipientAddress,
+				amount: parsedAmount,
+				assetIndex: config.assetId,
+				note: config.note ? new Uint8Array(Buffer.from(config.note)) : undefined,
+				suggestedParams: suggestedParams,
+			});
+
+			// Sign and send the transaction
+			const txId = await this.wallet.signAndSendTransaction(assetTransferTxn);
+
+			return txId;
+		} catch (error) {
+			console.error("Asset transfer failed:", error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Check if an account is opted into a specific asset
+	 * @param address Account address
+	 * @param assetId Asset ID to check
+	 * @returns Whether the account is opted into the asset
+	 */
+	async isOptedIntoAsset(address: string, assetId: number): Promise<boolean> {
+		try {
+			const accountInfo = await this.algodClient.accountInformation(address).do();
+			return accountInfo.assets?.some((asset) => asset.assetId === BigInt(assetId)) || false;
+		} catch (error) {
+			console.error("Error checking asset opt-in status:", error);
+			return false;
+		}
+	}
+
+	/**
+	 * Get asset balance for a specific account in microAsset (base units)
+	 * @param address Account address
+	 * @param assetId Asset ID
+	 * @returns Asset balance in base units
+	 */
+	private async getAssetBalanceInMicroUnit(
+		walletAddress: string,
+		assetId: number,
+	): Promise<bigint> {
+		try {
+			const accountInfo = await this.algodClient.accountInformation(walletAddress).do();
+			const asset = accountInfo.assets?.find((asset) => asset.assetId === BigInt(assetId));
+			return asset ? BigInt(asset.amount) : BigInt(0);
+		} catch (error) {
+			console.error("Error fetching asset balance:", error);
+			return BigInt(0);
+		}
+	}
+
+	async getAssetBalance(walletAddress: string, assetId: number): Promise<string> {
+		const balance = await this.getAssetBalanceInMicroUnit(walletAddress, assetId);
+		const decimals = await getAssetDecimals(this.algodClient, assetId);
+
+		return formatAlgorandAsset(balance, decimals);
+	}
+
+	async getAssetsBalance(walletAddress: string, assetIds: number[]): Promise<Map<number, string>> {
+		const map = new Map<number, string>(Array.from(assetIds.map((id) => [id, "0"])));
+		try {
+			const accountInfo = await this.algodClient.accountInformation(walletAddress).do();
+			const assets = accountInfo.assets;
+			if (!assets) {
+				return map;
+			}
+
+			await Promise.all(
+				assetIds.map(async (id) => {
+					const asset = assets.find((asset) => asset.assetId === BigInt(id));
+					if (asset) {
+						const decimals = await getAssetDecimals(this.algodClient, id);
+						const amount = formatAlgorandAsset(asset.amount, decimals);
+						map.set(id, amount);
+					}
+				}),
+			);
+			return map;
+		} catch (error) {
+			console.error("Error fetching asset balance:", error);
+		}
+		return map;
+	}
+
+	/**
 	 * Get account balance in Algos
 	 * @param address Account address
 	 * @returns Balance in ALGO
 	 */
-	async getAccountBalance(address: string | algosdk.Address): Promise<number> {
+	async getAccountBalance(address: string | algosdk.Address): Promise<string> {
 		const amount = await this.getAccountBalanceInMicroAlgo(address);
-		return microAlgoToAlgo(amount);
+		return formatAlgo(amount);
 	}
 
 	/**
@@ -128,22 +286,4 @@ export class AlgorandService {
 		const accountInfo = await this.algodClient.accountInformation(address).do();
 		return accountInfo.amount;
 	}
-}
-
-/**
- * Convert ALGO to microAlgos
- * @param algos Amount in ALGO
- * @returns Amount in microAlgos
- */
-export function algoToMicroAlgo(algos: number | string): bigint {
-	return BigInt(BigNumber(algos).times(1_000_000).toFixed(0));
-}
-
-/**
- * Convert microAlgos to ALGO
- * @param microAlgos Amount in microAlgos
- * @returns Amount in ALGO
- */
-export function microAlgoToAlgo(microAlgos: number | bigint): number {
-	return BigNumber(microAlgos).div(1_000_000).toNumber();
 }
