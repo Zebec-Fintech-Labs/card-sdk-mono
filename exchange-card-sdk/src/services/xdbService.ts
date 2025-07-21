@@ -47,8 +47,8 @@ export class XDBService {
 	 *
 	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
 	 */
-	async fetchQuote(): Promise<Quote> {
-		const res = await this.apiService.fetchQuote("XLM");
+	async fetchQuote(symbol = "XDB"): Promise<Quote> {
+		const res = await this.apiService.fetchQuote(symbol);
 		return res as Quote;
 	}
 
