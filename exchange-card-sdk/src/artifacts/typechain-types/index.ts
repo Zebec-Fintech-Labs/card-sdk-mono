@@ -2,7 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { ERC20 } from "./ERC20";
-export type { ZebecCard } from "./ZebecCard";
 export * as factories from "./factories";
 export { ERC20__factory } from "./factories/ERC20__factory";
-export { ZebecCard__factory } from "./factories/ZebecCard__factory";
