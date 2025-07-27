@@ -39,6 +39,8 @@ export const BITCOIN_ENDPOINTS = {
 	Production: "https://mempool.space/api",
 } as const;
 
+export const DEFAULT_EVM_GAS_LIMIT = 3000000;
+
 export const COUNTRIES_WITH_CCA3 = [
 	{
 		name: {
