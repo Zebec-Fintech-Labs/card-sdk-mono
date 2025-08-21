@@ -1,13 +1,13 @@
 import assert from "assert";
 import { describe } from "mocha";
 
-import { SupportedChain, USDC_ADDRESS, ZebecCardService } from "../src";
+import { SupportedChain, USDC_ADDRESS, WETH_ADDRESS, ZebecCardService } from "../src";
 import { fetchSwapData, getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Base;
+const chainId = SupportedChain.Mainnet;
 const provider = getProvider(chainId);
 const signers = getSigners(provider);
-const signer = signers[2];
+const signer = signers[0];
 console.log(
 	"signers:",
 	signers.map((s) => s.address),
@@ -18,16 +18,16 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 	describe("swapAndBuyCardDirect()", () => {
 		it("Should transfer balance from user's wallet to revenue vault", async () => {
 			// const brett = "0x532f27101965dd16442E59d40670FaF5eBB142E4";
-			const mgames = "0xD92B53EF83afAf0d0A0167cF7aC5951AD1994824";
-			const amount = "1862.095959";
+			// const mgames = "0xD92B53EF83afAf0d0A0167cF7aC5951AD1994824";
+			const WETH = WETH_ADDRESS[chainId];
+			const amount = "0.00252";
 			const spender = await service.zebecCard.getAddress();
-			// const WETH = "0x4200000000000000000000000000000000000006";
 
 			const params = {
 				amount,
 				chainId: chainId,
 				dst: USDC_ADDRESS[chainId],
-				src: mgames,
+				src: WETH,
 				from: spender,
 				origin: spender,
 				receiver: spender,
@@ -40,12 +40,12 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 			assert(!("error" in data), "Error in swap data response");
 			console.log("spender:", spender);
 
-			// Get current gas price and estimate ga
+			// Get current gas price and estimate gas
 
 			const approval1 = await service.approve({
 				amount,
 				spender,
-				token: mgames,
+				token: WETH,
 			});
 
 			if (approval1) {
