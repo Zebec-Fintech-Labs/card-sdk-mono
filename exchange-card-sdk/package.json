@@ -13,7 +13,7 @@
 		"build": "npm run clean && tsc",
 		"clean": "rimraf dist",
 		"format": "prettier --write .",
-		"test": "ts-mocha -p ./tsconfig.json -t 1000000",
+		"test": "ts-mocha -p ./tsconfig.test.json -t 1000000",
 		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\""
 	},
 	"devDependencies": {
@@ -48,7 +48,8 @@
 		"bignumber.js": "^9.3.0",
 		"bitcoinjs-lib": "^6.1.7",
 		"ethers": "^6.15.0",
-		"xrpl": "^4.2.5"
+		"xrpl": "^4.2.5",
+		"zano_web3": "^9.2.0"
 	},
 	"repository": {
 		"type": "git",
