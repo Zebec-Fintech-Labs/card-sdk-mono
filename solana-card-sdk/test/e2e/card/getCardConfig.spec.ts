@@ -6,7 +6,10 @@ import { getWallets } from "../../shared";
 describe("getCardConfig", () => {
 	const network = "mainnet-beta";
 	const wallets = getWallets(network);
-	console.log("wallets:", wallets);
+	console.log(
+		"wallets:",
+		wallets.map((w) => w.publicKey.toString()),
+	);
 
 	const service = new ZebecCardServiceBuilder()
 		.setNetwork(network)
