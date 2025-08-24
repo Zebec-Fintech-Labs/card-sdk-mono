@@ -1,11 +1,15 @@
+import dotenv from "dotenv";
 import { describe } from "mocha";
 
 import { ZanoService } from "../src";
 
+dotenv.config();
+
 const service = new ZanoService(
 	{
-		daemonUrl: "http://localhost:12111/json_rpc",
-		walletUrl: "http://localhost:12111/json_rpc",
+		daemonUrl: "http://localhost:11211/json_rpc",
+		walletUrl: "http://localhost:11211/json_rpc",
+		walletAuthToken: process.env.ZANO_AUTH_TOKEN!,
 	},
 	{
 		apiKey: process.env.API_KEY!,

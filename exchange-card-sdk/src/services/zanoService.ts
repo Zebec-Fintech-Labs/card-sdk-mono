@@ -1,49 +1,19 @@
 import { BigNumber } from "bignumber.js";
-import { ServerWallet } from "zano_web3/server";
+import { APIAsset, BalanceInfo, ServerWallet } from "zano_web3/server";
 
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
 
-export interface APIAsset {
-	asset_id: string;
-	current_supply: number;
-	decimal_point: number;
-	full_name: string;
-	hidden_supply: boolean;
-	meta_info: string;
-	owner: string;
-	ticker: string;
-	total_max_supply: number;
-}
-
-export interface BalanceInfo {
-	name: string;
-	ticker: string;
-	id: string;
-	amount: string;
-	awaiting_in: string;
-	awaiting_out: string;
-	total: string;
-	unlocked: string;
-	asset_info: APIAsset;
-}
-
 export interface ZanoServiceConfig {
 	walletUrl: string;
 	daemonUrl: string;
+	walletAuthToken: string;
 }
 
 export interface ZanoTransferParams {
 	assetId: string;
 	amount: string; // Amount in asset units (e.g., "10.5" for 10.5 ZANO)
 	comment?: string;
-}
-
-export interface ZanoTransferResult {
-	success: boolean;
-	transactionHash?: string;
-	error?: string;
-	result?: any;
 }
 
 export class ZanoService {
@@ -65,6 +35,7 @@ export class ZanoService {
 		this.serverWallet = new ServerWallet({
 			walletUrl: config.walletUrl,
 			daemonUrl: config.daemonUrl,
+			walletAuthToken: config.walletAuthToken,
 		});
 	}
 
@@ -91,44 +62,34 @@ export class ZanoService {
 	/**
 	 * Send a transfer
 	 */
-	async transferAssets(params: ZanoTransferParams): Promise<ZanoTransferResult> {
-		// Get asset info to validate amount format
-		try {
-			const assetInfo = await this.getAssetDetails(params.assetId);
-			const decimalPoints = assetInfo.decimal_point; // Default to 12 for ZANO
-
-			if (!this.validateAmount(params.amount, decimalPoints)) {
-				throw new Error(`Invalid amount format for asset with ${decimalPoints} decimal points`);
-			}
-		} catch (assetError) {
-			console.warn("Could not validate asset decimal points, proceeding with transfer");
-		}
-
+	async transferAssets(params: ZanoTransferParams): Promise<string> {
 		// Check if we have sufficient balance
-		const assetBalance = await this.getAssetBalance(params.assetId);
+		const balances = await this.serverWallet.getBalances();
+		const assetBalance = balances.find((balance) => balance.asset_info.asset_id === params.assetId);
+
 		if (assetBalance) {
 			const availableBalance = BigNumber(assetBalance.unlocked);
-			const transferAmount = BigNumber(params.amount);
+			const fee = BigNumber(0.1);
+			const transferAmount = BigNumber(params.amount).plus(fee);
 
 			if (transferAmount.isGreaterThan(availableBalance)) {
 				throw new Error(
 					`Insufficient balance. Available: ${assetBalance.unlocked} ${assetBalance.ticker || "tokens"}`,
 				);
 			}
+		} else {
+			throw new Error(`Sender does not have ${params.assetId} balance.`);
 		}
 
-		// const vault = await this.fetchVault("ZANO");
-		// const receiver = vault.address;
-		// hard coded receiver for testing;
-		const receiver =
-			"ZxCVeKWFiuZEedS4E1qAyZiwj9mys1BKMjfd2dLiDReg3UKUAciiqA68HS9tVwaZAbSM7b4GNeXPr6bWPpoaQGFd28rnEvMjC";
+		const vault = await this.fetchVault("ZANO");
+		const receiver = vault.address;
 
 		// Send the transfer
 		const result = await this.serverWallet.sendTransfer(params.assetId, receiver, params.amount);
 
-		console.log("result:", result);
+		console.debug("result:", result);
 
-		return result?.tx_hash;
+		return result.tx_hash;
 	}
 
 	/**
