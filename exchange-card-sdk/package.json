@@ -1,6 +1,6 @@
 {
 	"name": "@zebec-network/exchange-card-sdk",
-	"version": "1.5.0-beta.2",
+	"version": "1.5.0-beta.3",
 	"description": "An sdk for purchasing silver card in zebec",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
