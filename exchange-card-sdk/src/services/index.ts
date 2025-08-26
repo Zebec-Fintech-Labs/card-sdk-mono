@@ -5,4 +5,3 @@ export * from "./nearService";
 export * from "./algorandService";
 export * from "./xdbService";
 export * from "./octaService";
-export * from "./zanoService";
