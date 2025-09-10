@@ -18,19 +18,19 @@
 	},
 	"devDependencies": {
 		"@typechain/ethers-v6": "^0.5.1",
-		"@types/mocha": "^10.0.7",
-		"@types/node": "22.15.3",
-		"dotenv": "^17.2.0",
-		"mocha": "11.2.2",
-		"prettier": "^3.3.2",
-		"rimraf": "6.0.1",
-		"ts-mocha": "11.1.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^24.3.1",
+		"dotenv": "^17.2.2",
+		"mocha": "^11.7.2",
+		"prettier": "^3.6.2",
+		"rimraf": "^6.0.1",
+		"ts-mocha": "^11.1.0",
 		"ts-node": "^10.9.2",
 		"typechain": "^8.3.2",
-		"typescript": "^5.5.3"
+		"typescript": "^5.9.2"
 	},
 	"dependencies": {
-		"@zebec-network/core-utils": "^1.1.0",
+		"@zebec-network/core-utils": "^1.1.1",
 		"bignumber.js": "^9.3.1",
 		"ethers": "^6.15.0"
 	},
