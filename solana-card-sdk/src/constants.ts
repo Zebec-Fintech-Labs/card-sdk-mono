@@ -1,11 +1,3 @@
-import dotenv from "dotenv";
-
-dotenv.config();
-
-const SDK_ENV = process.env.SDK_ENV ?? "production";
-
-export const isSdkEnvDev = SDK_ENV === "development";
-
 /**
  * Zebec Card Program Ids
  */
