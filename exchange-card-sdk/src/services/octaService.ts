@@ -61,8 +61,8 @@ export class OctaService {
 		}
 
 		const overides: ethers.Overrides = {
-			...params.overrides,
 			gasLimit: DEFAULT_EVM_GAS_LIMIT,
+			...params.overrides,
 		};
 
 		const response = await this.signer.sendTransaction({
