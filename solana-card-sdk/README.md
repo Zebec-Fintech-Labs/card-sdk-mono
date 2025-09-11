@@ -30,10 +30,10 @@ const connection = new Connection(clusterApiUrl(network));
 const provider = createReadonlyProvider(connection);
 
 const service = new ZebecCardServiceBuilder()
- .setNetwork(network)
- .setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
- .setProgram()
- .build();
+	.setNetwork(network)
+	.setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
+	.setProgram()
+	.build();
 ```
 
 ### Direct Card Purchase Using USDC
@@ -41,7 +41,7 @@ const service = new ZebecCardServiceBuilder()
 This functionality is used to buy card directly using USDC. For this you need to invoke `buyCardDirect` method in service instance. Every card purchase has a counter that act as an index which can be fetched using `getNextBuyerCounter` method. It should be passed in the params along with other params.
 
 ```ts
-import {hashSHA256} from "@zebec-network/core-utils"
+import { hashSHA256 } from "@zebec-network/core-utils";
 
 const mintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 const amount = "100";
@@ -53,12 +53,12 @@ const nextBuyerCounter = await service.getNextBuyerCounter();
 console.debug("buyer counter", nextBuyerCounter);
 
 const params: BuyCardDirectParams = {
- amount: parseDecimalString(amount),
- cardType,
- nextBuyerCounter,
- buyerAddress,
- mintAddress,
- buyerEmail,
+	amount: parseDecimalString(amount),
+	cardType,
+	nextBuyerCounter,
+	buyerAddress,
+	mintAddress,
+	buyerEmail,
 };
 const payload = await service.buyCardDirect(params);
 
@@ -78,7 +78,7 @@ For making card purchase from tokens other than usdc, You are first required to 
 `getQuoteInfo` method inside the service instance. Then like in card purchase through USDC, you are required to fetch buyers counter by calling `getNextBuyerCounter` and then after, you need to pass the results from previous calls along with some other params to swapAndBuyCardDirect method.
 
 ```ts
-import {hashSHA256} from "@zebec-network/core-utils"
+import { hashSHA256 } from "@zebec-network/core-utils";
 
 const cardType: CardType = "silver";
 const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
@@ -88,11 +88,11 @@ const inputAmount = parseDecimalString("5300");
 const slippagePercent = parsePercentString("0.01");
 
 const quoteInfo = await service.getQuoteInfo({
- inputAmount,
- inputMintAddress,
- outputMintAddress,
- slippagePercent,
- swapMode: "ExactIn",
+	inputAmount,
+	inputMintAddress,
+	outputMintAddress,
+	slippagePercent,
+	swapMode: "ExactIn",
 });
 
 console.log("quoteInfo", quoteInfo);
@@ -101,11 +101,11 @@ const nextBuyerCounter = await service.getNextBuyerCounter();
 console.debug("buyer counter", nextBuyerCounter);
 
 const params: SwapAndBuyCardDirectParams = {
- quoteInfo,
- buyerAddress,
- cardType,
- nextBuyerCounter,
- buyerEmail,
+	quoteInfo,
+	buyerAddress,
+	cardType,
+	nextBuyerCounter,
+	buyerEmail,
 };
 
 const payload = await service.swapAndBuyCardDirect(params);
@@ -149,9 +149,9 @@ Card config can be initialize only one time in the program.
 
 ```ts
 const feeTiers = parseFeeTiers([
- { minAmount: "5", maxAmount: "100", feePercent: "6.5" },
- { minAmount: "101", maxAmount: "500", feePercent: "3" },
- { minAmount: "501", maxAmount: "1000", feePercent: "0.5" },
+	{ minAmount: "5", maxAmount: "100", feePercent: "6.5" },
+	{ minAmount: "101", maxAmount: "500", feePercent: "3" },
+	{ minAmount: "501", maxAmount: "1000", feePercent: "0.5" },
 ]);
 
 const zicOwnerAddress = provider.publicKey.toString();
@@ -168,18 +168,18 @@ const maxCardAmount = "500";
 const dailyCardPurchaseLimit = "1000";
 
 const params: InitCardConfigParams = {
- revenueFeePercent: parsePercentString(revenueFeePercent),
- nativeFeePercent: parsePercentString(nativeFeePercent),
- nonNativeFeePercent: parsePercentString(nonNativeFeePercent),
- zicOwnerAddress,
- usdcAddress,
- commissionVaultAddress,
- cardVaultAddress,
- revenueVaultAddress,
- maxCardAmount: parseDecimalString(maxCardAmount),
- minCardAmount: parseDecimalString(minCardAmount),
- feeTiers,
- dailyCardPurchaseLimit: parseDecimalString(dailyCardPurchaseLimit),
+	revenueFeePercent: parsePercentString(revenueFeePercent),
+	nativeFeePercent: parsePercentString(nativeFeePercent),
+	nonNativeFeePercent: parsePercentString(nonNativeFeePercent),
+	zicOwnerAddress,
+	usdcAddress,
+	commissionVaultAddress,
+	cardVaultAddress,
+	revenueVaultAddress,
+	maxCardAmount: parseDecimalString(maxCardAmount),
+	minCardAmount: parseDecimalString(minCardAmount),
+	feeTiers,
+	dailyCardPurchaseLimit: parseDecimalString(dailyCardPurchaseLimit),
 };
 
 const payload = await service.initCardConfig(params);
@@ -205,24 +205,24 @@ const maxCardAmount = "1500";
 const dailyCardPurchaseLimit = "1500";
 
 const feeTiers = parseFeeTiers([
- { minAmount: "5", maxAmount: "100", feePercent: "6.5" },
- { minAmount: "101", maxAmount: "500", feePercent: "3" },
- { minAmount: "501", maxAmount: "1500", feePercent: "0.5" },
+	{ minAmount: "5", maxAmount: "100", feePercent: "6.5" },
+	{ minAmount: "101", maxAmount: "500", feePercent: "3" },
+	{ minAmount: "501", maxAmount: "1500", feePercent: "0.5" },
 ]);
 
 const params: SetCardConfigParams = {
- revenueFeePercent: parsePercentString(revenueFeePercent),
- nativeFeePercent: parsePercentString(nativeFeePercent),
- nonNativeFeePercent: parsePercentString(nonNativeFeePercent),
- commissionVaultAddress,
- zicOwnerAddress,
- cardVaultAddress,
- revenueVaultAddress,
- feeTiers,
- newZicOwnerAddress: getProviders(network)[0].publicKey.toString(),
- maxCardAmount: parseDecimalString(maxCardAmount),
- minCardAmount: parseDecimalString(minCardAmount),
- dailyCardPurchaseLimit: parseDecimalString(dailyCardPurchaseLimit),
+	revenueFeePercent: parsePercentString(revenueFeePercent),
+	nativeFeePercent: parsePercentString(nativeFeePercent),
+	nonNativeFeePercent: parsePercentString(nonNativeFeePercent),
+	commissionVaultAddress,
+	zicOwnerAddress,
+	cardVaultAddress,
+	revenueVaultAddress,
+	feeTiers,
+	newZicOwnerAddress: getProviders(network)[0].publicKey.toString(),
+	maxCardAmount: parseDecimalString(maxCardAmount),
+	minCardAmount: parseDecimalString(minCardAmount),
+	dailyCardPurchaseLimit: parseDecimalString(dailyCardPurchaseLimit),
 };
 
 const payload = await service.setCardConfig(params);
@@ -271,10 +271,10 @@ const network = "mainnet-beta";
 const connection = new Connection(clusterApiUrl(network));
 const provider = createReadonlyProvider(connection);
 const readonlyService = new CardBotServiceBuilder()
- .setNetwork(network)
- .setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
- .setProgram()
- .build();
+	.setNetwork(network)
+	.setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
+	.setProgram()
+	.build();
 ```
 
 ### Card Bot Init Config
@@ -283,15 +283,15 @@ const readonlyService = new CardBotServiceBuilder()
 const botAdminAddress = parsePublicKeyString("EcbeemyUhRhogppTHaGja2axU7PpZ2opPigry8qWDj1L");
 
 const params: InitBotConfigParams = {
- zicOwnerAddress,
- botAdminAddress,
+	zicOwnerAddress,
+	botAdminAddress,
 };
 
 const payload = await service.initBotConfig(params);
 
 const signature = await payload.execute({
- preflightCommitment: "confirmed",
- commitment: "confirmed",
+	preflightCommitment: "confirmed",
+	commitment: "confirmed",
 });
 console.log("signature", signature);
 ```
@@ -312,16 +312,16 @@ const usdcMintAddress = parsePublicKeyString("De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU
 const userId = "0001";
 
 const params: InitBotUserCustodyParams = {
- botAdminAddress,
- usdcMintAddress,
- userId,
+	botAdminAddress,
+	usdcMintAddress,
+	userId,
 };
 
 const payload = await service.initBotUserCustody(params);
 
 const signature = await payload.execute({
- preflightCommitment: "confirmed",
- commitment: "confirmed",
+	preflightCommitment: "confirmed",
+	commitment: "confirmed",
 });
 console.log("signature", signature);
 ```
@@ -335,17 +335,17 @@ const userId = "0001";
 const amount = parseDecimalString(100);
 
 const params: BuyCardThroughBotParams = {
- amount,
- botAdminAddress,
- userId,
- usdcMintAddress,
+	amount,
+	botAdminAddress,
+	userId,
+	usdcMintAddress,
 };
 
 const payload = await service.buyCardThroughBot(params);
 
 const signature = await payload.execute({
- preflightCommitment: "confirmed",
- commitment: "confirmed",
+	preflightCommitment: "confirmed",
+	commitment: "confirmed",
 });
 console.log("signature", signature);
 ```
@@ -382,10 +382,10 @@ const network = "mainnet-beta";
 const connection = new Connection(clusterApiUrl(network));
 const provider = createReadonlyProvider(connection);
 const readonlyService = new OnRampServiceBuilder()
- .setNetwork(network)
- .setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
- .setProgram()
- .build();
+	.setNetwork(network)
+	.setProvider(provider) // provider can be left empty as it defaults to ReadonlyProvider if provider is not given.
+	.setProgram()
+	.build();
 ```
 
 ### Init Onramp config
@@ -396,9 +396,9 @@ const onRampAdminAddress = parsePublicKeyString("H2Bi1cjEJzHcLcFDzCJoVahtwN2dh1e
 const zbcnAddress = parsePublicKeyString("ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU");
 
 const params: InitOnRampConfigParams = {
- zicOwnerAddress,
- onRampAdminAddress,
- zbcnAddress,
+	zicOwnerAddress,
+	onRampAdminAddress,
+	zbcnAddress,
 };
 
 const payload = await service.initOnRampConfig(params);
@@ -422,15 +422,15 @@ const onRampAdminAddress = parsePublicKeyString(provider.publicKey.toString());
 const userId = "0004";
 
 const params: InitOnRampUserCustodyParams = {
- onRampAdminAddress,
- userId,
+	onRampAdminAddress,
+	userId,
 };
 
 const payload = await service.initOnRampUserCustody(params);
 
 const signature = await payload.execute({
- preflightCommitment: "confirmed",
- commitment: "confirmed",
+	preflightCommitment: "confirmed",
+	commitment: "confirmed",
 });
 console.log("signature", signature);
 ```
@@ -457,18 +457,18 @@ const senderUserId = "0003";
 const amount = parseDecimalString(100);
 
 const params: OnRampTransferZbcnParams = {
- onRampAdminAddress,
- senderUserId,
- durationInDays: 2,
- receiverAddress,
- amount,
+	onRampAdminAddress,
+	senderUserId,
+	durationInDays: 2,
+	receiverAddress,
+	amount,
 };
 
 const payload = await service.onRampTransferZbcn(params);
 
 const signature = await payload.execute({
- preflightCommitment: "confirmed",
- commitment: "confirmed",
+	preflightCommitment: "confirmed",
+	commitment: "confirmed",
 });
 console.log("signature", signature);
 ```
