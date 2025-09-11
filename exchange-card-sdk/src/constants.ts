@@ -1,3 +1,5 @@
+import { BobaChainId } from "./types";
+
 export const CARD_API_URL: Record<"Production" | "Sandbox", string> = {
 	Production: "https://cex.card.zebec.io",
 	Sandbox: "https://cex.card.zebec.io",
@@ -38,6 +40,11 @@ export const BITCOIN_ENDPOINTS = {
 	Sandbox: "https://mempool.space/testnet/api",
 	Production: "https://mempool.space/api",
 } as const;
+
+export const BOBA_CHAIN_ID: Record<"mainnet" | "testnet", BobaChainId> = {
+	mainnet: 288,
+	testnet: 28882,
+};
 
 export const DEFAULT_EVM_GAS_LIMIT = 3000000;
 

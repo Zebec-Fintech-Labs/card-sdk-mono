@@ -3,3 +3,5 @@ export type Quote = {
 	fluctuationPercentage: number; // Amount of USD the user wants to purchase
 	token: string; // Timestamp when the quote was generated
 };
+
+export type BobaChainId = 288 | 28882;

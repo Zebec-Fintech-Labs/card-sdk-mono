@@ -22,7 +22,7 @@ Example:
 
 For EVM compatible networks:
 
-```typescript
+````typescript
 For Bittensor Network:
 
 ```typescript
@@ -40,7 +40,7 @@ const service = new ZebecCardTAOService(
         sandbox: true, // Set to true for development or testing
     },
 );
-```
+````
 
 ### Fetch Quote
 
