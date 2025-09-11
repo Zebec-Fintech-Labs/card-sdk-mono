@@ -13,6 +13,7 @@ export type TransferBobaParams = {
 export type TransferTokenParams = {
 	amount: string | number;
 	tokenAddress: string;
+	symbol: string;
 	overrides?: Omit<ethers.Overrides, "from" | "value" | "chainId">;
 };
 
@@ -38,7 +39,7 @@ export class BobaService {
 	 *
 	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
 	 */
-	async fetchQuote(symbol = "BOBA"): Promise<Quote> {
+	async fetchQuote(symbol: string): Promise<Quote> {
 		const res = await this.apiService.fetchQuote(symbol);
 		return res;
 	}
@@ -48,7 +49,7 @@ export class BobaService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol = "BOBA"): Promise<{ address: string; tag?: string }> {
+	async fetchVault(symbol: string): Promise<{ address: string; tag?: string }> {
 		const data = await this.apiService.fetchVault(symbol);
 		return data;
 	}
@@ -58,7 +59,7 @@ export class BobaService {
 
 		const provider = this.signer.provider;
 
-		const vault = await this.fetchVault();
+		const vault = await this.fetchVault("BOBA-ETH");
 		const recipientAddress = vault.address;
 
 		if (!provider) {
@@ -96,7 +97,7 @@ export class BobaService {
 
 		const parsedAmount = ethers.parseUnits(params.amount.toString(), tokenDecimals);
 
-		const vault = await this.fetchVault();
+		const vault = await this.fetchVault(params.symbol);
 		const recipientAddress = vault.address;
 
 		const senderBalance = await tokenContract.balanceOf(this.signer);
