@@ -4,6 +4,7 @@
 import algosdk from "algosdk";
 import assert from "assert";
 import dotenv from "dotenv";
+import { quais } from "quais";
 import { Wallet } from "xrpl";
 
 import { Account } from "@near-js/accounts";
@@ -145,4 +146,32 @@ export function getAlgorandAccount() {
 	const account = algosdk.mnemonicToSecretKey(mnemonic);
 
 	return account;
+}
+
+export function getQuaiProvider() {
+	dotenv.config();
+	const rpcUrl = process.env.QUAI_RPC_URL;
+	assert(rpcUrl, "Missing env var QUAI_RPC_URL");
+
+	const provider = new quais.JsonRpcProvider(rpcUrl, undefined, { usePathing: true });
+
+	return provider;
+}
+
+export function getQuaiSigners(provider: quais.Provider) {
+	const privateKeysString = process.env.QUAI_PRIVATE_KEYS;
+	assert(privateKeysString, "Missing env var PRIVATE_KEYS");
+
+	let privateKeys: string[];
+	try {
+		const parsed = JSON.parse(privateKeysString);
+		assert(Array.isArray(parsed));
+		privateKeys = parsed;
+	} catch (err) {
+		throw new Error("Invalid private key format");
+	}
+
+	let signers = privateKeys.map((key) => new quais.Wallet(key, provider));
+
+	return signers;
 }

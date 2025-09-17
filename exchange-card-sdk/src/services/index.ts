@@ -6,3 +6,4 @@ export * from "./algorandService";
 export * from "./xdbService";
 export * from "./octaService";
 export * from "./bobaService";
+export * from "./quaiService";
