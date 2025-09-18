@@ -1,26 +1,35 @@
 import { describe } from "mocha";
 
-import { QuaiService } from "../src";
-import {
-	getQuaiProvider,
-	getQuaiSigners,
-} from "./setup";
+import { QuaiService, QuaiWallet } from "../src";
+import { getQuaiProvider, getQuaiSigners } from "./setup";
 
 const provider = getQuaiProvider();
 const signers = getQuaiSigners(provider);
 const signer = signers[0];
+console.log("signer:", signer.address);
+console.log("other signer:", signers[1].address);
 
-const service = new QuaiService(signer, {
+const quaiWallet: QuaiWallet = {
+	address: signer.address,
+	signAndSendTransaction: async (tx) => {
+		const response = await signer.sendTransaction(tx);
+		await response.wait();
+
+		return response.hash;
+	},
+};
+
+const service = new QuaiService(quaiWallet, {
 	apiKey: process.env.API_KEY!,
 	encryptionKey: process.env.ENCRYPTION_KEY!,
 });
 
 describe("QuaiService Tests", () => {
 	it("should transfer quai", async () => {
-		const receipt = await service.transferQuai({
+		const hash = await service.transferQuai({
 			amount: 0.1,
 		});
 
-		console.log("Quai Transfer Receipt:", receipt?.hash);
+		console.log("Quai Transfer Receipt:", hash);
 	});
 });

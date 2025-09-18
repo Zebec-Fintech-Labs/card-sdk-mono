@@ -1,44 +1,30 @@
-import {
-	parseQuai,
-	quais,
-} from "quais";
-import {
-	QuaiTransactionRequest,
-	TransactionRequest,
-} from "quais/providers";
+import { parseQuai } from "quais";
+import { QuaiTransactionRequest } from "quais/providers";
 
-import {
-	DEFAULT_EVM_GAS_LIMIT,
-	QUAI_CHAIN_ID,
-} from "../constants";
-import {
-	APIConfig,
-	ZebecCardAPIService,
-} from "../helpers/apiHelpers";
-import {
-	QuaiChainId,
-	Quote,
-} from "../types";
+import { DEFAULT_QUAI_GAS_LIMIT } from "../constants";
+import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
+import { Quote } from "../types";
 
 export type TransferQuaiParams = {
 	amount: string | number;
 	overrides?: Omit<QuaiTransactionRequest, "from" | "value" | "chainId">;
 };
 
+export type QuaiWallet = {
+	address: string;
+	signAndSendTransaction: (tx: QuaiTransactionRequest) => Promise<string>;
+};
+
 export class QuaiService {
-	readonly network: "mainnet" | "testnet";
-	readonly chainId: QuaiChainId;
 	private apiService: ZebecCardAPIService;
 
 	constructor(
-		readonly signer: quais.Signer,
+		readonly signer: QuaiWallet,
 		readonly apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 		},
 	) {
-		this.network = sdkOptions?.sandbox ? "testnet" : "mainnet";
-		this.chainId = QUAI_CHAIN_ID[this.network];
 		this.apiService = new ZebecCardAPIService(apiConfig, sdkOptions?.sandbox || false);
 	}
 
@@ -62,43 +48,23 @@ export class QuaiService {
 		return data;
 	}
 
-	async transferQuai(
-		params: TransferQuaiParams,
-	): Promise<quais.TransactionReceipt | quais.QiTransactionResponse | null> {
+	async transferQuai(params: TransferQuaiParams): Promise<string> {
 		const parsedAmount = parseQuai(params.amount.toString());
-
-		const provider = this.signer.provider;
 
 		const vault = await this.fetchVault("QUAI");
 		const recipientAddress = vault.address;
 
-		if (!provider) {
-			throw new Error("There is no provider in signer instance.");
-		}
-
-		const senderBalance = await provider.getBalance(this.signer);
-
-		if (senderBalance < parsedAmount) {
-			throw new Error("Insufficient balance for transaction.");
-		}
-
-		const overides: TransactionRequest = {
+		const request: QuaiTransactionRequest = {
 			...params.overrides,
-			gasLimit: params.overrides?.gasLimit ?? DEFAULT_EVM_GAS_LIMIT,
-			from: this.signer,
-		};
-
-		const response = await this.signer.sendTransaction({
-			...overides,
+			gasLimit: params.overrides?.gasLimit ?? DEFAULT_QUAI_GAS_LIMIT,
+			// gasPrice: params.overrides?.gasPrice ?? DEFAULT_QUAI_GAS_PRICE,
+			from: this.signer.address,
 			to: recipientAddress,
 			value: parsedAmount,
-			from: this.signer,
-			chainId: this.chainId,
-		});
+		};
 
-		console.debug("Quai Transaction Hash:", response.hash);
-		const receipt = await response.wait();
+		const hash = await this.signer.signAndSendTransaction(request);
 
-		return receipt;
+		return hash;
 	}
 }

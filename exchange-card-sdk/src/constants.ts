@@ -1,7 +1,4 @@
-import {
-	BobaChainId,
-	QuaiChainId,
-} from "./types";
+import { BobaChainId, QuaiChainId } from "./types";
 
 export const CARD_API_URL: Record<"Production" | "Sandbox", string> = {
 	Production: "https://cex.card.zebec.io",
@@ -55,5 +52,8 @@ export const QUAI_CHAIN_ID: Record<"mainnet" | "testnet", QuaiChainId> = {
 };
 
 export const DEFAULT_EVM_GAS_LIMIT = 3000000;
+
+export const DEFAULT_QUAI_GAS_LIMIT = 2000000;
+export const DEFAULT_QUAI_GAS_PRICE = 1000000000;
 
 export const PLATFORM_FEE = 5 * 100;
