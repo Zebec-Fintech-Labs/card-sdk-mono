@@ -17,7 +17,12 @@ import {
 	WSOL,
 } from "@zebec-network/solana-common";
 
-import { CARD_LOOKUP_TABLE_ADDRESS, JUP_SWAP_API, ZEBEC_CARD_PROGRAM } from "../constants";
+import {
+	CARD_LOOKUP_TABLE_ADDRESS,
+	JUP_QUOTE_API,
+	JUP_SWAP_API,
+	ZEBEC_CARD_PROGRAM,
+} from "../constants";
 import {
 	AmountOutOfRangeError,
 	AssociatedTokenAccountDoesNotExistsError,
@@ -1194,7 +1199,7 @@ export class ZebecCardService {
 			slippageBps: slippage.toString(),
 			swapMode: swapMode,
 		});
-		const quoteResponse = await fetch(`https://quote-api.jup.ag/v6/quote?${queryParams}`);
+		const quoteResponse = await fetch(`${JUP_QUOTE_API}?${queryParams}`);
 		const quoteInfojson: unknown = await quoteResponse.json();
 		// console.log("quoteResponse:", quoteInfojson);
 		const quoteInfo = await parseQuoteInfo(quoteInfojson);

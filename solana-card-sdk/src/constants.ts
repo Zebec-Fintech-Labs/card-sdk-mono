@@ -34,4 +34,6 @@ export const CARD_PROGRAM_SEEDS = {
 
 export const CARD_LOOKUP_TABLE_ADDRESS = "Dw9K5oGzAsXybijfgKaJG2ka3WT2sfDoL6SnbCH9kWz";
 
-export const JUP_SWAP_API = "https://quote-api.jup.ag/v6/swap";
+export const JUP_SWAP_API = "https://lite-api.jup.ag/swap/v1/swap";
+
+export const JUP_QUOTE_API = "https://lite-api.jup.ag/swap/v1/quote";
