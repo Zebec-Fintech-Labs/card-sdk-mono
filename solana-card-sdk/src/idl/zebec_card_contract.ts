@@ -983,6 +983,182 @@ export type ZebecCardContract = {
 			];
 		},
 		{
+			name: "stakeZbcn";
+			accounts: [
+				{
+					name: "admin";
+					isMut: true;
+					isSigner: true;
+				},
+				{
+					name: "lockup";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakePda";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "userNonce";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "staker";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "stakerTokenAccount";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "stakeVault";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakeVaultTokenAccount";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "onRampConfig";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "zbcnToken";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakeProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "tokenProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "systemProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "associatedTokenProgram";
+					isMut: false;
+					isSigner: false;
+				},
+			];
+			args: [
+				{
+					name: "params";
+					type: {
+						defined: "StakeZbcnParams";
+					};
+				},
+			];
+		},
+		{
+			name: "unstakeZbcn";
+			accounts: [
+				{
+					name: "admin";
+					isMut: true;
+					isSigner: true;
+				},
+				{
+					name: "lockup";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakePda";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "userNonce";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "staker";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "stakerTokenAccount";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "stakeVault";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakeVaultTokenAccount";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "onRampConfig";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "zbcnToken";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "feeVault";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "feeVaultTokenAccount";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "stakeProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "tokenProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "associatedTokenProgram";
+					isMut: false;
+					isSigner: false;
+				},
+				{
+					name: "systemProgram";
+					isMut: false;
+					isSigner: false;
+				},
+			];
+			args: [
+				{
+					name: "params";
+					type: {
+						defined: "UnstakeZbcnParams";
+					};
+				},
+			];
+		},
+		{
 			name: "initProposalConfigs";
 			accounts: [
 				{
@@ -1205,38 +1381,6 @@ export type ZebecCardContract = {
 	];
 	accounts: [
 		{
-			name: "cardBot";
-			type: {
-				kind: "struct";
-				fields: [
-					{
-						name: "botAdmin";
-						type: "publicKey";
-					},
-				];
-			};
-		},
-		{
-			name: "cardCustodyData";
-			type: {
-				kind: "struct";
-				fields: [
-					{
-						name: "userId";
-						type: "string";
-					},
-					{
-						name: "totalBoughtPerDay";
-						type: "u64";
-					},
-					{
-						name: "dateTimeInUnix";
-						type: "u64";
-					},
-				];
-			};
-		},
-		{
 			name: "card";
 			type: {
 				kind: "struct";
@@ -1290,6 +1434,38 @@ export type ZebecCardContract = {
 						type: {
 							defined: "ProviderConfig";
 						};
+					},
+				];
+			};
+		},
+		{
+			name: "cardBot";
+			type: {
+				kind: "struct";
+				fields: [
+					{
+						name: "botAdmin";
+						type: "publicKey";
+					},
+				];
+			};
+		},
+		{
+			name: "cardCustodyData";
+			type: {
+				kind: "struct";
+				fields: [
+					{
+						name: "userId";
+						type: "string";
+					},
+					{
+						name: "totalBoughtPerDay";
+						type: "u64";
+					},
+					{
+						name: "dateTimeInUnix";
+						type: "u64";
 					},
 				];
 			};
@@ -1363,26 +1539,6 @@ export type ZebecCardContract = {
 			};
 		},
 		{
-			name: "proposalConfigs";
-			type: {
-				kind: "struct";
-				fields: [
-					{
-						name: "stakingToken";
-						type: "publicKey";
-					},
-					{
-						name: "creatorStakingCap";
-						type: "u64";
-					},
-					{
-						name: "votersStakingCap";
-						type: "u64";
-					},
-				];
-			};
-		},
-		{
 			name: "proposal";
 			type: {
 				kind: "struct";
@@ -1405,6 +1561,26 @@ export type ZebecCardContract = {
 					},
 					{
 						name: "totalVotes";
+						type: "u64";
+					},
+				];
+			};
+		},
+		{
+			name: "proposalConfigs";
+			type: {
+				kind: "struct";
+				fields: [
+					{
+						name: "stakingToken";
+						type: "publicKey";
+					},
+					{
+						name: "creatorStakingCap";
+						type: "u64";
+					},
+					{
+						name: "votersStakingCap";
 						type: "u64";
 					},
 				];
@@ -1597,6 +1773,31 @@ export type ZebecCardContract = {
 			};
 		},
 		{
+			name: "StakeZbcnParams";
+			docs: ["Must match the target program’s params struct"];
+			type: {
+				kind: "struct";
+				fields: [
+					{
+						name: "amount";
+						type: "u64";
+					},
+					{
+						name: "userId";
+						type: "string";
+					},
+					{
+						name: "lockPeriod";
+						type: "i64";
+					},
+					{
+						name: "nonce";
+						type: "u64";
+					},
+				];
+			};
+		},
+		{
 			name: "TransferZbcnParams";
 			type: {
 				kind: "struct";
@@ -1608,6 +1809,23 @@ export type ZebecCardContract = {
 					{
 						name: "userId";
 						type: "string";
+					},
+				];
+			};
+		},
+		{
+			name: "UnstakeZbcnParams";
+			docs: ["Must match the target program’s params struct"];
+			type: {
+				kind: "struct";
+				fields: [
+					{
+						name: "userId";
+						type: "string";
+					},
+					{
+						name: "nonce";
+						type: "u64";
 					},
 				];
 			};
@@ -1781,22 +1999,16 @@ export type ZebecCardContract = {
 			};
 		},
 		{
-			name: "ProviderConfig";
+			name: "FeeMap";
 			type: {
 				kind: "struct";
 				fields: [
 					{
-						name: "minCardAmount";
-						type: "u64";
-					},
-					{
-						name: "maxCardAmount";
-						type: "u64";
-					},
-					{
-						name: "feeTiers";
+						name: "tiers";
 						type: {
-							defined: "FeeMap";
+							vec: {
+								defined: "FeeTier";
+							};
 						};
 					},
 				];
@@ -1823,16 +2035,22 @@ export type ZebecCardContract = {
 			};
 		},
 		{
-			name: "FeeMap";
+			name: "ProviderConfig";
 			type: {
 				kind: "struct";
 				fields: [
 					{
-						name: "tiers";
+						name: "minCardAmount";
+						type: "u64";
+					},
+					{
+						name: "maxCardAmount";
+						type: "u64";
+					},
+					{
+						name: "feeTiers";
 						type: {
-							vec: {
-								defined: "FeeTier";
-							};
+							defined: "FeeMap";
 						};
 					},
 				];
@@ -1864,6 +2082,26 @@ export type ZebecCardContract = {
 					type: "string";
 					index: false;
 				},
+				{
+					name: "from";
+					type: "publicKey";
+					index: false;
+				},
+				{
+					name: "to";
+					type: "publicKey";
+					index: false;
+				},
+				{
+					name: "amount";
+					type: "u64";
+					index: false;
+				},
+			];
+		},
+		{
+			name: "DepositToUserPda";
+			fields: [
 				{
 					name: "from";
 					type: "publicKey";
@@ -1914,26 +2152,6 @@ export type ZebecCardContract = {
 					type: "u64";
 					index: false;
 				},
-				{
-					name: "from";
-					type: "publicKey";
-					index: false;
-				},
-				{
-					name: "to";
-					type: "publicKey";
-					index: false;
-				},
-				{
-					name: "amount";
-					type: "u64";
-					index: false;
-				},
-			];
-		},
-		{
-			name: "DepositToUserPda";
-			fields: [
 				{
 					name: "from";
 					type: "publicKey";
@@ -3001,6 +3219,182 @@ export const IDL: ZebecCardContract = {
 			],
 		},
 		{
+			name: "stakeZbcn",
+			accounts: [
+				{
+					name: "admin",
+					isMut: true,
+					isSigner: true,
+				},
+				{
+					name: "lockup",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakePda",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "userNonce",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "staker",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "stakerTokenAccount",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "stakeVault",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakeVaultTokenAccount",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "onRampConfig",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "zbcnToken",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakeProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "tokenProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "systemProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "associatedTokenProgram",
+					isMut: false,
+					isSigner: false,
+				},
+			],
+			args: [
+				{
+					name: "params",
+					type: {
+						defined: "StakeZbcnParams",
+					},
+				},
+			],
+		},
+		{
+			name: "unstakeZbcn",
+			accounts: [
+				{
+					name: "admin",
+					isMut: true,
+					isSigner: true,
+				},
+				{
+					name: "lockup",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakePda",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "userNonce",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "staker",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "stakerTokenAccount",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "stakeVault",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakeVaultTokenAccount",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "onRampConfig",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "zbcnToken",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "feeVault",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "feeVaultTokenAccount",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "stakeProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "tokenProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "associatedTokenProgram",
+					isMut: false,
+					isSigner: false,
+				},
+				{
+					name: "systemProgram",
+					isMut: false,
+					isSigner: false,
+				},
+			],
+			args: [
+				{
+					name: "params",
+					type: {
+						defined: "UnstakeZbcnParams",
+					},
+				},
+			],
+		},
+		{
 			name: "initProposalConfigs",
 			accounts: [
 				{
@@ -3223,38 +3617,6 @@ export const IDL: ZebecCardContract = {
 	],
 	accounts: [
 		{
-			name: "cardBot",
-			type: {
-				kind: "struct",
-				fields: [
-					{
-						name: "botAdmin",
-						type: "publicKey",
-					},
-				],
-			},
-		},
-		{
-			name: "cardCustodyData",
-			type: {
-				kind: "struct",
-				fields: [
-					{
-						name: "userId",
-						type: "string",
-					},
-					{
-						name: "totalBoughtPerDay",
-						type: "u64",
-					},
-					{
-						name: "dateTimeInUnix",
-						type: "u64",
-					},
-				],
-			},
-		},
-		{
 			name: "card",
 			type: {
 				kind: "struct",
@@ -3308,6 +3670,38 @@ export const IDL: ZebecCardContract = {
 						type: {
 							defined: "ProviderConfig",
 						},
+					},
+				],
+			},
+		},
+		{
+			name: "cardBot",
+			type: {
+				kind: "struct",
+				fields: [
+					{
+						name: "botAdmin",
+						type: "publicKey",
+					},
+				],
+			},
+		},
+		{
+			name: "cardCustodyData",
+			type: {
+				kind: "struct",
+				fields: [
+					{
+						name: "userId",
+						type: "string",
+					},
+					{
+						name: "totalBoughtPerDay",
+						type: "u64",
+					},
+					{
+						name: "dateTimeInUnix",
+						type: "u64",
 					},
 				],
 			},
@@ -3381,26 +3775,6 @@ export const IDL: ZebecCardContract = {
 			},
 		},
 		{
-			name: "proposalConfigs",
-			type: {
-				kind: "struct",
-				fields: [
-					{
-						name: "stakingToken",
-						type: "publicKey",
-					},
-					{
-						name: "creatorStakingCap",
-						type: "u64",
-					},
-					{
-						name: "votersStakingCap",
-						type: "u64",
-					},
-				],
-			},
-		},
-		{
 			name: "proposal",
 			type: {
 				kind: "struct",
@@ -3423,6 +3797,26 @@ export const IDL: ZebecCardContract = {
 					},
 					{
 						name: "totalVotes",
+						type: "u64",
+					},
+				],
+			},
+		},
+		{
+			name: "proposalConfigs",
+			type: {
+				kind: "struct",
+				fields: [
+					{
+						name: "stakingToken",
+						type: "publicKey",
+					},
+					{
+						name: "creatorStakingCap",
+						type: "u64",
+					},
+					{
+						name: "votersStakingCap",
 						type: "u64",
 					},
 				],
@@ -3615,6 +4009,31 @@ export const IDL: ZebecCardContract = {
 			},
 		},
 		{
+			name: "StakeZbcnParams",
+			docs: ["Must match the target program’s params struct"],
+			type: {
+				kind: "struct",
+				fields: [
+					{
+						name: "amount",
+						type: "u64",
+					},
+					{
+						name: "userId",
+						type: "string",
+					},
+					{
+						name: "lockPeriod",
+						type: "i64",
+					},
+					{
+						name: "nonce",
+						type: "u64",
+					},
+				],
+			},
+		},
+		{
 			name: "TransferZbcnParams",
 			type: {
 				kind: "struct",
@@ -3626,6 +4045,23 @@ export const IDL: ZebecCardContract = {
 					{
 						name: "userId",
 						type: "string",
+					},
+				],
+			},
+		},
+		{
+			name: "UnstakeZbcnParams",
+			docs: ["Must match the target program’s params struct"],
+			type: {
+				kind: "struct",
+				fields: [
+					{
+						name: "userId",
+						type: "string",
+					},
+					{
+						name: "nonce",
+						type: "u64",
 					},
 				],
 			},
@@ -3799,22 +4235,16 @@ export const IDL: ZebecCardContract = {
 			},
 		},
 		{
-			name: "ProviderConfig",
+			name: "FeeMap",
 			type: {
 				kind: "struct",
 				fields: [
 					{
-						name: "minCardAmount",
-						type: "u64",
-					},
-					{
-						name: "maxCardAmount",
-						type: "u64",
-					},
-					{
-						name: "feeTiers",
+						name: "tiers",
 						type: {
-							defined: "FeeMap",
+							vec: {
+								defined: "FeeTier",
+							},
 						},
 					},
 				],
@@ -3841,16 +4271,22 @@ export const IDL: ZebecCardContract = {
 			},
 		},
 		{
-			name: "FeeMap",
+			name: "ProviderConfig",
 			type: {
 				kind: "struct",
 				fields: [
 					{
-						name: "tiers",
+						name: "minCardAmount",
+						type: "u64",
+					},
+					{
+						name: "maxCardAmount",
+						type: "u64",
+					},
+					{
+						name: "feeTiers",
 						type: {
-							vec: {
-								defined: "FeeTier",
-							},
+							defined: "FeeMap",
 						},
 					},
 				],
@@ -3882,6 +4318,26 @@ export const IDL: ZebecCardContract = {
 					type: "string",
 					index: false,
 				},
+				{
+					name: "from",
+					type: "publicKey",
+					index: false,
+				},
+				{
+					name: "to",
+					type: "publicKey",
+					index: false,
+				},
+				{
+					name: "amount",
+					type: "u64",
+					index: false,
+				},
+			],
+		},
+		{
+			name: "DepositToUserPda",
+			fields: [
 				{
 					name: "from",
 					type: "publicKey",
@@ -3932,26 +4388,6 @@ export const IDL: ZebecCardContract = {
 					type: "u64",
 					index: false,
 				},
-				{
-					name: "from",
-					type: "publicKey",
-					index: false,
-				},
-				{
-					name: "to",
-					type: "publicKey",
-					index: false,
-				},
-				{
-					name: "amount",
-					type: "u64",
-					index: false,
-				},
-			],
-		},
-		{
-			name: "DepositToUserPda",
-			fields: [
 				{
 					name: "from",
 					type: "publicKey",
