@@ -8,6 +8,13 @@ export const ZEBEC_CARD_PROGRAM: Record<"devnet" | "mainnet-beta", string> = {
 	devnet: "HxZq3iRwN2a2myikHz8JNVufJ7FM92xV8kNvFpQaRgKd",
 };
 
+export const ZEBEC_STAKE_PROGRAM: Record<"devnet" | "mainnet-beta", string> = {
+	/** Mainnet Program Id */
+	["mainnet-beta"]: "zSTKzGLiN6T6EVzhBiL6sjULXMahDavAS2p4R62afGv",
+	/** Devnet Program Id */
+	devnet: "zSTKzGLiN6T6EVzhBiL6sjULXMahDavAS2p4R62afGv",
+};
+
 export const CARD_PROGRAM_SEEDS = {
 	cardPdaSeed: "zic_instant_card_inits",
 	userPdaSeed: "user_vault",
