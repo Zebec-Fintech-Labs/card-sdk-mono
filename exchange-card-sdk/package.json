@@ -17,6 +17,7 @@
 		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\""
 	},
 	"devDependencies": {
+		"@algorandfoundation/algokit-utils": "^9.1.2",
 		"@near-js/accounts": "^2.3.0",
 		"@near-js/keystores": "^2.3.0",
 		"@near-js/signers": "^2.3.0",
@@ -33,7 +34,6 @@
 		"typescript": "^5.9.2"
 	},
 	"dependencies": {
-		"@algorandfoundation/algokit-utils": "^9.1.2",
 		"@near-js/crypto": "^2.3.0",
 		"@near-js/providers": "^2.3.0",
 		"@near-js/transactions": "^2.3.0",
