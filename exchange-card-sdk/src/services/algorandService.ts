@@ -1,8 +1,6 @@
 import algosdk from "algosdk";
 
-import { AlgorandClient } from "@algorandfoundation/algokit-utils";
-import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
-
+import { ALGORAND_RPC_URL } from "../constants";
 import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
 import { Quote } from "../types";
 import {
@@ -38,9 +36,7 @@ export interface AlgorandWallet {
 
 export class AlgorandService {
 	readonly algodClient: algosdk.Algodv2;
-	readonly algorandClient: AlgorandClient;
 	private apiService: ZebecCardAPIService;
-	private readonly network: "mainnet" | "testnet";
 
 	constructor(
 		readonly wallet: AlgorandWallet,
@@ -49,13 +45,8 @@ export class AlgorandService {
 			sandbox?: boolean;
 		},
 	) {
-		this.network = sdkOptions?.sandbox ? "testnet" : "mainnet";
-		this.algodClient = ClientManager.getAlgodClient(
-			ClientManager.getAlgoNodeConfig(this.network, "algod"),
-		);
-		this.algorandClient = AlgorandClient.fromClients({
-			algod: this.algodClient,
-		});
+		const rpcUrl = ALGORAND_RPC_URL[sdkOptions?.sandbox ? "Sandbox" : "Production"];
+		this.algodClient = new algosdk.Algodv2({}, rpcUrl, 443);
 		this.apiService = new ZebecCardAPIService(apiConfig, sdkOptions?.sandbox || false);
 	}
 
