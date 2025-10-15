@@ -25,6 +25,11 @@ export const XDB_RPC_URL: Record<"Production" | "Sandbox", string> = {
 	Sandbox: "https://horizon.futurenet.xdbchain.com/",
 };
 
+export const ALGORAND_RPC_URL: Record<"Production" | "Sandbox", string> = {
+	Production: "https://mainnet-api.algonode.cloud",
+	Sandbox: "https://testnet-api.algonode.cloud",
+};
+
 export const XDB_NETWORK = {
 	PUBLIC: "LiveNet Global XDBChain Network ; November 2023",
 	TESTNET: "Futurenet XDBChain Network ; October 2023",
