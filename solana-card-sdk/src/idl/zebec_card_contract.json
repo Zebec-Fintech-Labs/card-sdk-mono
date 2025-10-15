@@ -992,17 +992,17 @@
 				},
 				{
 					"name": "lockup",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "stakePda",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "userNonce",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
@@ -1017,12 +1017,12 @@
 				},
 				{
 					"name": "stakeVault",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "stakeVaultTokenAccount",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
@@ -1075,17 +1075,12 @@
 				},
 				{
 					"name": "lockup",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "stakePda",
-					"isMut": false,
-					"isSigner": false
-				},
-				{
-					"name": "userNonce",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
@@ -1100,11 +1095,21 @@
 				},
 				{
 					"name": "stakeVault",
-					"isMut": false,
+					"isMut": true,
+					"isSigner": false
+				},
+				{
+					"name": "rewardVault",
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "stakeVaultTokenAccount",
+					"isMut": true,
+					"isSigner": false
+				},
+				{
+					"name": "rewardVaultTokenAccount",
 					"isMut": true,
 					"isSigner": false
 				},
@@ -1120,12 +1125,12 @@
 				},
 				{
 					"name": "feeVault",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{
 					"name": "feeVaultTokenAccount",
-					"isMut": false,
+					"isMut": true,
 					"isSigner": false
 				},
 				{

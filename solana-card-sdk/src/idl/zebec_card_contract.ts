@@ -992,17 +992,17 @@ export type ZebecCardContract = {
 				},
 				{
 					name: "lockup";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "stakePda";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "userNonce";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
@@ -1017,12 +1017,12 @@ export type ZebecCardContract = {
 				},
 				{
 					name: "stakeVault";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "stakeVaultTokenAccount";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
@@ -1075,17 +1075,12 @@ export type ZebecCardContract = {
 				},
 				{
 					name: "lockup";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "stakePda";
-					isMut: false;
-					isSigner: false;
-				},
-				{
-					name: "userNonce";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
@@ -1100,11 +1095,21 @@ export type ZebecCardContract = {
 				},
 				{
 					name: "stakeVault";
-					isMut: false;
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "rewardVault";
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "stakeVaultTokenAccount";
+					isMut: true;
+					isSigner: false;
+				},
+				{
+					name: "rewardVaultTokenAccount";
 					isMut: true;
 					isSigner: false;
 				},
@@ -1120,12 +1125,12 @@ export type ZebecCardContract = {
 				},
 				{
 					name: "feeVault";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
 					name: "feeVaultTokenAccount";
-					isMut: false;
+					isMut: true;
 					isSigner: false;
 				},
 				{
@@ -3228,17 +3233,17 @@ export const IDL: ZebecCardContract = {
 				},
 				{
 					name: "lockup",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "stakePda",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "userNonce",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
@@ -3253,12 +3258,12 @@ export const IDL: ZebecCardContract = {
 				},
 				{
 					name: "stakeVault",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "stakeVaultTokenAccount",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
@@ -3311,17 +3316,12 @@ export const IDL: ZebecCardContract = {
 				},
 				{
 					name: "lockup",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "stakePda",
-					isMut: false,
-					isSigner: false,
-				},
-				{
-					name: "userNonce",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
@@ -3336,11 +3336,21 @@ export const IDL: ZebecCardContract = {
 				},
 				{
 					name: "stakeVault",
-					isMut: false,
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "rewardVault",
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "stakeVaultTokenAccount",
+					isMut: true,
+					isSigner: false,
+				},
+				{
+					name: "rewardVaultTokenAccount",
 					isMut: true,
 					isSigner: false,
 				},
@@ -3356,12 +3366,12 @@ export const IDL: ZebecCardContract = {
 				},
 				{
 					name: "feeVault",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
 					name: "feeVaultTokenAccount",
-					isMut: false,
+					isMut: true,
 					isSigner: false,
 				},
 				{
