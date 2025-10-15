@@ -7,3 +7,5 @@ export type Quote = {
 export type BobaChainId = 288 | 28882;
 
 export type QuaiChainId = 9 | 15000;
+
+export type OGChainId = 16661 | 16602;
