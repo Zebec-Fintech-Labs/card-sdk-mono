@@ -8,6 +8,13 @@ export const ZEBEC_CARD_PROGRAM: Record<"devnet" | "mainnet-beta", string> = {
 	devnet: "HxZq3iRwN2a2myikHz8JNVufJ7FM92xV8kNvFpQaRgKd",
 };
 
+export const ZEBEC_STAKE_PROGRAM: Record<"devnet" | "mainnet-beta", string> = {
+	/** Mainnet Program Id */
+	["mainnet-beta"]: "zSTKzGLiN6T6EVzhBiL6sjULXMahDavAS2p4R62afGv",
+	/** Devnet Program Id */
+	devnet: "zSTKzGLiN6T6EVzhBiL6sjULXMahDavAS2p4R62afGv",
+};
+
 export const CARD_PROGRAM_SEEDS = {
 	cardPdaSeed: "zic_instant_card_inits",
 	userPdaSeed: "user_vault",
@@ -34,4 +41,6 @@ export const CARD_PROGRAM_SEEDS = {
 
 export const CARD_LOOKUP_TABLE_ADDRESS = "Dw9K5oGzAsXybijfgKaJG2ka3WT2sfDoL6SnbCH9kWz";
 
-export const JUP_SWAP_API = "https://quote-api.jup.ag/v6/swap";
+export const JUP_SWAP_API = "https://lite-api.jup.ag/swap/v1/swap";
+
+export const JUP_QUOTE_API = "https://lite-api.jup.ag/swap/v1/quote";

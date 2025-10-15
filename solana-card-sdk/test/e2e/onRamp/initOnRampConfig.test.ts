@@ -1,4 +1,4 @@
-import { describe, it } from "mocha";
+// import { describe, it } from "mocha";
 
 import { Program } from "@coral-xyz/anchor";
 
@@ -13,9 +13,9 @@ import {
 import { getConnection, getWallets } from "../../shared";
 
 describe("initOnRampConfig", () => {
-	const network = "mainnet-beta";
+	const network = "devnet";
 	const connection = getConnection(network);
-	const wallet = getWallets(network)[4];
+	const wallet = getWallets(network)[0];
 	const provider = createAnchorProvider(connection, wallet);
 
 	const service = new OnRampServiceBuilder()
@@ -27,11 +27,11 @@ describe("initOnRampConfig", () => {
 	it("initialize on ramp config", async () => {
 		const zicOwnerAddress = parsePublicKeyString(provider.publicKey.toString());
 		/** for devnet */
-		// const onRampAdminAddress = parsePublicKeyString("5Eu8577bGqoRPNbCmJfJk2wUfN8FwuVPEThNFygaaFH9");
-		// const zbcnAddress = parsePublicKeyString("5qEhjfVc5C6bz1Vi7Uj5SiSeDvqsMtZwuVS9njoVPcRr");
+		const onRampAdminAddress = parsePublicKeyString("2amZiVsTuVuJfG3PwKkPwVBNWHsfRoLxEW2wkadPT6D4");
+		const zbcnAddress = parsePublicKeyString("De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU3k2jqnkmKc");
 		/** for mainnet */
-		const onRampAdminAddress = parsePublicKeyString("H2Bi1cjEJzHcLcFDzCJoVahtwN2dh1eG325VLhFc8r8C");
-		const zbcnAddress = parsePublicKeyString("ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU");
+		// const onRampAdminAddress = parsePublicKeyString("H2Bi1cjEJzHcLcFDzCJoVahtwN2dh1eG325VLhFc8r8C");
+		// const zbcnAddress = parsePublicKeyString("ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU");
 
 		const params: InitOnRampConfigParams = {
 			zicOwnerAddress,

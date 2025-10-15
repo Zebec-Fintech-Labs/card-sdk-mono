@@ -1,12 +1,12 @@
-import { describe, it } from "mocha";
+// import { describe, it } from "mocha";
 
-import { ZebecCardServiceBuilder } from "../../../src";
-import { deriveReloadableCardPda, deriveTokenFeeMapPda } from "../../../src/pda";
+import { deriveReloadableCardPda, ZebecCardServiceBuilder } from "../../../src";
 import { getConnection, getWallets } from "../../shared";
 
 describe("getCustomTokenFees()", () => {
-	const network = "devnet";
+	const network = "mainnet-beta";
 	const connection = getConnection(network);
+
 	const wallets = getWallets(network);
 	console.log("wallets:", wallets);
 
@@ -20,14 +20,11 @@ describe("getCustomTokenFees()", () => {
 		const reloadablePda = deriveReloadableCardPda(service.program.programId);
 		console.log("reloadablePda:", reloadablePda.toString());
 
-		const customFeeMapPda = deriveTokenFeeMapPda(service.program.programId);
-		console.log("token-fee map pda:", customFeeMapPda.toString());
+		// const customFeeMapPda = deriveTokenFeeMapPda(service.program.programId);
+		// console.log("token-fee map pda:", customFeeMapPda.toString());
 
 		const customFees = await service.getCustomTokenFees();
 
-		console.log(
-			"fees",
-			customFees.filter((r) => r.tokenAddress.toString() === reloadablePda.toString()),
-		);
+		console.log("fees", JSON.stringify(customFees, null, 2));
 	});
 });

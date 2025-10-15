@@ -1,6 +1,6 @@
 import { Address, BN, translateAddress, utils, web3 } from "@coral-xyz/anchor";
 
-import { CARD_PROGRAM_SEEDS } from "./constants";
+import { CARD_PROGRAM_SEEDS, ZEBEC_STAKE_PROGRAM } from "./constants";
 
 export function deriveCardConfigPda(cardProgramId: Address) {
 	const programId = translateAddress(cardProgramId);
@@ -124,4 +124,77 @@ export function deriveReloadableCardPda(cardProgramId: Address) {
 	);
 
 	return reloadableCardPda;
+}
+
+const STAKE_PROGRAM_SEEDS = {
+	lockup: "zebec_lockup",
+	stakeVault: "stake_vault",
+	rewardVault: "reward_vault",
+};
+
+export function deriveStakeAddress(
+	staker: Address,
+	lockup: Address,
+	nonce: bigint,
+	programId: Address = ZEBEC_STAKE_PROGRAM["mainnet-beta"],
+) {
+	const [stakeAddress] = web3.PublicKey.findProgramAddressSync(
+		[
+			translateAddress(staker).toBuffer(),
+			translateAddress(lockup).toBuffer(),
+			new BN(nonce.toString()).toArrayLike(Buffer, "le", 8),
+		],
+		translateAddress(programId),
+	);
+
+	return stakeAddress;
+}
+
+export function deriveStakeLockupAddress(
+	name: string,
+	programId: Address = ZEBEC_STAKE_PROGRAM["mainnet-beta"],
+) {
+	const [lockupAddress] = web3.PublicKey.findProgramAddressSync(
+		[utils.bytes.utf8.encode(STAKE_PROGRAM_SEEDS.lockup), utils.bytes.utf8.encode(name)],
+		translateAddress(programId),
+	);
+
+	return lockupAddress;
+}
+
+export function deriveStakeUserNonceAddress(
+	user: Address,
+	lockup: Address,
+	programId: Address = ZEBEC_STAKE_PROGRAM["mainnet-beta"],
+) {
+	const [userNonceAddress] = web3.PublicKey.findProgramAddressSync(
+		[translateAddress(user).toBuffer(), translateAddress(lockup).toBuffer()],
+		translateAddress(programId),
+	);
+
+	return userNonceAddress;
+}
+
+export function deriveStakeVaultAddress(
+	lockup: Address,
+	programId: Address = ZEBEC_STAKE_PROGRAM["mainnet-beta"],
+) {
+	const [stakeVault] = web3.PublicKey.findProgramAddressSync(
+		[utils.bytes.utf8.encode(STAKE_PROGRAM_SEEDS.stakeVault), translateAddress(lockup).toBuffer()],
+		translateAddress(programId),
+	);
+
+	return stakeVault;
+}
+
+export function deriveStakeRewardVaultAddress(
+	lockup: Address,
+	programId: Address = ZEBEC_STAKE_PROGRAM["mainnet-beta"],
+) {
+	const [rewardVault] = web3.PublicKey.findProgramAddressSync(
+		[utils.bytes.utf8.encode(STAKE_PROGRAM_SEEDS.rewardVault), translateAddress(lockup).toBuffer()],
+		translateAddress(programId),
+	);
+
+	return rewardVault;
 }

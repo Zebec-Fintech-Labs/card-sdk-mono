@@ -33,7 +33,7 @@ describe("swapAndBuyCardDirect", () => {
 
 	const buyerAddress = provider.publicKey.toString();
 	// const mintAddress = "De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU3k2jqnkmKc";
-	const amount = "5000";
+	const amount = "50";
 
 	// before(async () => {
 	// 	const params: DepositParams = {
@@ -47,7 +47,7 @@ describe("swapAndBuyCardDirect", () => {
 	// });
 
 	it("transfer usdc from user vault to card vault", async () => {
-		const cardType: CardType = "carbon";
+		const cardType: CardType = "silver";
 		const buyerEmail = await hashSHA256("ashishspkt6566@gmail.com");
 		const inputMintAddress = "ZBCNpuD7YMXzTHB2fhGkGi78MNsHGLRXUhRewNRm9RU";
 		const outputMintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";

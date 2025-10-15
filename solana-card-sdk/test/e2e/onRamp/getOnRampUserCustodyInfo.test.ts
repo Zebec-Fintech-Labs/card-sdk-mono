@@ -22,7 +22,7 @@ describe("getOnRampUserCustodyInfo()", () => {
 
 	it("fetch on ramp user custody info", async () => {
 		const userId = "0004";
-		const userCustody = deriveOnRampUserCustodyPda(userId, service.program.programId);
+		const userCustody = deriveOnRampUserCustodyPda(userId, service.onRampProgram.programId);
 		console.log("user custody:", userCustody.toString());
 
 		const info = await service.getOnRampUserCustodyInfo(userCustody);
