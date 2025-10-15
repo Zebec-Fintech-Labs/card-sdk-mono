@@ -21,6 +21,7 @@ import {
 	deriveOnRampUserCustodyPda,
 	deriveStakeAddress,
 	deriveStakeLockupAddress,
+	deriveStakeRewardVaultAddress,
 	deriveStakeUserNonceAddress,
 	deriveStakeVaultAddress,
 } from "../pda";
@@ -216,7 +217,7 @@ export type OnRampUnstakeZbcnParams = {
 	onRampAdminAddress: Address;
 	lockupName: string;
 	nonce: bigint;
-	feeVault: Address;
+	feeVaultAddress: Address;
 };
 
 export type OnRampConfigInfo = {
@@ -405,12 +406,13 @@ export class OnRampService {
 		onRampConfig: web3.PublicKey,
 		stakeProgram: web3.PublicKey,
 		lockup: web3.PublicKey,
+		rewardVault: web3.PublicKey,
+		rewardVaultTokenAccount: web3.PublicKey,
 		stakePda: web3.PublicKey,
 		staker: web3.PublicKey,
 		stakerTokenAccount: web3.PublicKey,
 		stakeVault: web3.PublicKey,
 		stakeVaultTokenAccount: web3.PublicKey,
-		userNonce: web3.PublicKey,
 		zbcnToken: web3.PublicKey,
 		feeVault: web3.PublicKey,
 		feeVaultTokenAccount: web3.PublicKey,
@@ -430,6 +432,8 @@ export class OnRampService {
 				feeVaultTokenAccount,
 				lockup,
 				onRampConfig,
+				rewardVault,
+				rewardVaultTokenAccount,
 				stakePda,
 				stakeProgram,
 				staker,
@@ -438,7 +442,6 @@ export class OnRampService {
 				stakeVaultTokenAccount,
 				systemProgram: web3.SystemProgram.programId,
 				tokenProgram: TOKEN_PROGRAM_ID,
-				userNonce,
 				zbcnToken,
 			})
 			.instruction();
@@ -478,6 +481,7 @@ export class OnRampService {
 		const onRampAdmin = translateAddress(params.onRampAdminAddress);
 		const onRampConfig = deriveOnRampConfigPda(this.onRampProgram.programId);
 		const onRampUserCustody = deriveOnRampUserCustodyPda(userId, this.onRampProgram.programId);
+		console.debug("onramp user custody:", onRampUserCustody.toString());
 
 		const onRampConfigInfo = await this.onRampProgram.account.onRamp.fetch(
 			onRampConfig,
@@ -624,6 +628,8 @@ export class OnRampService {
 			},
 		);
 
+		// console.log("ix:", JSON.stringify(ix, null, 2));
+
 		return this._createPayload(onRampAdmin, [ix]);
 	}
 
@@ -649,8 +655,10 @@ export class OnRampService {
 		const stakeVault = deriveStakeVaultAddress(lockup, this.stakeProgramId);
 		const stakeVaultTokenAccount = getAssociatedTokenAddressSync(zbcnToken, stakeVault, true);
 
-		const userNonce = deriveStakeUserNonceAddress(staker, lockup, this.stakeProgramId);
-		const feeVault = translateAddress(params.feeVault);
+		const rewardVault = deriveStakeRewardVaultAddress(lockup, this.stakeProgramId);
+		const rewardVaultTokenAccount = getAssociatedTokenAddressSync(zbcnToken, rewardVault, true);
+
+		const feeVault = translateAddress(params.feeVaultAddress);
 		const feeVaultTokenAccount = getAssociatedTokenAddressSync(zbcnToken, feeVault, true);
 
 		const ix = await this.getOnRampUnstakeInstruction(
@@ -658,12 +666,13 @@ export class OnRampService {
 			onRampConfig,
 			new web3.PublicKey(this.stakeProgramId),
 			lockup,
+			rewardVault,
+			rewardVaultTokenAccount,
 			stakePda,
 			staker,
 			stakerTokenAccount,
 			stakeVault,
 			stakeVaultTokenAccount,
-			userNonce,
 			zbcnToken,
 			feeVault,
 			feeVaultTokenAccount,
