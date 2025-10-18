@@ -26,17 +26,6 @@ describe("buyCardDirect", () => {
 
 	const buyerAddress = wallet.publicKey.toString();
 
-	// before(async () => {
-	// 	const params: DepositParams = {
-	// 		amount,
-	// 		mintAddress,
-	// 		userAddress: buyerAddress,
-	// 	};
-
-	// 	await (await service.deposit(params)).execute({ commitment: "finalized" });
-	// 	await sleep(5000);
-	// });
-
 	it("purchase card", async () => {
 		const mintAddress = "De31sBPcDejCVpZZh1fq8SNs7AcuWcBKuU3k2jqnkmKc";
 		// const mintAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
@@ -67,4 +56,14 @@ describe("buyCardDirect", () => {
 		});
 		console.log("signature", getTxUrl(signature, network));
 	});
+
+	// it.only("hashes buyer email", async () => {
+	// 	const buyerEmail = await hashSHA256("larryhenry328@gmail.com");
+	// 	const expected = "0bd914376a1350d0d89c4aa9ab05fd524ab5d96d302baaba59794c091fe7c93d";
+
+	// 	console.log("actual:", buyerEmail);
+	// 	console.log("expected:", expected);
+
+	// 	assert.strictEqual(buyerEmail, expected);
+	// });
 });

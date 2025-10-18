@@ -2,6 +2,7 @@
 
 import {
 	createAnchorProvider,
+	deriveOnRampUserCustodyPda,
 	deriveStakeLockupAddress,
 	deriveStakeUserNonceAddress,
 	OnRampServiceBuilder,
@@ -30,7 +31,8 @@ describe("onRampStakeZbcn()", () => {
 
 	before(async () => {
 		const lockup = deriveStakeLockupAddress(lockupName, service.stakeProgramId);
-		const userNonce = deriveStakeUserNonceAddress(wallet.publicKey, lockup, service.stakeProgramId);
+		const staker = deriveOnRampUserCustodyPda(senderUserId, service.onRampProgram.programId);
+		const userNonce = deriveStakeUserNonceAddress(staker, lockup, service.stakeProgramId);
 		const nonceInfo = await service.getUserNonceInfo(userNonce);
 		nonce = nonceInfo ? nonceInfo.nonce : BigInt(0);
 		console.log("nonce:", nonce);
