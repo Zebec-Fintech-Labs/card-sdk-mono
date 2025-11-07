@@ -30,8 +30,6 @@ export function getWallets(cluster?: web3.Cluster) {
 	try {
 		const secretKeys = JSON.parse(SECRET_KEYS);
 
-		assert(Array.isArray(secretKeys), "Invalid format for SECRET_KEYS");
-
 		for (const keys of secretKeys) {
 			// console.log("secret key", keys);
 			assert(keys && typeof keys === "string" && keys != "", "Invalid secret key");

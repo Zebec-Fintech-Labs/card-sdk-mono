@@ -1,4 +1,4 @@
-import { describe, it } from "mocha";
+// import { describe, it } from "mocha";
 
 import {
 	CardPurchaseInfo,
@@ -9,7 +9,7 @@ import {
 import { getConnection, getWallets } from "../../shared";
 
 describe("getCardPurchaseInfo", () => {
-	const network = "devnet";
+	const network = "mainnet-beta";
 	const connection = getConnection(network);
 	const buyerPubkey = getWallets(network)[2].publicKey;
 	const provider = createReadonlyProvider(connection, buyerPubkey);

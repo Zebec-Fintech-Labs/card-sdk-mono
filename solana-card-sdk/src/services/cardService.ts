@@ -1207,13 +1207,13 @@ export class ZebecCardService {
 		return quoteInfo;
 	}
 
-	async getNextBuyerCounter(): Promise<bigint> {
+	async getNextBuyerCounter(commitment: web3.Commitment = "finalized"): Promise<bigint> {
 		const cardConfig = deriveCardConfigPda(this.program.programId);
-		const decoded = await this.program.account.card.fetch(cardConfig, "confirmed");
+		const decoded = await this.program.account.card.fetch(cardConfig, commitment);
 		return BigInt(decoded.index.addn(1).toString());
 	}
 
-	async getCardConfigInfo(commitment: web3.Commitment = "confirmed"): Promise<CardConfigInfo> {
+	async getCardConfigInfo(commitment: web3.Commitment = "finalized"): Promise<CardConfigInfo> {
 		const cardConfig = deriveCardConfigPda(this.program.programId);
 		const decoded = await this.program.account.card.fetch(cardConfig, commitment);
 
@@ -1266,11 +1266,20 @@ export class ZebecCardService {
 
 	async getCardPurchaseInfo(
 		cardPurchaseInfoPda: Address,
-		commitment: web3.Commitment = "confirmed",
+		commitment: web3.Commitment = "finalized",
 	): Promise<CardPurchaseInfo> {
-		const decoded = await this.program.account.prepaidCardBuyer.fetch(
-			cardPurchaseInfoPda,
+		const accountInfo = await this.provider.connection.getAccountInfo(
+			translateAddress(cardPurchaseInfoPda),
 			commitment,
+		);
+		// console.log("accountInfo", accountInfo);
+
+		if (!accountInfo) {
+			throw new Error("Account does not exist or has no data: " + cardPurchaseInfoPda.toString());
+		}
+		const decoded = await this.program.coder.accounts.decode(
+			this.program.idl.accounts[6].name,
+			accountInfo.data,
 		);
 
 		const amount = parseDecimalString(
@@ -1287,7 +1296,7 @@ export class ZebecCardService {
 
 	async getUserPurchaseRecord(
 		userPurchaseRecordKey: Address,
-		commitment: web3.Commitment = "confirmed",
+		commitment: web3.Commitment = "finalized",
 	): Promise<UserPurchaseRecordInfo> {
 		const decoded = await this.program.account.vault.fetch(userPurchaseRecordKey, commitment);
 		const totalCardBoughtPerDay = parseDecimalString(
@@ -1313,7 +1322,10 @@ export class ZebecCardService {
 		return tokenFeeList;
 	}
 
-	async getAllCardPurchaseInfo(buyerAddress: Address): Promise<Array<CardPurchaseInfo>> {
+	async getAllCardPurchaseInfo(
+		buyerAddress: Address,
+		commitment: web3.Commitment = "finalized",
+	): Promise<Array<CardPurchaseInfo>> {
 		const buyer = translateAddress(buyerAddress);
 		const response = await this.provider.connection.getProgramAccounts(this.program.programId, {
 			filters: [
@@ -1327,7 +1339,7 @@ export class ZebecCardService {
 					},
 				},
 			],
-			commitment: "confirmed",
+			commitment,
 		});
 		console.debug("data size:", response.length);
 
