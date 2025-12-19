@@ -48,7 +48,7 @@ export const ZEBEC_CARD_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Base]: "0x1bF6419D8555EafaE79142D309534e8aBd54aBa3",
 	[SupportedChain.Mainnet]: "0xB4f6E946E12200F4E0ba3B352B8DbF0a66635b53",
 	[SupportedChain.Bsc]: "0x1bF6419D8555EafaE79142D309534e8aBd54aBa3",
-	[SupportedChain.BscTestnet]: "0x9061E6eB59890D33C94B9f517c3dba30621fAB2f",
+	[SupportedChain.BscTestnet]: "0x53E1Ffb703298744670a7Fd341F90AC7949D7516",
 	[SupportedChain.OdysseyTestnet]: "0x597fA3656FF24034939edce2d74480c0619F51A7",
 	[SupportedChain.Odyssey]: "0x935D149eCB4E3F3824327e7d4357180a08aE8a15",
 	[SupportedChain.Polygon]: "0xB4f6E946E12200F4E0ba3B352B8DbF0a66635b53",
