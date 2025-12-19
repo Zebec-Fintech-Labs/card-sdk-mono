@@ -4,7 +4,7 @@ import { describe } from "mocha";
 import { SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Sepolia;
+const chainId = SupportedChain.BscTestnet;
 const provider = getProvider(chainId);
 
 const signers = getSigners(provider);
@@ -25,7 +25,7 @@ describe("ZebecCardService: buycardDirect", () => {
 			);
 			console.log("token balance:", await service.usdcToken.balanceOf(signer));
 
-			const amount = "30";
+			const amount = "10";
 			const token = await service.usdcToken.getAddress();
 			const spender = await service.zebecCard.getAddress();
 			console.log("amount: ", amount);
