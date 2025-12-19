@@ -29,7 +29,7 @@ import {
 } from "./constants";
 
 /**
- * Id which associated with card type featured by zebec instant card.
+ * Card type featured by zebec instant card.
  */
 export type CardType = "silver" | "carbon";
 
