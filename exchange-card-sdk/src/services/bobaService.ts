@@ -2,8 +2,8 @@ import { ethers } from "ethers";
 
 import { ERC20__factory } from "../artifacts";
 import { BOBA_CHAIN_ID, DEFAULT_EVM_GAS_LIMIT } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { BobaChainId, Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
+import { BobaChainId } from "../types";
 
 export type TransferBobaParams = {
 	amount: string | number;
@@ -24,24 +24,13 @@ export class BobaService {
 
 	constructor(
 		readonly signer: ethers.Signer,
-		readonly apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 		},
 	) {
 		this.network = sdkOptions?.sandbox ? "testnet" : "mainnet";
 		this.chainId = BOBA_CHAIN_ID[this.network];
-		this.apiService = new ZebecCardAPIService(apiConfig, sdkOptions?.sandbox || false);
-	}
-
-	/**
-	 * Fetches a quote for Bitcoin transfer.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(symbol: string): Promise<Quote> {
-		const res = await this.apiService.fetchQuote(symbol);
-		return res;
+		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox || false);
 	}
 
 	/**

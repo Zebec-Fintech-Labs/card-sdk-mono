@@ -9,8 +9,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 import { STELLAR_RPC_URL, STELLAR_USDC_ISSUER } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export interface StellarWallet {
 	address: string;
@@ -30,29 +29,17 @@ export class StellarService {
 	 */
 	constructor(
 		readonly wallet: StellarWallet,
-		apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 			apiKey?: string;
 		},
 	) {
 		const sandbox = sdkOptions?.sandbox ? sdkOptions.sandbox : false;
-		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
+		this.apiService = new ZebecCardAPIService(sandbox);
 		this.server = new Horizon.Server(
 			sandbox ? STELLAR_RPC_URL.Sandbox : STELLAR_RPC_URL.Production,
 		);
 		this.sandbox = sandbox;
-	}
-
-	/**
-	 * Fetches a quote for the given amount.
-	 *
-	 * @param {string | number} amount - The amount for which to fetch the quote.
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote() {
-		const res = await this.apiService.fetchQuote("XLM");
-		return res as Quote;
 	}
 
 	/**

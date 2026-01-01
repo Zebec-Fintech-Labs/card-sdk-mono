@@ -2,8 +2,7 @@ import axios from "axios";
 import * as bitcoin from "bitcoinjs-lib";
 
 import { BITCOIN_ENDPOINTS } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 type UTXO = {
 	txid: string;
@@ -69,26 +68,15 @@ export class BitcoinService {
 
 	constructor(
 		readonly wallet: BitcoinWallet,
-		apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 			apiKey?: string;
 		},
 	) {
 		const sandbox = sdkOptions?.sandbox ?? false;
-		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
+		this.apiService = new ZebecCardAPIService(sandbox);
 		this.network = sandbox ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
 		this.apiEndpoint = sandbox ? BITCOIN_ENDPOINTS.Sandbox : BITCOIN_ENDPOINTS.Production;
-	}
-
-	/**
-	 * Fetches a quote for Bitcoin transfer.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(): Promise<Quote> {
-		const res = await this.apiService.fetchQuote("BTC");
-		return res as Quote;
 	}
 
 	/**

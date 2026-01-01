@@ -6,8 +6,7 @@ import { CodeResult, FinalExecutionOutcome } from "@near-js/types";
 import { parseNearAmount } from "@near-js/utils";
 
 import { NEAR_RPC_URL } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export interface CreateAccountAction {
 	type: "CreateAccount";
@@ -131,23 +130,12 @@ export class NearService {
 
 	constructor(
 		readonly wallet: NearWallet,
-		apiConfig: APIConfig,
 		options?: { sandbox?: boolean },
 	) {
 		const sandbox = options?.sandbox ? options.sandbox : false;
-		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
+		this.apiService = new ZebecCardAPIService(sandbox);
 		const url = sandbox ? NEAR_RPC_URL.Sandbox : NEAR_RPC_URL.Production;
 		this.provider = new JsonRpcProvider({ url });
-	}
-
-	/**
-	 * Fetches a quote for Bitcoin transfer.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(symbol = "NEAR"): Promise<Quote> {
-		const res = await this.apiService.fetchQuote(symbol);
-		return res as Quote;
 	}
 
 	/**

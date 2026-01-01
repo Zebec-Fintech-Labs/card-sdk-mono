@@ -40,16 +40,9 @@ const nearWallet: NearWallet = {
 		return result;
 	},
 };
-const service = new NearService(
-	nearWallet,
-	{
-		apiKey: process.env.API_KEY!,
-		encryptionKey: process.env.ENCRYPTION_KEY!,
-	},
-	{
-		sandbox: true,
-	},
-);
+const service = new NearService(nearWallet, {
+	sandbox: true,
+});
 
 describe("NearService", () => {
 	it("should transfer native NEAR", async () => {

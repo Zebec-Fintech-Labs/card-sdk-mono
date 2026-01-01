@@ -12,16 +12,9 @@ describe("Bitcoin Services", () => {
 				broadcastTransaction: async (tx: string) => tx,
 				signTransaction: async (psbt: bitcoin.Psbt) => psbt,
 			};
-			const bitcoinService = new BitcoinService(
-				mockWallet,
-				{
-					apiKey: process.env.API_KEY!,
-					encryptionKey: process.env.ENCRYPTION_KEY!,
-				},
-				{
-					sandbox: true,
-				},
-			);
+			const bitcoinService = new BitcoinService(mockWallet, {
+				sandbox: true,
+			});
 			const utxos = await bitcoinService.getUTXOs();
 
 			console.log("UTXOs: ", utxos);

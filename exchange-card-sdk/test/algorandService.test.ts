@@ -31,16 +31,9 @@ const algorandWallet: AlgorandWallet = {
 	},
 };
 
-const service = new AlgorandService(
-	algorandWallet,
-	{
-		apiKey: process.env.API_KEY!,
-		encryptionKey: process.env.ENCRYPTION_KEY!,
-	},
-	{
-		sandbox: true,
-	},
-);
+const service = new AlgorandService(algorandWallet, {
+	sandbox: true,
+});
 
 describe("AlgorandService", () => {
 	it("should transfer native ALGO", async () => {

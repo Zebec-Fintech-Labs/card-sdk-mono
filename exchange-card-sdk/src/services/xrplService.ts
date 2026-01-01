@@ -11,8 +11,7 @@ import {
 } from "xrpl";
 
 import { XRPL_RPC_URL } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export interface XRPLWallet {
 	address: string;
@@ -25,23 +24,12 @@ export class XRPLService {
 
 	constructor(
 		readonly wallet: XRPLWallet,
-		apiConfig: APIConfig,
 		options?: { sandbox?: boolean },
 	) {
 		const sandbox = options?.sandbox ? options.sandbox : false;
-		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
+		this.apiService = new ZebecCardAPIService(sandbox);
 		const xrplNetwork = sandbox ? XRPL_RPC_URL.Sandbox : XRPL_RPC_URL.Production;
 		this.client = new Client(xrplNetwork);
-	}
-
-	/**
-	 * Fetches a quote for Bitcoin transfer.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(symbol = "XRP"): Promise<Quote> {
-		const res = await this.apiService.fetchQuote(symbol);
-		return res as Quote;
 	}
 
 	/**

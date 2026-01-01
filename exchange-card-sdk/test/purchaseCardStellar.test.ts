@@ -14,23 +14,11 @@ const wallet: StellarWallet = {
 };
 const apiKey = process.env.API_KEY!;
 const encryptionKey = process.env.ENCRYPTION_KEY!;
-const service = new StellarService(
-	wallet,
-	{
-		apiKey: apiKey,
-		encryptionKey: encryptionKey,
-	},
-	{
-		sandbox: true, // Set true for testing and dev environment
-	},
-);
+const service = new StellarService(wallet, {
+	sandbox: true, // Set true for testing and dev environment
+});
 
 describe("purchaseCard()", () => {
-	it("fetch quotes", async () => {
-		const quote = await service.fetchQuote();
-		console.log("Quote:", quote);
-	});
-
 	it("should successfully ", async () => {
 		console.log("Signer Public Key:", signer.publicKey());
 

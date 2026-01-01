@@ -2,8 +2,7 @@ import { parseQuai } from "quais";
 import { QuaiTransactionRequest } from "quais/providers";
 
 import { DEFAULT_QUAI_GAS_LIMIT } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export type TransferQuaiParams = {
 	amount: string | number;
@@ -20,22 +19,11 @@ export class QuaiService {
 
 	constructor(
 		readonly signer: QuaiWallet,
-		readonly apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 		},
 	) {
-		this.apiService = new ZebecCardAPIService(apiConfig, sdkOptions?.sandbox || false);
-	}
-
-	/**
-	 * Fetches a quote for Bitcoin transfer.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(symbol: string): Promise<Quote> {
-		const res = await this.apiService.fetchQuote(symbol);
-		return res as Quote;
+		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox || false);
 	}
 
 	/**

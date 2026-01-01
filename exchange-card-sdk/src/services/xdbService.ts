@@ -8,8 +8,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 import { XDB_NETWORK, XDB_RPC_URL } from "../constants";
-import { APIConfig, ZebecCardAPIService } from "../helpers/apiHelpers";
-import { Quote } from "../types";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export interface XDBWalletInterface {
 	address: string;
@@ -30,26 +29,15 @@ export class XDBService {
 	 */
 	constructor(
 		readonly wallet: XDBWalletInterface,
-		apiConfig: APIConfig,
 		sdkOptions?: {
 			sandbox?: boolean;
 			apiKey?: string;
 		},
 	) {
 		const sandbox = sdkOptions?.sandbox ? sdkOptions.sandbox : false;
-		this.apiService = new ZebecCardAPIService(apiConfig, sandbox);
+		this.apiService = new ZebecCardAPIService(sandbox);
 		this.server = new Horizon.Server(sandbox ? XDB_RPC_URL.Sandbox : XDB_RPC_URL.Production);
 		this.sandbox = sandbox;
-	}
-
-	/**
-	 * Fetches a quote for the given amount.
-	 *
-	 * @returns {Promise<Quote>} A promise that resolves to a Quote object.
-	 */
-	async fetchQuote(symbol = "XDB"): Promise<Quote> {
-		const res = await this.apiService.fetchQuote(symbol);
-		return res as Quote;
 	}
 
 	/**

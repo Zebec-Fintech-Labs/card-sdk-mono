@@ -15,10 +15,6 @@ const service = new XRPLService(
 		},
 	},
 	{
-		apiKey: process.env.API_KEY!,
-		encryptionKey: process.env.ENCRYPTION_KEY!,
-	},
-	{
 		sandbox: true,
 	},
 );
@@ -48,8 +44,8 @@ describe("XRPL Service", () => {
 				walletAddress: wallet.address,
 			};
 
-			const response = await service.createTrustLine(params);
-			console.log("response:", JSON.stringify(response, null, 2));
+			// const response = await service.createTrustLine(params);
+			// console.log("response:", JSON.stringify(response, null, 2));
 
 			const response1 = await service.transferTokens(params);
 			console.log("response:", JSON.stringify(response1, null, 2));

@@ -20,8 +20,7 @@ const quaiWallet: QuaiWallet = {
 };
 
 const service = new QuaiService(quaiWallet, {
-	apiKey: process.env.API_KEY!,
-	encryptionKey: process.env.ENCRYPTION_KEY!,
+	sandbox: true,
 });
 
 describe("QuaiService Tests", () => {
