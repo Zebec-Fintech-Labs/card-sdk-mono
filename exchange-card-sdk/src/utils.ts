@@ -1,13 +1,5 @@
 import algosdk from "algosdk";
 import { BigNumber } from "bignumber.js";
-import crypto from "crypto";
-
-export function hashSHA256(input: string) {
-	const hash = crypto.createHash("sha256");
-	hash.update(input);
-	const hex = hash.digest("hex");
-	return hex;
-}
 
 /**
  * Convert ALGO to microAlgos
