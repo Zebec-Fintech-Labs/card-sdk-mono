@@ -1,8 +1,8 @@
 import { BobaChainId, QuaiChainId } from "./types";
 
 export const CARD_API_URL: Record<"Production" | "Sandbox", string> = {
-	Production: "https://cex.card.zebec.io",
-	Sandbox: "https://cex.card.zebec.io",
+	Production: "https://api.superapp.zebec.io",
+	Sandbox: "https://dev-super.api.zebec.io",
 };
 
 export const NEAR_RPC_URL: Record<"Production" | "Sandbox", string> = {
