@@ -340,7 +340,10 @@ export class NearService {
 			finality: "final",
 		});
 
-		return { ...result };
+		assert("amount" in result, "Amount field is missing in the account data.");
+		assert(typeof result.amount === "string", "Amount field is not a string.");
+		const nearDecimals = 24;
+		return BigNumber(result.amount).div(BigNumber(10).pow(nearDecimals)).toFixed();
 	}
 
 	async getTokenBalance(params: { tokenContractId: string; signerId?: string }) {
