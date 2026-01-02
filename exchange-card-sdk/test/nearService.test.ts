@@ -6,6 +6,10 @@ import { NearService, NearWallet } from "../src";
 import { getNearAccounts } from "./setup";
 
 const accounts = getNearAccounts();
+console.log(
+	"near accounts",
+	accounts.map((a) => a.accountId),
+);
 const account = accounts[0];
 
 const nearWallet: NearWallet = {
@@ -71,5 +75,10 @@ describe("NearService", () => {
 			tokenContractId,
 		});
 		console.log("Token balance:", balance);
+	});
+
+	it("should get near balance", async () => {
+		const balance = await service.getNearBalance({});
+		console.log("Near balance:", balance);
 	});
 });
