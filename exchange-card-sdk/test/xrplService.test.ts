@@ -15,7 +15,7 @@ const service = new XRPLService(
 		},
 	},
 	{
-		sandbox: true,
+		sandbox: false,
 	},
 );
 
@@ -66,10 +66,10 @@ describe("XRPL Service", () => {
 	describe("fetchVault", () => {
 		it("fetch Vault Address", async () => {
 			let vaultAddress = await service.fetchVault("XRP");
-			console.log("vaultAddress:", vaultAddress);
+			console.log("XRP vaultAddress:", vaultAddress);
 
 			vaultAddress = await service.fetchVault("RLUSD");
-			console.log("vaultAddress:", vaultAddress);
+			console.log("RLUSD vaultAddress:", vaultAddress);
 			// assert(response, "Response should not be null");
 		});
 	});

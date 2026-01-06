@@ -53,13 +53,15 @@ export class XRPLService {
 			throw new Error("Invalid wallet address");
 		}
 
-		const fetchVault = await this.fetchVault();
-		const destination = fetchVault.address;
+		const { address: destination, tag } = await this.fetchVault();
 		console.debug("destination:", destination);
+		console.debug("tag:", tag);
 
 		if (!isValidAddress(destination)) {
 			throw new Error("Invalid destination address");
 		}
+
+		const destinationTag = tag && tag !== "" ? parseInt(tag) : undefined;
 
 		const amountInDrops = xrpToDrops(params.amount);
 
@@ -68,6 +70,7 @@ export class XRPLService {
 			Account: walletAddress,
 			Destination: destination,
 			Amount: amountInDrops,
+			DestinationTag: destinationTag,
 		};
 
 		await this.client.connect();
@@ -99,13 +102,15 @@ export class XRPLService {
 			throw new Error("Invalid wallet address");
 		}
 
-		const fetchVault = await this.fetchVault("RLUSD");
-		const destination = fetchVault.address;
-		console.log("destination:", destination);
+		const { address: destination, tag } = await this.fetchVault();
+		console.debug("destination:", destination);
+		console.debug("tag:", tag);
 
 		if (!isValidAddress(destination)) {
 			throw new Error("Invalid destination address");
 		}
+
+		const destinationTag = tag && tag !== "" ? parseInt(tag) : undefined;
 
 		const transaction: Payment = {
 			TransactionType: "Payment",
@@ -116,6 +121,7 @@ export class XRPLService {
 				value: params.amount,
 				issuer: params.token.issuer,
 			},
+			DestinationTag: destinationTag,
 		};
 
 		await this.client.connect();
