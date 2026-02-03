@@ -3,7 +3,7 @@ import { describe } from "mocha";
 import { FeeTier, SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Sepolia;
+const chainId = SupportedChain.Bsc;
 
 const provider = getProvider(chainId);
 const signer = getSigners(provider)[0];
@@ -82,7 +82,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setMaxCardAmount()", () => {
 		it("Should update min card amount", async () => {
-			const maxCardAmount = "1000";
+			const maxCardAmount = "1500";
 			const response = await service.setMaxCardAmount({ maxCardAmount });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -91,7 +91,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("dailyCardPurchaseLimit()", () => {
 		it("Should update dailyCardPurchaseLimit", async () => {
-			const dailyCardPurchaseLimit = "1000";
+			const dailyCardPurchaseLimit = "10000";
 			const response = await service.setDailyCardPurchaseLimit({ dailyCardPurchaseLimit });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
