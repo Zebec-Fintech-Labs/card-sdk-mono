@@ -60,3 +60,23 @@ export async function getAssetDecimals(client: algosdk.Algodv2, assetId: number)
 
 	return decimals;
 }
+
+/**
+ * Convert credits to microcredits
+ * @param {number} credits - Amount in credits
+ * @param {number} decimals - Number of decimals for the token (default is 6)
+ * @returns {number} Amount in microcredits
+ */
+export function creditsToMicrocredits(credits: BigNumber.Value, decimals = 6) {
+	return BigNumber(credits).times(BigNumber(10).pow(decimals)).toFixed(0);
+}
+
+/**
+ * Convert microcredits to credits
+ * @param {number} microcredits - Amount in microcredits
+ * @param {number} decimals - Number of decimals for the token (default is 6)
+ * @returns {number} Amount in credits
+ */
+export function microcreditsToCredits(microcredits: BigNumber.Value, decimals = 6) {
+	return BigNumber(microcredits).div(BigNumber(10).pow(decimals)).toFixed();
+}
