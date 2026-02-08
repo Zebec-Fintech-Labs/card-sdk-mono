@@ -1,21 +1,22 @@
 {
-	"name": "@zebec-network/exchange-card-sdk",
-	"version": "1.8.2",
-	"description": "An sdk for purchasing silver card in zebec",
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
-	"author": "Ashish Sapkota",
-	"license": "MIT",
-	"files": [
-		"dist"
-	],
-	"scripts": {
-		"build": "npm run clean && tsc",
-		"clean": "rimraf dist",
-		"format": "prettier --write .",
-		"test": "ts-mocha -p ./tsconfig.test.json -t 1000000",
-		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\""
+	"author": "Zebec Network | Ashish Sapkota",
+	"dependencies": {
+		"@near-js/crypto": "^2.5.1",
+		"@near-js/providers": "^2.5.1",
+		"@near-js/transactions": "^2.5.1",
+		"@near-js/types": "^2.5.1",
+		"@near-js/utils": "^2.5.1",
+		"@provablehq/sdk": "^0.9.15",
+		"@stellar/stellar-sdk": "^14.4.3",
+		"algosdk": "^3.4.0",
+		"axios": "^1.11.0",
+		"bignumber.js": "^9.3.1",
+		"bitcoinjs-lib": "^6.1.7",
+		"ethers": "^6.15.0",
+		"quais": "^1.0.0-alpha.52",
+		"xrpl": "^4.4.1"
 	},
+	"description": "An sdk for purchasing silver card in zebec",
 	"devDependencies": {
 		"@algorandfoundation/algokit-utils": "^9.1.2",
 		"@near-js/accounts": "^2.5.1",
@@ -33,32 +34,33 @@
 		"typechain": "^8.3.2",
 		"typescript": "^5.9.2"
 	},
-	"dependencies": {
-		"@near-js/crypto": "^2.5.1",
-		"@near-js/providers": "^2.5.1",
-		"@near-js/transactions": "^2.5.1",
-		"@near-js/types": "^2.5.1",
-		"@near-js/utils": "^2.5.1",
-		"@stellar/stellar-sdk": "^14.4.3",
-		"algosdk": "^3.4.0",
-		"axios": "^1.11.0",
-		"bignumber.js": "^9.3.1",
-		"bitcoinjs-lib": "^6.1.7",
-		"ethers": "^6.15.0",
-		"quais": "^1.0.0-alpha.52",
-		"xrpl": "^4.4.1"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git"
-	},
+	"files": [
+		"dist"
+	],
 	"homepage": "https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git#README",
 	"keywords": [
 		"zebec",
 		"zebec fintech",
 		"zebec instant card"
 	],
+	"license": "MIT",
+	"main": "dist/index.js",
+	"name": "@zebec-network/exchange-card-sdk",
 	"publishConfig": {
 		"access": "public"
-	}
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git"
+	},
+	"scripts": {
+		"build": "npm run clean && tsc",
+		"clean": "rimraf dist",
+		"format": "prettier --write .",
+		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\"",
+		"test": "ts-mocha -p ./tsconfig.test.json -t 1000000"
+	},
+	"type": "module",
+	"types": "dist/index.d.ts",
+	"version": "1.9.0-dev.2"
 }
