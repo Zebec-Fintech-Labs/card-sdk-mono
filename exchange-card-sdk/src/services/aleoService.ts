@@ -1,5 +1,12 @@
+import { AleoNetworkClient } from "@provablehq/sdk/mainnet.js";
+import { AleoNetworkClient as TestnetAleoNetworkProvider } from "@provablehq/sdk/testnet.js";
+
+import { ALEO_NETWORK_CLIENT_URLS } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
-import { creditsToMicrocredits } from "../utils";
+import {
+	creditsToMicrocredits,
+	microcreditsToCredits,
+} from "../utils";
 
 export interface AleoTransition {
 	program: string;
@@ -17,18 +24,18 @@ export interface AleoTransaction {
 
 export interface AleoWallet {
 	address: string;
-	requestRecords: (programId: string) => Promise<any[]>;
+	// requestRecords: (programId: string) => Promise<any[]>;
 	requestTransaction: (transaction: AleoTransaction) => Promise<{ transactionId: string }>;
 }
 
-export type TransferCreditParams = {
+export type AleoTransferCreditParams = {
 	amount: number | string;
 	chainId: string;
 	fee?: number;
 	feePrivate?: boolean;
 };
 
-export type TransferTokenParams = {
+export type AleoTransferTokenParams = {
 	tokenProgramId: string;
 	tokenDecimals: number;
 	tokenSymbol: string;
@@ -42,17 +49,20 @@ export class AleoService {
 	readonly wallet: AleoWallet;
 	readonly sandbox: boolean;
 	readonly apiService: ZebecCardAPIService;
+	readonly client: AleoNetworkClient | TestnetAleoNetworkProvider;
 
 	constructor(
 		wallet: AleoWallet,
 		options?: {
 			sandbox?: boolean;
-			aleoNetworkClientUrl?: string;
 		},
 	) {
 		this.wallet = wallet;
 		this.sandbox = options?.sandbox || false;
 		this.apiService = new ZebecCardAPIService(options?.sandbox || false);
+		this.client = options?.sandbox ?
+			new TestnetAleoNetworkProvider(ALEO_NETWORK_CLIENT_URLS.Sandbox) :
+			new AleoNetworkClient(ALEO_NETWORK_CLIENT_URLS.Production)
 	}
 
 	/**
@@ -70,7 +80,7 @@ export class AleoService {
 	 *
 	 * @param recipient - The recipient's Aleo address.
 	 */
-	async transferCredits(params: TransferCreditParams): Promise<{ transactionId: string }> {
+	async transferCredits(params: AleoTransferCreditParams): Promise<{ transactionId: string }> {
 		const { amount, chainId } = params;
 
 		const fee = params?.fee || 100000; // Default fee, can be adjusted as needed
@@ -103,7 +113,7 @@ export class AleoService {
 		return result;
 	}
 
-	async transferTokens(tokens: TransferTokenParams): Promise<{ transactionId: string }> {
+	async transferTokens(tokens: AleoTransferTokenParams): Promise<{ transactionId: string }> {
 		const { tokenProgramId, tokenDecimals, tokenSymbol, amount, chainId } = tokens;
 
 		const fee = tokens?.fee || 100000; // Default fee, can be adjusted as needed
@@ -134,5 +144,27 @@ export class AleoService {
 		const result = await this.wallet.requestTransaction(transaction);
 
 		return result;
+	}
+
+	async getBalance(address: string): Promise<string> {
+
+		const programId = "credits.aleo";
+		const mappingName = "account";
+		const balance = await this.client.getProgramMappingValue(programId, mappingName, address);
+		// regex to extract the number part and convert it to a string with 6 decimal places
+		const regex = /(\d+)u64/;
+		const match = balance.match(regex);
+
+		if (match) {
+			const amount = match[1];
+			const formattedAmount = microcreditsToCredits(amount);
+			return formattedAmount;
+		} else {
+			throw new Error("Invalid balance format");
+		}
+	}
+
+	async getTokenBalance(_address: string, _tokenProgramId: string, _tokenDecimals: number): Promise<string> {
+		throw new Error("Not implemented yet");
 	}
 }

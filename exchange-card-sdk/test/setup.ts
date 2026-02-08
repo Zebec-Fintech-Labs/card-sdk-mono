@@ -12,6 +12,7 @@ import { Account } from "@near-js/accounts";
 import { KeyPairString } from "@near-js/crypto";
 import { JsonRpcProvider } from "@near-js/providers";
 import { KeyPairSigner } from "@near-js/signers";
+import { Account as AleoAccount } from "@provablehq/sdk/mainnet.js";
 import { Keypair } from "@stellar/stellar-sdk";
 
 import { NEAR_RPC_URL } from "../src";
@@ -169,4 +170,11 @@ export function getQuaiSigners(provider: quais.Provider) {
 	let signers = privateKeys.map((key) => new quais.Wallet(key, provider));
 
 	return signers;
+}
+
+export function getAleoAccount() {
+	const privateKey = process.env.ALEO_PRIVATE_KEY;
+	assert(privateKey, "Missing env var ALEO_PRIVATE_KEY");
+	const account = new AleoAccount({ privateKey });
+	return account;
 }
