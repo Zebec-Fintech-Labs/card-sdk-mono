@@ -1,8 +1,16 @@
 {
-	"extends": "./tsconfig.json",
 	"compilerOptions": {
-		"module": "CommonJS",
-		"moduleResolution": "node"
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"types": [
+			"@types/mocha",
+			"@types/node",
+			"@types/jest",
+		],
 	},
-	"include": ["src", "test"]
+	"extends": "./tsconfig.json",
+	"include": [
+		"src",
+		"test"
+	]
 }
