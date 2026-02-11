@@ -1,19 +1,19 @@
 // import { ethers } from "ethers";
 // import { Keyring } from "@polkadot/api";
 
+import { Account } from "@near-js/accounts";
+import type { KeyPairString } from "@near-js/crypto";
+import { JsonRpcProvider } from "@near-js/providers";
+import { KeyPairSigner } from "@near-js/signers";
+import { Account as AleoAccount } from "@provablehq/sdk/mainnet.js";
+import { Account as TestnetAleoAccount } from "@provablehq/sdk/testnet.js";
+import { Keypair } from "@stellar/stellar-sdk";
 import algosdk from "algosdk";
 import assert from "assert";
 import dotenv from "dotenv";
 import { ethers } from "ethers";
 import { quais } from "quais";
 import { Wallet } from "xrpl";
-
-import { Account } from "@near-js/accounts";
-import { KeyPairString } from "@near-js/crypto";
-import { JsonRpcProvider } from "@near-js/providers";
-import { KeyPairSigner } from "@near-js/signers";
-import { Account as AleoAccount } from "@provablehq/sdk/mainnet.js";
-import { Keypair } from "@stellar/stellar-sdk";
 
 import { NEAR_RPC_URL } from "../src";
 
@@ -53,7 +53,7 @@ export function getSigners(provider: ethers.Provider) {
 		throw new Error("Invalid private key format");
 	}
 
-	let signers = privateKeys.map((key) => new ethers.Wallet(key, provider));
+	const signers = privateKeys.map((key) => new ethers.Wallet(key, provider));
 
 	return signers;
 }
@@ -149,7 +149,9 @@ export function getQuaiProvider() {
 	const rpcUrl = process.env.QUAI_RPC_URL;
 	assert(rpcUrl, "Missing env var QUAI_RPC_URL");
 
-	const provider = new quais.JsonRpcProvider(rpcUrl, undefined, { usePathing: true });
+	const provider = new quais.JsonRpcProvider(rpcUrl, undefined, {
+		usePathing: true,
+	});
 
 	return provider;
 }
@@ -167,14 +169,17 @@ export function getQuaiSigners(provider: quais.Provider) {
 		throw new Error("Invalid private key format");
 	}
 
-	let signers = privateKeys.map((key) => new quais.Wallet(key, provider));
+	const signers = privateKeys.map((key) => new quais.Wallet(key, provider));
 
 	return signers;
 }
 
-export function getAleoAccount() {
+export function getAleoAccount(network: "mainnet" | "testnet" = "mainnet") {
 	const privateKey = process.env.ALEO_PRIVATE_KEY;
 	assert(privateKey, "Missing env var ALEO_PRIVATE_KEY");
-	const account = new AleoAccount({ privateKey });
+	const account =
+		network === "mainnet"
+			? new AleoAccount({ privateKey })
+			: new TestnetAleoAccount({ privateKey });
 	return account;
 }
