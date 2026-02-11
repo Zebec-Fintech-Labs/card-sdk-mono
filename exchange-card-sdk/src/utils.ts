@@ -1,5 +1,7 @@
-import algosdk from "algosdk";
+import type algosdk from "algosdk";
 import { BigNumber } from "bignumber.js";
+
+import { ALEO_NETWORK_CLIENT_URL } from "./constants";
 
 /**
  * Convert ALGO to microAlgos
@@ -50,7 +52,13 @@ const ALGORAND_ASSET_DECIMALS_CACHE = new Map<number, number>();
 export async function getAssetDecimals(client: algosdk.Algodv2, assetId: number): Promise<number> {
 	// Check if we already have this value cached
 	if (ALGORAND_ASSET_DECIMALS_CACHE.has(assetId)) {
-		return ALGORAND_ASSET_DECIMALS_CACHE.get(assetId)!;
+		const value = ALGORAND_ASSET_DECIMALS_CACHE.get(assetId);
+
+		if (value) {
+			return value;
+		} else {
+			throw new Error("Cached value is undefined, this should not happen");
+		}
 	}
 
 	const assetInfo = await client.getAssetByID(assetId).do();
@@ -63,9 +71,6 @@ export async function getAssetDecimals(client: algosdk.Algodv2, assetId: number)
 
 /**
  * Convert credits to microcredits
- * @param {number} credits - Amount in credits
- * @param {number} decimals - Number of decimals for the token (default is 6)
- * @returns {number} Amount in microcredits
  */
 export function creditsToMicrocredits(credits: BigNumber.Value, decimals = 6) {
 	return BigNumber(credits).times(BigNumber(10).pow(decimals)).toFixed(0);
@@ -73,10 +78,50 @@ export function creditsToMicrocredits(credits: BigNumber.Value, decimals = 6) {
 
 /**
  * Convert microcredits to credits
- * @param {number} microcredits - Amount in microcredits
- * @param {number} decimals - Number of decimals for the token (default is 6)
- * @returns {number} Amount in credits
  */
 export function microcreditsToCredits(microcredits: BigNumber.Value, decimals = 6) {
 	return BigNumber(microcredits).div(BigNumber(10).pow(decimals)).toFixed();
+}
+
+export type TokenMetadata = {
+	token_id: string;
+	token_id_datatype: string | null;
+	symbol: string;
+	display: string;
+	program_name: string;
+	decimals: number;
+	total_supply: string;
+	verified: boolean;
+	token_icon_url: string;
+	compliance_freeze_list: string;
+	price: string;
+	price_change_percentage_24h: string;
+	fully_diluted_value: string;
+	total_market_cap: string;
+	volume_24h: string;
+};
+
+export async function getTokenBySymbol(
+	tokenSymbol: string,
+	network: "mainnet" | "testnet" = "mainnet",
+): Promise<TokenMetadata> {
+	const response = await fetch(
+		`${ALEO_NETWORK_CLIENT_URL}/${network}/tokens?symbol=${encodeURIComponent(tokenSymbol)}`,
+	);
+
+	if (!response.ok) {
+		const body = await response.text().catch(() => "");
+		throw new Error(
+			`Failed to fetch token decimals for ${tokenSymbol}: ${response.statusText} ${body}`.trim(),
+		);
+	}
+
+	const result = await response.json();
+	const tokens = Array.isArray(result) ? result : result?.data;
+
+	if (!Array.isArray(tokens) || tokens.length === 0) {
+		throw new Error(`No token found with symbol ${tokenSymbol}`);
+	}
+
+	return tokens.find((token) => token.verified) ?? tokens[0];
 }
