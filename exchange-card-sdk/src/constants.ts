@@ -1,7 +1,4 @@
-import {
-	BobaChainId,
-	QuaiChainId,
-} from "./types";
+import type { BobaChainId, QuaiChainId } from "./types";
 
 export const CARD_API_URL: Record<"Production" | "Sandbox", string> = {
 	Production: "https://api.superapp.zebec.io",
@@ -49,10 +46,7 @@ export const BITCOIN_ENDPOINTS = {
 	Production: "https://mempool.space/api",
 } as const;
 
-export const ALEO_NETWORK_CLIENT_URLS = {
-	Sandbox: "https://api.provable.com/v2",
-	Production: "https://api.provable.com/v2",
-} as const;
+export const ALEO_NETWORK_CLIENT_URL = "https://api.provable.com/v2";
 
 export const BOBA_CHAIN_ID: Record<"mainnet" | "testnet", BobaChainId> = {
 	mainnet: 288,
