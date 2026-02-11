@@ -1,8 +1,7 @@
+import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
 import algosdk from "algosdk";
 
-import { ClientManager } from "@algorandfoundation/algokit-utils/types/client-manager";
-
-import { AlgorandService, AlgorandWallet } from "../src";
+import { AlgorandService, type AlgorandWallet } from "../src";
 import { getAlgorandAccount } from "./setup";
 
 const algodClient = ClientManager.getAlgodClient(
