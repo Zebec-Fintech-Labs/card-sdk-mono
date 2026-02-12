@@ -99,7 +99,7 @@ export class AleoService {
 
 		const result = await this.wallet.requestTransaction({
 			address: this.wallet.address,
-			chainId: this.sandbox ? "testnet" : "mainnet",
+			chainId: this.sandbox ? "testnetbeta" : "mainnet",
 			fee: Number(creditsToMicrocredits(params.fee || 0.035)),
 			feePrivate,
 			transitions: [
@@ -151,7 +151,7 @@ export class AleoService {
 
 		const result = await this.wallet.requestTransaction({
 			address: this.wallet.address,
-			chainId: this.sandbox ? "testnet" : "mainnet",
+			chainId: this.sandbox ? "testnetbeta" : "mainnet",
 			fee: Number(creditsToMicrocredits(params.fee || 0.035)),
 			feePrivate,
 			transitions: [
