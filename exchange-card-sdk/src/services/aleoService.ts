@@ -3,34 +3,55 @@ import { AleoNetworkClient as TestnetAleoNetworkClient } from "@provablehq/sdk/t
 
 import { ALEO_NETWORK_CLIENT_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
-import { creditsToMicrocredits, getTokenBySymbol, microcreditsToCredits } from "../utils";
+import {
+	creditsToMicrocredits,
+	getTokenBySymbol,
+	microcreditsToCredits,
+} from "../utils";
 
-export interface AleoTransition {
+/**
+ * Transaction creation options
+ */
+interface TransactionOptions {
+	/**
+	 * The program to execute
+	 */
 	program: string;
-	functionName: string;
-	// biome-ignore lint/suspicious/noExplicitAny: we don't know what we'll be inputs item type
-	inputs: any[];
-}
-
-export interface AleoTransaction {
-	address: string;
-	chainId: string;
-	transitions: AleoTransition[];
-	fee: number;
-	feePrivate: boolean;
+	/**
+	 * The function to call
+	 */
+	function: string;
+	/**
+	 * The function inputs
+	 */
+	inputs: string[];
+	/**
+	 * The transaction fee to pay
+	 */
+	fee?: number;
+	/**
+	 * Record indices to use
+	 */
+	recordIndices?: number[];
+	/**
+	 * Whether the fee is private
+	 */
+	privateFee?: boolean;
 }
 
 export interface AleoWallet {
 	address: string;
-	// requestRecords: (programId: string) => Promise<any[]>;
-	requestTransaction: (transaction: AleoTransaction) => Promise<{ transactionId: string }>;
+	requestRecords: (program: string, includePlaintext?: boolean | undefined) => Promise<unknown[]>;
+	executeTransaction: (options: TransactionOptions) => Promise<{
+		transactionId: string;
+	}>;
 }
 
 export type AleoTransferCreditParams = {
 	amount: number | string;
 	transferType?: "public" | "private" | "privateToPublic" | "publicToPrivate";
 	fee?: number;
-	feePrivate?: boolean;
+	privateFee?: boolean;
 };
 
 export type AleoTransferTokenParams = {
@@ -39,7 +60,7 @@ export type AleoTransferTokenParams = {
 	amount: number | string;
 	transferType?: "public" | "private" | "privateToPublic" | "publicToPrivate";
 	fee?: number;
-	feePrivate?: boolean;
+	privateFee?: boolean;
 };
 
 export class AleoService {
@@ -79,7 +100,7 @@ export class AleoService {
 		const { amount } = params;
 
 		const transferType = params.transferType || "public";
-		const feePrivate = params?.feePrivate || false;
+		const privateFee = params?.privateFee || false;
 
 		const vault = await this.fetchVault("ALEO");
 		const recipient = vault.address;
@@ -97,18 +118,12 @@ export class AleoService {
 						? "transfer_private_to_public"
 						: "transfer_public_to_private";
 
-		const result = await this.wallet.requestTransaction({
-			address: this.wallet.address,
-			chainId: this.sandbox ? "testnetbeta" : "mainnet",
-			fee: Number(creditsToMicrocredits(params.fee || 0.035)),
-			feePrivate,
-			transitions: [
-				{
-					functionName,
-					program: programName,
-					inputs: [recipient, `${amountInMiroCredits}u64`],
-				},
-			],
+		const result = await this.wallet.executeTransaction({
+			program: programName,
+			function: functionName,
+			inputs: [recipient, `${amountInMiroCredits}u64`],
+			fee: Number(creditsToMicrocredits(params.fee || 0.1)),
+			privateFee,
 		});
 
 		return result;
@@ -132,7 +147,7 @@ export class AleoService {
 		const tokenIdDatatype = tokenMetadata.token_id_datatype;
 
 		const transferType = params.transferType || "public";
-		const feePrivate = params?.feePrivate || false;
+		const privateFee = params?.privateFee || false;
 
 		const vault = await this.fetchVault(tokenSymbol);
 		const recipient = vault.address;
@@ -149,18 +164,12 @@ export class AleoService {
 						? "transfer_private_to_public"
 						: "transfer_public_to_private";
 
-		const result = await this.wallet.requestTransaction({
-			address: this.wallet.address,
-			chainId: this.sandbox ? "testnetbeta" : "mainnet",
-			fee: Number(creditsToMicrocredits(params.fee || 0.035)),
-			feePrivate,
-			transitions: [
-				{
-					functionName,
-					program: programName,
-					inputs: [`${tokenId}${tokenIdDatatype}`, recipient, `${amountInMicroTokens}u128`],
-				},
-			],
+		const result = await this.wallet.executeTransaction({
+			fee: Number(creditsToMicrocredits(params.fee || 0.1)),
+			privateFee,
+			program: programName,
+			function: functionName,
+			inputs: [`${tokenId}${tokenIdDatatype}`, recipient, `${amountInMicroTokens}u128`],
 		});
 
 		return result;

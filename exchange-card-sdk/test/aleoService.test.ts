@@ -1,8 +1,14 @@
-import assert from "node:assert";
+import {
+	AleoKeyProvider,
+	AleoNetworkClient,
+	ProgramManager,
+} from "@provablehq/sdk";
 
-import { AleoKeyProvider, AleoNetworkClient, ProgramManager } from "@provablehq/sdk";
-
-import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet } from "../src";
+import {
+	ALEO_NETWORK_CLIENT_URL,
+	AleoService,
+	type AleoWallet,
+} from "../src";
 import { getAleoAccount } from "./setup";
 
 const account = getAleoAccount("testnet");
@@ -13,19 +19,21 @@ const programManager = new ProgramManager(ALEO_NETWORK_CLIENT_URL, keyProvider);
 
 const wallet: AleoWallet = {
 	address: account.toString(),
-	requestTransaction: async (transaction) => {
+	requestRecords: async (_program: string, _includePlaintext?: boolean) => {
+		throw new Error("Method not implemented.");
+	},
+	executeTransaction: async (transaction) => {
 		console.log("transaction:", JSON.stringify(transaction, null, 2));
 
-		assert(transaction.chainId === "testnet");
 		const tx = await programManager.buildExecutionTransaction({
-			functionName: transaction.transitions[0].functionName,
-			inputs: transaction.transitions[0].inputs,
-			priorityFee: transaction.feePrivate ? 0 : transaction.fee,
-			privateFee: transaction.feePrivate,
-			programName: transaction.transitions[0].program,
+			functionName: transaction.function,
+			inputs: transaction.inputs,
+			priorityFee: transaction.fee || 0.1,
+			privateFee: transaction.privateFee || false,
+			programName: transaction.program,
 			privateKey: account.privateKey(),
 			keySearchParams: {
-				cacheKey: `${transaction.transitions[0].program}:${transaction.transitions[0].functionName}`,
+				cacheKey: `${transaction.program}:${transaction.function}`,
 			},
 		});
 
@@ -54,7 +62,7 @@ describe("AleoService", () => {
 	it("should transfer native credit", async () => {
 		const result = await service.transferCredits({
 			amount: 0.01,
-			feePrivate: false,
+			privateFee: false,
 			transferType: "public",
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
