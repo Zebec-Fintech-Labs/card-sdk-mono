@@ -12,8 +12,7 @@
 		"@stellar/stellar-sdk": "^14.4.3",
 		"algosdk": "^3.4.0",
 		"axios": "^1.11.0",
-		"bignumber.js": "^9.3.1",
-		"bitcoinjs-lib": "^6.1.7",
+		"bignumber.js": "^10.0.2",
 		"ethers": "^6.15.0",
 		"quais": "^1.0.0-alpha.52",
 		"xrpl": "^4.4.1"
@@ -25,6 +24,7 @@
 		"@near-js/accounts": "^2.5.1",
 		"@near-js/keystores": "^2.5.1",
 		"@near-js/signers": "^2.5.1",
+		"@near-js/tokens": "^2.5.1",
 		"@typechain/ethers-v6": "^0.5.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^24.3.1",
