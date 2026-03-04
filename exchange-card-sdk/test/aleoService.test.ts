@@ -1,14 +1,6 @@
-import {
-	AleoKeyProvider,
-	AleoNetworkClient,
-	ProgramManager,
-} from "@provablehq/sdk";
+import { AleoKeyProvider, AleoNetworkClient, ProgramManager } from "@provablehq/sdk";
 
-import {
-	ALEO_NETWORK_CLIENT_URL,
-	AleoService,
-	type AleoWallet,
-} from "../src";
+import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet, getTokenBySymbol } from "../src";
 import { getAleoAccount } from "./setup";
 
 const account = getAleoAccount("testnet");
@@ -19,6 +11,9 @@ const programManager = new ProgramManager(ALEO_NETWORK_CLIENT_URL, keyProvider);
 
 const wallet: AleoWallet = {
 	address: account.toString(),
+	decrypt: async (cipherText: string) => {
+		return account.decryptRecord(cipherText).toString();
+	},
 	requestRecords: async (_program: string, _includePlaintext?: boolean) => {
 		throw new Error("Method not implemented.");
 	},
@@ -46,12 +41,12 @@ const service = new AleoService(wallet, { sandbox: true });
 
 describe("AleoService", () => {
 	it("should get aleo balance", async () => {
-		const balance = await service.getBalance(account.toString());
+		const balance = await service.getPublicBalance(account.toString());
 		console.log("Balance:", balance);
 	});
 
 	it("should get token balance", async () => {
-		const balance = await service.getTokenBalance(
+		const balance = await service.getPublicTokenBalance(
 			account.toString(),
 			"test_usdcx_stablecoin.aleo",
 			"USDCx",
@@ -60,11 +55,26 @@ describe("AleoService", () => {
 	});
 
 	it("should transfer native credit", async () => {
-		const result = await service.transferCredits({
+		const result = await service.transferCredit({
 			amount: 0.01,
 			privateFee: false,
-			transferType: "public",
+			transferType: "private",
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
+	});
+
+	it("should transfer stable coin", async () => {
+		const result = await service.transferStableCoin({
+			programId: "usad_stablecoin.aleo",
+			amount: 0.01,
+			privateFee: false,
+			transferType: "private",
+		});
+		console.log("Transfer transaction Id:", result.transactionId);
+	});
+
+	it("should fetch token metadata", async () => {
+		const metadata = await getTokenBySymbol("usad", "mainnet");
+		console.log("Token Metadata:", metadata);
 	});
 });
