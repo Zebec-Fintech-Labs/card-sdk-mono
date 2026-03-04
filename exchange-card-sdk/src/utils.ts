@@ -72,14 +72,14 @@ export async function getAssetDecimals(client: algosdk.Algodv2, assetId: number)
 /**
  * Convert credits to microcredits
  */
-export function creditsToMicrocredits(credits: BigNumber.Value, decimals = 6) {
-	return BigNumber(credits).times(BigNumber(10).pow(decimals)).toFixed(0);
+export function toMicroUnits(credits: BigNumber.Value, decimals = 6, typeSuffix?: string) {
+	return `${BigNumber(credits).times(BigNumber(10).pow(decimals)).toFixed(0)}${typeSuffix || ""}`;
 }
 
 /**
  * Convert microcredits to credits
  */
-export function microcreditsToCredits(microcredits: BigNumber.Value, decimals = 6) {
+export function fromMicroUnits(microcredits: BigNumber.Value, decimals = 6) {
 	return BigNumber(microcredits).div(BigNumber(10).pow(decimals)).toFixed();
 }
 
