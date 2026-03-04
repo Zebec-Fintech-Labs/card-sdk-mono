@@ -262,37 +262,13 @@ export class AleoService {
 		return result;
 	}
 
-	async getPublicBalance(walletAddress: string): Promise<string> {
-		const programId = "credits.aleo";
-		const mappingName = "account";
-		const balance = await this.networkClient.getProgramMappingValue(
-			programId,
-			mappingName,
-			walletAddress,
-		);
-
-		if (balance) {
-			// regex to extract the number part and convert it to a string with 6 decimal places
-			const regex = /(\d+)u64/;
-			const match = balance.match(regex);
-
-			if (match) {
-				const amount = match[1];
-				const formattedAmount = fromMicroUnits(amount);
-				return formattedAmount;
-			} else {
-				throw new Error(`Invalid balance format: ${balance}`);
-			}
-		} else {
-			return "0";
-		}
+	async getPublicBalance(): Promise<string> {
+		const balance = await this.networkClient.getPublicBalance(this.wallet.address);
+		const formattedAmount = fromMicroUnits(balance);
+		return formattedAmount;
 	}
 
-	async getPublicTokenBalance(
-		walletAddress: string,
-		tokenProgramId: string,
-		tokenSymbol: string,
-	): Promise<string> {
+	async getPublicTokenBalance(tokenProgramId: string, tokenSymbol: string): Promise<string> {
 		const tokenMetadata = await getTokenBySymbol(tokenSymbol, this.sandbox ? "testnet" : "mainnet");
 		if (!("decimals" in tokenMetadata)) {
 			throw new Error(`Token metadata for ${tokenSymbol} does not include decimals.`);
@@ -313,11 +289,11 @@ export class AleoService {
 		const balance = await this.networkClient.getProgramMappingValue(
 			tokenProgramId,
 			balanceMappingName,
-			walletAddress,
+			this.wallet.address,
 		);
 
 		if (balance) {
-			const regex = /(\d+)u128/;
+			const regex = /(\d+)u\d+/;
 			const match = balance.match(regex);
 
 			if (match) {
@@ -330,5 +306,83 @@ export class AleoService {
 		} else {
 			return "0";
 		}
+	}
+
+	async getPrivateBalance(): Promise<string> {
+		const programId = "credits.aleo";
+		const records = await this.wallet.requestRecords(programId, false);
+
+		if (!records) {
+			throw new Error(`No records found for program ${programId}`);
+		}
+		// console.log("Fetched Records:", records);
+		const unspent = records.filter((r) => r && typeof r === "object" && "spent" in r && !r.spent);
+
+		if (!unspent || !unspent.length) {
+			throw new Error(`No unspent ${programId} records found`);
+		}
+
+		const decrypted = await Promise.all(
+			unspent.map(async (rec) => {
+				if (
+					!rec ||
+					typeof rec !== "object" ||
+					!("recordCiphertext" in rec) ||
+					typeof rec.recordCiphertext !== "string"
+				) {
+					throw new Error(`Invalid record format: ${JSON.stringify(rec)}`);
+				}
+				const plaintext = await this.wallet.decrypt(rec.recordCiphertext);
+				return plaintext.replace(/\s+/g, " ").trim();
+			}),
+		);
+
+		const balance = decrypted
+			.map((line) => {
+				const match = line.match(/microcredits:\s*(\d+)u64/);
+				return match ? BigInt(match[1]) : 0n;
+			})
+			.reduce((acc, val) => acc + val, 0n);
+
+		return fromMicroUnits(balance, 6);
+	}
+
+	async getPrivateTokenBalance(tokenProgramId: string, tokenSymbol: string): Promise<string> {
+		const records = await this.wallet.requestRecords(tokenProgramId, false);
+		// console.log("Fetched Records:", records);
+		const unspent = records?.filter((r) => r && typeof r === "object" && "spent" in r && !r.spent);
+
+		if (!unspent || !unspent.length) {
+			throw new Error(`No unspent ${tokenProgramId} records found`);
+		}
+
+		const decrypted = await Promise.all(
+			unspent.map(async (rec) => {
+				if (
+					!rec ||
+					typeof rec !== "object" ||
+					!("recordCiphertext" in rec) ||
+					typeof rec.recordCiphertext !== "string"
+				) {
+					throw new Error(`Invalid record format: ${JSON.stringify(rec)}`);
+				}
+				const plaintext = await this.wallet.decrypt(rec.recordCiphertext);
+				return plaintext.replace(/\s+/g, " ").trim();
+			}),
+		);
+
+		const balance = decrypted
+			.map((line) => {
+				const match = line.match(/amount:\s*(\d+)u\d+/);
+				return match ? BigInt(match[1]) : 0n;
+			})
+			.reduce((acc, val) => acc + val, 0n);
+
+		const tokenMetadata = await getTokenBySymbol(tokenSymbol, this.sandbox ? "testnet" : "mainnet");
+		if (!("decimals" in tokenMetadata)) {
+			throw new Error(`Token metadata for ${tokenSymbol} does not include decimals.`);
+		}
+
+		return fromMicroUnits(balance, tokenMetadata.decimals);
 	}
 }
