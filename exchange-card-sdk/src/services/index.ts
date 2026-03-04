@@ -1,6 +1,7 @@
 export * from "./aleoService";
 export * from "./algorandService";
 export * from "./bobaService";
+export * from "./cantonService";
 export * from "./nearService";
 export * from "./octaService";
 export * from "./quaiService";
