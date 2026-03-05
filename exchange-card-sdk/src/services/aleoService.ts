@@ -47,6 +47,14 @@ export interface TransactionOptions {
 	privateFee?: boolean;
 }
 
+interface AleoNetworkClientOptions {
+	headers?: {
+		[key: string]: string;
+	};
+	proverUri?: string;
+	recordScannerUri?: string;
+}
+
 export interface AleoWallet {
 	address: string;
 	decrypt: (cipherText: string) => Promise<string>;
@@ -106,16 +114,17 @@ export class AleoService {
 
 	constructor(
 		wallet: AleoWallet,
-		options?: {
+		aleoNetworkClientOptions?: AleoNetworkClientOptions,
+		sdkOptions?: {
 			sandbox?: boolean;
 		},
 	) {
 		this.wallet = wallet;
-		this.sandbox = options?.sandbox || false;
-		this.apiService = new ZebecCardAPIService(options?.sandbox || false);
+		this.sandbox = sdkOptions?.sandbox || false;
+		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox || false);
 		this.networkClient = this.sandbox
-			? new TestnetAleoNetworkClient(ALEO_NETWORK_CLIENT_URL)
-			: new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL);
+			? new TestnetAleoNetworkClient(ALEO_NETWORK_CLIENT_URL, aleoNetworkClientOptions)
+			: new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL, aleoNetworkClientOptions);
 	}
 
 	/**
