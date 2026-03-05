@@ -1,7 +1,6 @@
 {
 	"author": "Zebec Network | Ashish Sapkota",
 	"dependencies": {
-		"@canton-network/wallet-sdk": "^0.21.1",
 		"@near-js/crypto": "^2.5.1",
 		"@near-js/providers": "^2.5.1",
 		"@near-js/transactions": "^2.5.1",
@@ -54,7 +53,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/Zebec-Fintech-Labs/zebec-card-minimal-sdk.git"
+		"url": "git+git@github.com:Zebec-Fintech-Labs/card-sdk-mono.git"
 	},
 	"scripts": {
 		"build": "npm run clean && tsc",
@@ -65,5 +64,5 @@
 	},
 	"type": "module",
 	"types": "dist/index.d.ts",
-	"version": "1.9.0-dev.7"
+	"version": "1.9.0-dev.8"
 }
