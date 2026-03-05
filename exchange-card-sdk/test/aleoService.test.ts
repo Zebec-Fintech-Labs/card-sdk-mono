@@ -6,11 +6,16 @@ import {
 	ProgramManager,
 } from "@provablehq/sdk/testnet.js";
 
-import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet, getTokenBySymbol } from "../src";
-import { getAleoAccount } from "./setup";
+import {
+	ALEO_NETWORK_CLIENT_URL,
+	AleoService,
+	type AleoWallet,
+	getTokenBySymbol,
+} from "../src";
+import { getAleoAccounts } from "./setup";
 
-initThreadPool();
-const account = getAleoAccount("testnet");
+const accounts = getAleoAccounts("testnet");
+const account = accounts[0];
 console.log("address", account.toString());
 const client = new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL);
 client.setAccount(account as Account);
@@ -93,3 +98,21 @@ describe("AleoService", () => {
 		console.log("Token Metadata:", metadata);
 	});
 });
+
+
+describe("Aleo Transaction Parsing", () => {
+	it("should parse transfer credit transaction", async () => {
+		initThreadPool();
+
+		const receiver = accounts[1] as Account;
+		console.log("receiver address", receiver.toString());
+		const txId = "at1xr52jse7t5zqg6fmzkclh256pndlmywyvcdjj7q00sarxtz92gpqt9w5f6";
+
+		// fetch transaction details using AleoNetworkClient
+		const transaction = await client.getTransaction(txId);
+
+		// fetch transaction
+
+		console.log("Parsed transaction:", JSON.stringify(transaction, null, 2));
+	})
+})

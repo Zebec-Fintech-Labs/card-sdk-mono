@@ -174,12 +174,26 @@ export function getQuaiSigners(provider: quais.Provider) {
 	return signers;
 }
 
-export function getAleoAccount(network: "mainnet" | "testnet" = "mainnet") {
-	const privateKey = process.env.ALEO_PRIVATE_KEY;
-	assert(privateKey, "Missing env var ALEO_PRIVATE_KEY");
-	const account =
-		network === "mainnet"
-			? new AleoAccount({ privateKey })
-			: new TestnetAleoAccount({ privateKey });
-	return account;
+export function getAleoAccounts(network: "mainnet" | "testnet" = "mainnet") {
+	const privateKeysString = process.env.ALEO_PRIVATE_KEYS;
+	assert(privateKeysString, "Missing env var ALEO_PRIVATE_KEYS");
+	let parsedKeys: string[];
+
+	try {
+		parsedKeys = JSON.parse(privateKeysString);
+		assert(Array.isArray(parsedKeys));
+	} catch (_err) {
+		throw new Error("Invalid ALEO_PRIVATE_KEYS format");
+	}
+
+	return parsedKeys.map((key) => {
+		if (typeof key !== "string") {
+			throw new Error("Invalid ALEO_PRIVATE_KEYS format: all keys must be strings");
+		}
+		const account =
+			network === "mainnet"
+				? new AleoAccount({ privateKey: key })
+				: new TestnetAleoAccount({ privateKey: key });
+		return account;
+	});
 }
