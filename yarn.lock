@@ -398,12 +398,7 @@
   resolved "https://registry.npmjs.org/@popperjs/core/-/core-2.11.8.tgz#6b79032e760a0899cd4204710beede972a3a185f"
   integrity sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==
 
-"@provablehq/aleo-types@^0.3.0-alpha.3":
-  version "0.3.0-alpha.3"
-  resolved "https://registry.npmjs.org/@provablehq/aleo-types/-/aleo-types-0.3.0-alpha.3.tgz#d8f17874e5b2efd86d8bcf517f8d0cf448581573"
-  integrity sha512-8oQYDfUXn7hOdF2MOXit94j+OWT/MmYq5Hjhfrqv8Ws4/XrqHmRb7mcMVwVobSC5m8qLz7ew9Rg3mvc1pMkqDQ==
-
-"@provablehq/sdk@^0.9.15":
+"@provablehq/sdk@^0.9.16":
   version "0.9.16"
   resolved "https://registry.npmjs.org/@provablehq/sdk/-/sdk-0.9.16.tgz#0a9fcd7e93cd0733ad628200dfa2fd0a599c9000"
   integrity sha512-SzF2aelYW5DIjfLNFrdn4N8K5a18cMOgDE7DcnDcSCHXhoBipLQN49IzrKefTpxRMwvetunj63TqCMvzayC2WA==
@@ -488,9 +483,9 @@
     sha.js "^2.4.12"
 
 "@stellar/stellar-sdk@^14.4.3":
-  version "14.6.0"
-  resolved "https://registry.npmjs.org/@stellar/stellar-sdk/-/stellar-sdk-14.6.0.tgz#a720d747ed654dc4764baee011f9ff50aeadd6c0"
-  integrity sha512-uAFI32VsrKYUL/b5P7LM80M0N+amLPLJJ/zEibwcCwe5jbbXht7AUNVekyE6WFDZaUtqDtIWb7R+rJ+xk9qRRA==
+  version "14.6.1"
+  resolved "https://registry.npmjs.org/@stellar/stellar-sdk/-/stellar-sdk-14.6.1.tgz#5cf7c1645389fbb2697ac0e63ab9b773a2b3821d"
+  integrity sha512-A1rQWDLdUasXkMXnYSuhgep+3ZZzyuXJKdt5/KAIc0gkmSp906HTvUpbT4pu+bVr41tu0+J4Ugz9J4BQAGGytg==
   dependencies:
     "@stellar/stellar-base" "^14.1.0"
     axios "^1.13.3"

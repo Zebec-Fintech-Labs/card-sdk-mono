@@ -6,8 +6,7 @@
 		"@near-js/transactions": "^2.5.1",
 		"@near-js/types": "^2.5.1",
 		"@near-js/utils": "^2.5.1",
-		"@provablehq/aleo-types": "^0.3.0-alpha.3",
-		"@provablehq/sdk": "^0.9.15",
+		"@provablehq/sdk": "^0.9.16",
 		"@stellar/stellar-sdk": "^14.4.3",
 		"algosdk": "^3.4.0",
 		"axios": "^1.11.0",
@@ -64,5 +63,5 @@
 	},
 	"type": "module",
 	"types": "dist/index.d.ts",
-	"version": "1.9.0-dev.8"
+	"version": "1.9.0"
 }
