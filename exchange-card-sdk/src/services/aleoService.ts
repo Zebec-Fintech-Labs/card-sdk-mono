@@ -1,5 +1,7 @@
-import { Network, type TransactionOptions } from "@provablehq/aleo-types";
-import { AleoNetworkClient, SealanceMerkleTree } from "@provablehq/sdk/mainnet.js";
+import {
+	AleoNetworkClient,
+	SealanceMerkleTree,
+} from "@provablehq/sdk/mainnet.js";
 import {
 	AleoNetworkClient as TestnetAleoNetworkClient,
 	SealanceMerkleTree as TestnetSealanceMerkleTree,
@@ -7,7 +9,50 @@ import {
 
 import { ALEO_NETWORK_CLIENT_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
-import { fromMicroUnits, getTokenBySymbol, toMicroUnits } from "../utils";
+import {
+	fromMicroUnits,
+	getTokenBySymbol,
+	toMicroUnits,
+} from "../utils";
+
+/**
+ * Supported Aleo networks
+ */
+export enum Network {
+	MAINNET = "mainnet",
+	TESTNET = "testnet",
+	CANARY = "canary"
+}
+
+/**
+ * Transaction creation options
+ */
+export interface TransactionOptions {
+	/**
+	 * The program to execute
+	 */
+	program: string;
+	/**
+	 * The function to call
+	 */
+	function: string;
+	/**
+	 * The function inputs
+	 */
+	inputs: string[];
+	/**
+	 * The transaction fee to pay
+	 */
+	fee?: number;
+	/**
+	 * Record indices to use
+	 */
+	recordIndices?: number[];
+	/**
+	 * Whether the fee is private
+	 */
+	privateFee?: boolean;
+}
 
 export interface AleoWallet {
 	address: string;
