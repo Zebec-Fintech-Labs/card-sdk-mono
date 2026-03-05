@@ -51,7 +51,7 @@ const wallet: AleoWallet = {
 	},
 };
 
-const service = new AleoService(wallet, { sandbox: true });
+const service = new AleoService(wallet, {}, { sandbox: true });
 
 describe("AleoService", () => {
 	it("should get aleo balance", async () => {
