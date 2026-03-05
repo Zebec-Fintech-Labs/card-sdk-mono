@@ -1,7 +1,4 @@
-import {
-	AleoNetworkClient,
-	SealanceMerkleTree,
-} from "@provablehq/sdk/mainnet.js";
+import { AleoNetworkClient, SealanceMerkleTree } from "@provablehq/sdk/mainnet.js";
 import {
 	AleoNetworkClient as TestnetAleoNetworkClient,
 	SealanceMerkleTree as TestnetSealanceMerkleTree,
@@ -9,11 +6,7 @@ import {
 
 import { ALEO_NETWORK_CLIENT_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
-import {
-	fromMicroUnits,
-	getTokenBySymbol,
-	toMicroUnits,
-} from "../utils";
+import { fromMicroUnits, getTokenBySymbol, toMicroUnits } from "../utils";
 
 /**
  * Supported Aleo networks
@@ -21,7 +14,7 @@ import {
 export enum Network {
 	MAINNET = "mainnet",
 	TESTNET = "testnet",
-	CANARY = "canary"
+	CANARY = "canary",
 }
 
 /**
@@ -230,7 +223,7 @@ export class AleoService {
 
 		switch (functionName) {
 			case "transfer_public":
-				inputs = [recipient, `${amountInMicroCredits}u64`];
+				inputs = [recipient, amountInMicroCredits];
 				break;
 			case "transfer_private": {
 				const record = await this._getRecord(PROGRAM_NAME);
