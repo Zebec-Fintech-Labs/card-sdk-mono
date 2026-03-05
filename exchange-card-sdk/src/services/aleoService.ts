@@ -349,8 +349,12 @@ export class AleoService {
 
 	async getPrivateTokenBalance(tokenProgramId: string, tokenSymbol: string): Promise<string> {
 		const records = await this.wallet.requestRecords(tokenProgramId, false);
-		// console.log("Fetched Records:", records);
-		const unspent = records?.filter((r) => r && typeof r === "object" && "spent" in r && !r.spent);
+
+		if (!records) {
+			throw new Error(`No records found for program ${tokenProgramId}`);
+		}
+
+		const unspent = records.filter((r) => r && typeof r === "object" && "spent" in r && !r.spent);
 
 		if (!unspent || !unspent.length) {
 			throw new Error(`No unspent ${tokenProgramId} records found`);
