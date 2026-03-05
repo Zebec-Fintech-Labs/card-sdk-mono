@@ -6,12 +6,7 @@ import {
 	ProgramManager,
 } from "@provablehq/sdk/testnet.js";
 
-import {
-	ALEO_NETWORK_CLIENT_URL,
-	AleoService,
-	type AleoWallet,
-	getTokenBySymbol,
-} from "../src";
+import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet, getTokenBySymbol } from "../src";
 import { getAleoAccounts } from "./setup";
 
 const accounts = getAleoAccounts("testnet");
@@ -99,7 +94,6 @@ describe("AleoService", () => {
 	});
 });
 
-
 describe("Aleo Transaction Parsing", () => {
 	it("should parse transfer credit transaction", async () => {
 		initThreadPool();
@@ -114,5 +108,5 @@ describe("Aleo Transaction Parsing", () => {
 		// fetch transaction
 
 		console.log("Parsed transaction:", JSON.stringify(transaction, null, 2));
-	})
-})
+	});
+});
