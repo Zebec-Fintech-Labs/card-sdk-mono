@@ -243,12 +243,6 @@ export class AleoService {
 				throw new Error("Invalid or Unsupported transfer type");
 		}
 
-		if (functionName !== "transfer_public") {
-			throw new Error(
-				"Only public transfers are currently supported for credits. Private and cross-type transfers require additional implementation.",
-			);
-		}
-
 		const result = await this.wallet.executeTransaction({
 			program: PROGRAM_NAME,
 			function: functionName,
