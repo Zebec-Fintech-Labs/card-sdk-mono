@@ -10,7 +10,7 @@ import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet, getTokenBySymbol
 import { getAleoAccounts } from "./setup";
 
 const accounts = getAleoAccounts("testnet");
-const account = accounts[0];
+const account = accounts[1];
 console.log("address", account.toString());
 const client = new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL);
 client.setAccount(account as Account);
@@ -88,6 +88,11 @@ describe("AleoService", () => {
 		console.log("Private Balance:", balance);
 	});
 
+	it("should fetch private token balance", async () => {
+		const balance = await service.getPrivateTokenBalance("test_usdcx_stablecoin.aleo", "USDCx");
+		console.log("Private USDC Balance:", balance);
+	});
+
 	it("should fetch token metadata", async () => {
 		const metadata = await getTokenBySymbol("usad", "mainnet");
 		console.log("Token Metadata:", metadata);
@@ -106,7 +111,6 @@ describe("Aleo Transaction Parsing", () => {
 		const transaction = await client.getTransaction(txId);
 
 		// fetch transaction
-
 		console.log("Parsed transaction:", JSON.stringify(transaction, null, 2));
 	});
 });
