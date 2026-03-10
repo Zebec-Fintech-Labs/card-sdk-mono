@@ -1,6 +1,7 @@
 {
 	"author": "Zebec Network | Ashish Sapkota",
 	"dependencies": {
+		"@canton-network/core-types": "^0.20.0",
 		"@canton-network/wallet-sdk": "^0.21.1",
 		"@near-js/crypto": "^2.5.1",
 		"@near-js/providers": "^2.5.1",
@@ -64,5 +65,5 @@
 	},
 	"type": "module",
 	"types": "dist/index.d.ts",
-	"version": "1.10.1"
+	"version": "1.11.0-dev.1"
 }

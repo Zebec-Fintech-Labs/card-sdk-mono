@@ -154,6 +154,14 @@
     uuid "^11.1.0"
     zod "^4.3.5"
 
+"@canton-network/core-types@^0.20.0":
+  version "0.20.0"
+  resolved "https://registry.npmjs.org/@canton-network/core-types/-/core-types-0.20.0.tgz#58542e572959789b5e2f31fa97bad4185539db01"
+  integrity sha512-HGTtpEoYs/6MhB8zOO4CKn/Lk66eBTGo9Us+cc6cnQM+9XpHT9sR/rGKYzRINMBjSqI+zGz5rQ3D9oPTsYbX6w==
+  dependencies:
+    uuid "^11.1.0"
+    zod "^4.3.5"
+
 "@canton-network/core-wallet-auth@^0.19.1":
   version "0.19.1"
   resolved "https://registry.npmjs.org/@canton-network/core-wallet-auth/-/core-wallet-auth-0.19.1.tgz#a05f6860ae3414511bacafd3a4beda1a754fb488"
