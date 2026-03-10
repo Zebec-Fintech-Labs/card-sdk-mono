@@ -34,8 +34,30 @@ export interface CantonWalletAdapter {
 	 * @returns The submitted transaction / command ID.
 	 */
 	executeTransaction(
-		command: unknown,
-		disclosedContracts: unknown[],
+		command: {
+			ExerciseCommand: {
+				templateId: string;
+				contractId: string;
+				choice: string;
+				choiceArgument: unknown;
+			} | {
+				templateId: string;
+				contractId: string;
+				choice: string;
+				choiceArgument: unknown;
+			};
+		},
+		disclosedContracts: ({
+			templateId?: string;
+			contractId: string;
+			createdEventBlob: string;
+			synchronizerId: string;
+		} | {
+			templateId?: string;
+			contractId: string;
+			createdEventBlob: string;
+			synchronizerId: string;
+		})[],
 	): Promise<string>;
 }
 
