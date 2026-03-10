@@ -1,116 +1,222 @@
-// import {
-// 	type AuthTokenProvider,
-// 	LedgerController,
-// 	localNetStaticConfig,
-// 	TokenStandardController,
-// 	ValidatorController,
-// 	type WalletSDK,
-// 	WalletSDKImpl,
-// } from "@canton-network/wallet-sdk";
+import {
+	type AuthTokenProvider,
+	LedgerController,
+	localNetStaticConfig,
+	TokenStandardController,
+	ValidatorController,
+	type WalletSDK,
+	WalletSDKImpl,
+} from "@canton-network/wallet-sdk";
 
-// import { ZebecCardAPIService } from "../helpers/apiHelpers";
+import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
-// export interface CantonWallet {
-// 	partyId: string;
-// 	executeTransaction: (command: unknown, disclosedContractId: unknown[]) => Promise<string>;
-// }
+export const CANTON_NATIVE_INSTRUMENT_ID = "Amulet";
+export const DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN = "DSO::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a";
+/**
+ * Wallet adapter interface — the frontend implements this to bridge the
+ * dApp wallet (e.g. Canton dApp SDK, browser extension) with CantonService.
+ *
+ * The service calls `executeTransaction` with the prepared command and
+ * disclosed contracts produced by the wallet-sdk; the adapter is responsible
+ * for signing and submitting them through whichever wallet integration the
+ * frontend uses.
+ */
+export interface CantonWalletAdapter {
+	/** The Daml party ID of the connected user. */
+	readonly partyId: string;
 
-// export interface CantonConfig {
-// 	ledgerApiUrl: string;
-// 	validatorAppApiUrl: string;
-// }
+	/**
+	 * Sign and submit a transaction to the Canton ledger.
+	 *
+	 * @param command          - The exercise command prepared by the wallet-sdk.
+	 * @param disclosedContracts - Contracts that must be disclosed alongside
+	 *                           the command for the transaction to succeed.
+	 * @returns The submitted transaction / command ID.
+	 */
+	executeTransaction(
+		command: unknown,
+		disclosedContracts: unknown[],
+	): Promise<string>;
+}
 
-// export function createLedgerFactory(ledgerApiUrl: string) {
-// 	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
-// 		return new LedgerController(
-// 			userId,
-// 			new URL(ledgerApiUrl),
-// 			undefined,
-// 			isAdmin,
-// 			authTokenProvider,
-// 		);
-// 	};
-// }
+export interface CantonConfig {
+	ledgerApiUrl: string;
+	validatorAppApiUrl: string;
+	/**
+	 * Transfer-factory registry URL.
+	 * Defaults to `localNetStaticConfig.LOCALNET_REGISTRY_API_URL` when omitted.
+	 */
+	registryApiUrl?: string | URL;
+}
 
-// export function createValidatorFactory(validatorAppApiUrl: string) {
-// 	return (userId: string, authTokenProvider: AuthTokenProvider) => {
-// 		return new ValidatorController(userId, new URL(validatorAppApiUrl), authTokenProvider);
-// 	};
-// }
+/** Parameters for transferring native Canton coin (Amulet). */
+export interface NativeTransferParams {
+	amount: number | string;
+	/**
+	 * The instrument admin party for the Amulet instrument on the target network
+	 * (typically the DSO party).
+	 */
+	instrumentAdmin?: string;
+	memo?: string;
+}
 
-// export function createTokenStandardFactory(ledgerApiUrl: string, validatorAppApiUrl: string) {
-// 	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
-// 		return new TokenStandardController(
-// 			userId,
-// 			new URL(ledgerApiUrl),
-// 			new URL(validatorAppApiUrl),
-// 			undefined,
-// 			authTokenProvider,
-// 			isAdmin,
-// 		);
-// 	};
-// }
+/** Parameters for transferring a CIP-0056 standard token. */
+export interface TokenTransferParams {
+	amount: number | string;
+	/** The instrument / token identifier as registered in the token registry. */
+	instrumentId: string;
+	/** The admin party that governs this instrument. */
+	instrumentAdmin: string;
+	/**
+	 * Override the registry URL for this specific token.
+	 * Falls back to `CantonConfig.registryApiUrl` when omitted.
+	 */
+	registryApiUrl?: string | URL;
+	memo?: string;
+}
 
-// export class CantonService {
-// 	readonly cantonWalletSdk: WalletSDK;
-// 	private apiService: ZebecCardAPIService;
-// 	constructor(
-// 		readonly wallet: CantonWallet,
-// 		readonly cantonConfig: CantonConfig,
-// 		sdkOptions?: { sandbox?: boolean },
-// 	) {
-// 		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox || false);
-// 		this.cantonWalletSdk = new WalletSDKImpl().configure({
-// 			logger: console,
-// 			ledgerFactory: createLedgerFactory(cantonConfig.ledgerApiUrl),
-// 			validatorFactory: createValidatorFactory(cantonConfig.validatorAppApiUrl),
-// 			tokenStandardFactory: createTokenStandardFactory(
-// 				cantonConfig.ledgerApiUrl,
-// 				cantonConfig.validatorAppApiUrl,
-// 			),
-// 		});
-// 	}
+// ---------------------------------------------------------------------------
+// SDK factory helpers
+// ---------------------------------------------------------------------------
 
-// 	async connect() {
-// 		await this.cantonWalletSdk.connect();
-// 	}
+export function createLedgerFactory(ledgerApiUrl: string) {
+	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
+		return new LedgerController(
+			userId,
+			new URL(ledgerApiUrl),
+			undefined,
+			isAdmin,
+			authTokenProvider,
+		);
+	};
+}
 
-// 	async fetchVault(symbol = "CANTON"): Promise<{ address: string; tag?: string }> {
-// 		const data = await this.apiService.fetchVault(symbol);
-// 		return data;
-// 	}
+export function createValidatorFactory(validatorAppApiUrl: string) {
+	return (userId: string, authTokenProvider: AuthTokenProvider) => {
+		return new ValidatorController(userId, new URL(validatorAppApiUrl), authTokenProvider);
+	};
+}
 
-// 	// methods for transfering natve assets
-// 	async transferNative(params: {
-// 		amount: number | string;
-// 		instrumentId: string;
-// 		instrumentAdmin: string;
-// 	}) {
-// 		const vault = await this.fetchVault("CANTON");
+export function createTokenStandardFactory(ledgerApiUrl: string, validatorAppApiUrl: string) {
+	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
+		return new TokenStandardController(
+			userId,
+			new URL(ledgerApiUrl),
+			new URL(validatorAppApiUrl),
+			undefined,
+			authTokenProvider,
+			isAdmin,
+		);
+	};
+}
 
-// 		const sender = this.wallet.partyId;
-// 		const receiver = vault.address;
-// 		const memo = vault.tag;
+// ---------------------------------------------------------------------------
+// CantonService
+// ---------------------------------------------------------------------------
 
-// 		// implement transfer logic here
-// 		this.cantonWalletSdk.tokenStandard?.setTransferFactoryRegistryUrl(
-// 			localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
-// 		);
+export class CantonService {
+	readonly cantonWalletSdk: WalletSDK;
+	private readonly apiService: ZebecCardAPIService;
+	private readonly registryApiUrl: URL;
 
-// 		const [transferCommand, disclosedContracts] =
-// 			// biome-ignore lint/style/noNonNullAssertion: we can be sure that tokenStandard is defined here since we set its factory in the SDK constructor
-// 			await this.cantonWalletSdk.tokenStandard!.createTransfer(
-// 				sender,
-// 				receiver,
-// 				params.amount.toString(),
-// 				{
-// 					instrumentId: params.instrumentId,
-// 					instrumentAdmin: params.instrumentAdmin,
-// 				},
-// 				[],
-// 				memo,
-// 			);
+	constructor(
+		readonly wallet: CantonWalletAdapter,
+		readonly cantonConfig: CantonConfig,
+		sdkOptions?: { sandbox?: boolean },
+	) {
+		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox ?? false);
 
-// 		return this.wallet.executeTransaction(transferCommand, disclosedContracts);
-// 	}
-// }
+		this.registryApiUrl = cantonConfig.registryApiUrl
+			? new URL(cantonConfig.registryApiUrl.toString())
+			: localNetStaticConfig.LOCALNET_REGISTRY_API_URL;
+
+		this.cantonWalletSdk = new WalletSDKImpl().configure({
+			logger: console,
+			ledgerFactory: createLedgerFactory(cantonConfig.ledgerApiUrl),
+			validatorFactory: createValidatorFactory(cantonConfig.validatorAppApiUrl),
+			tokenStandardFactory: createTokenStandardFactory(
+				cantonConfig.ledgerApiUrl,
+				cantonConfig.validatorAppApiUrl,
+			),
+		});
+	}
+
+	async connect(): Promise<void> {
+		await this.cantonWalletSdk.connect();
+	}
+
+	async fetchVault(symbol = "CANTON"): Promise<{ address: string; tag?: string }> {
+		return this.apiService.fetchVault(symbol);
+	}
+
+	private getTokenStandard(): TokenStandardController {
+		const ts = this.cantonWalletSdk.tokenStandard;
+		if (!ts) {
+			throw new Error(
+				"TokenStandardController is not initialized. Call connect() before transferring.",
+			);
+		}
+		return ts;
+	}
+
+	/**
+	 * Transfer native Canton coin (Amulet) to the Zebec vault.
+	 *
+	 * 1. Resolves the vault address for the "CANTON" symbol.
+	 * 2. Builds the transfer command via the wallet-sdk token-standard.
+	 * 3. Delegates signing and submission to the wallet adapter.
+	 */
+	async transferNative(params: NativeTransferParams): Promise<string> {
+		const vault = await this.fetchVault("CANTON");
+		const tokenStandard = this.getTokenStandard();
+
+		tokenStandard.setTransferFactoryRegistryUrl(this.registryApiUrl);
+
+		const [command, disclosedContracts] = await tokenStandard.createTransfer(
+			this.wallet.partyId,
+			vault.address,
+			params.amount.toString(),
+			{
+				instrumentId: CANTON_NATIVE_INSTRUMENT_ID,
+				instrumentAdmin: params.instrumentAdmin || DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN,
+			},
+			[],
+			vault.tag ?? params.memo,
+		);
+
+		return this.wallet.executeTransaction(command, disclosedContracts);
+	}
+
+	/**
+	 * Transfer a CIP-0056 standard token to the Zebec vault.
+	 *
+	 * 1. Resolves the vault address for the given instrument symbol.
+	 * 2. Configures the token-standard with the appropriate registry URL.
+	 * 3. Builds the transfer command via the wallet-sdk token-standard.
+	 * 4. Delegates signing and submission to the wallet adapter.
+	 */
+	async transferToken(params: TokenTransferParams): Promise<string> {
+		const vault = await this.fetchVault(params.instrumentId);
+		const tokenStandard = this.getTokenStandard();
+
+		const registryUrl = params.registryApiUrl
+			? new URL(params.registryApiUrl.toString())
+			: this.registryApiUrl;
+
+		tokenStandard.setTransferFactoryRegistryUrl(registryUrl);
+
+		const [command, disclosedContracts] = await tokenStandard.createTransfer(
+			this.wallet.partyId,
+			vault.address,
+			params.amount.toString(),
+			{
+				instrumentId: params.instrumentId,
+				instrumentAdmin: params.instrumentAdmin,
+			},
+			[],
+			vault.tag ?? params.memo,
+		);
+
+		return this.wallet.executeTransaction(command, disclosedContracts);
+	}
+}
