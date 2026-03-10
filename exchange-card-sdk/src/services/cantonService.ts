@@ -1,5 +1,7 @@
+import type { Logger } from "@canton-network/core-types";
 import {
 	type AuthTokenProvider,
+	ClientCredentialOAuthController,
 	LedgerController,
 	localNetStaticConfig,
 	TokenStandardController,
@@ -11,7 +13,8 @@ import {
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
 
 export const CANTON_NATIVE_INSTRUMENT_ID = "Amulet";
-export const DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN = "DSO::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a";
+export const DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN =
+	"DSO::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a";
 /**
  * Wallet adapter interface — the frontend implements this to bridge the
  * dApp wallet (e.g. Canton dApp SDK, browser extension) with CantonService.
@@ -35,29 +38,34 @@ export interface CantonWalletAdapter {
 	 */
 	executeTransaction(
 		command: {
-			ExerciseCommand: {
+			ExerciseCommand:
+			| {
 				templateId: string;
 				contractId: string;
 				choice: string;
 				choiceArgument: unknown;
-			} | {
+			}
+			| {
 				templateId: string;
 				contractId: string;
 				choice: string;
 				choiceArgument: unknown;
 			};
 		},
-		disclosedContracts: ({
-			templateId?: string;
-			contractId: string;
-			createdEventBlob: string;
-			synchronizerId: string;
-		} | {
-			templateId?: string;
-			contractId: string;
-			createdEventBlob: string;
-			synchronizerId: string;
-		})[],
+		disclosedContracts: (
+			| {
+				templateId?: string;
+				contractId: string;
+				createdEventBlob: string;
+				synchronizerId: string;
+			}
+			| {
+				templateId?: string;
+				contractId: string;
+				createdEventBlob: string;
+				synchronizerId: string;
+			}
+		)[],
 	): Promise<string>;
 }
 
@@ -69,6 +77,15 @@ export interface CantonConfig {
 	 * Defaults to `localNetStaticConfig.LOCALNET_REGISTRY_API_URL` when omitted.
 	 */
 	registryApiUrl?: string | URL;
+	auth: {
+		configUrl: string;
+		userId?: string;
+		userSecret?: string;
+		adminId?: string;
+		adminSecret?: string;
+		scope?: string;
+		audience?: string;
+	}
 }
 
 /** Parameters for transferring native Canton coin (Amulet). */
@@ -102,7 +119,11 @@ export interface TokenTransferParams {
 // ---------------------------------------------------------------------------
 
 export function createLedgerFactory(ledgerApiUrl: string) {
-	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
+	return (
+		userId: string,
+		authTokenProvider: AuthTokenProvider,
+		isAdmin: boolean,
+	) => {
 		return new LedgerController(
 			userId,
 			new URL(ledgerApiUrl),
@@ -115,12 +136,23 @@ export function createLedgerFactory(ledgerApiUrl: string) {
 
 export function createValidatorFactory(validatorAppApiUrl: string) {
 	return (userId: string, authTokenProvider: AuthTokenProvider) => {
-		return new ValidatorController(userId, new URL(validatorAppApiUrl), authTokenProvider);
+		return new ValidatorController(
+			userId,
+			new URL(validatorAppApiUrl),
+			authTokenProvider,
+		);
 	};
 }
 
-export function createTokenStandardFactory(ledgerApiUrl: string, validatorAppApiUrl: string) {
-	return (userId: string, authTokenProvider: AuthTokenProvider, isAdmin: boolean) => {
+export function createTokenStandardFactory(
+	ledgerApiUrl: string,
+	validatorAppApiUrl: string,
+) {
+	return (
+		userId: string,
+		authTokenProvider: AuthTokenProvider,
+		isAdmin: boolean,
+	) => {
 		return new TokenStandardController(
 			userId,
 			new URL(ledgerApiUrl),
@@ -130,6 +162,29 @@ export function createTokenStandardFactory(ledgerApiUrl: string, validatorAppApi
 			isAdmin,
 		);
 	};
+}
+
+export function createAuthFactory(
+	configUrl: string,
+	logger: Logger = console,
+	userId?: string,
+	userSecret?: string,
+	adminId?: string,
+	adminSecret?: string,
+	scope?: string,
+	audience?: string,
+) {
+	return () =>
+		new ClientCredentialOAuthController(
+			configUrl,
+			logger,
+			userId,
+			userSecret,
+			adminId,
+			adminSecret,
+			scope,
+			audience,
+		);
 }
 
 // ---------------------------------------------------------------------------
@@ -154,6 +209,16 @@ export class CantonService {
 
 		this.cantonWalletSdk = new WalletSDKImpl().configure({
 			logger: console,
+			authFactory: createAuthFactory(
+				cantonConfig.auth.configUrl,
+				console,
+				cantonConfig.auth.userId,
+				cantonConfig.auth.userSecret,
+				cantonConfig.auth.adminId,
+				cantonConfig.auth.adminSecret,
+				cantonConfig.auth.scope,
+				cantonConfig.auth.audience,
+			),
 			ledgerFactory: createLedgerFactory(cantonConfig.ledgerApiUrl),
 			validatorFactory: createValidatorFactory(cantonConfig.validatorAppApiUrl),
 			tokenStandardFactory: createTokenStandardFactory(
@@ -167,7 +232,9 @@ export class CantonService {
 		await this.cantonWalletSdk.connect();
 	}
 
-	async fetchVault(symbol = "CANTON"): Promise<{ address: string; tag?: string }> {
+	async fetchVault(
+		symbol = "CANTON",
+	): Promise<{ address: string; tag?: string }> {
 		return this.apiService.fetchVault(symbol);
 	}
 
@@ -200,7 +267,8 @@ export class CantonService {
 			params.amount.toString(),
 			{
 				instrumentId: CANTON_NATIVE_INSTRUMENT_ID,
-				instrumentAdmin: params.instrumentAdmin || DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN,
+				instrumentAdmin:
+					params.instrumentAdmin || DEVNET_CANTON_NATIVE_INSTRUMENT_ADMIN,
 			},
 			[],
 			vault.tag ?? params.memo,
