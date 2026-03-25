@@ -69,6 +69,7 @@ export type AleoTransferCreditParams = {
 	transferType?: "public" | "private";
 	fee?: number;
 	privateFee?: boolean;
+	recipient?: string; // Optional recipient address, defaults to vault if not provided
 };
 
 export type AleoTransferStableCoinParams = {
@@ -77,6 +78,7 @@ export type AleoTransferStableCoinParams = {
 	transferType?: "public" | "private";
 	fee?: number;
 	privateFee?: boolean;
+	recipient?: string; // Optional recipient address, defaults to vault if not provided
 };
 
 export const NETWORK_CONFIG = {
@@ -218,9 +220,16 @@ export class AleoService {
 		const privateFee = params?.privateFee || false;
 		const fee = toMicroUnits(params.fee || 0.1, 6);
 
-		const vault = await this.fetchVault("ALEO");
-		const recipient = vault.address;
-		console.log("recipient:", recipient);
+		let recipient: string;
+		if (params.recipient) {
+			recipient = params.recipient;
+		} else {
+			const vault = await this.fetchVault("ALEO");
+			if (!vault) {
+				throw new Error("Failed to fetch vault address");
+			}
+			recipient = vault.address;
+		}
 
 		const amountInMicroCredits = toMicroUnits(amount, 6, "u64");
 
@@ -265,8 +274,16 @@ export class AleoService {
 		const tokenSymbol = params.programId === "usad_stablecoin.aleo" ? "USAD" : "USDCX";
 		const functionName = transferType === "public" ? "transfer_public" : "transfer_private";
 
-		const vault = await this.fetchVault(tokenSymbol);
-		const recipient = vault.address;
+		let recipient: string;
+		if (params.recipient) {
+			recipient = params.recipient;
+		} else {
+			const vault = await this.fetchVault(tokenSymbol);
+			if (!vault) {
+				throw new Error("Failed to fetch vault address");
+			}
+			recipient = vault.address;
+		}
 
 		const amountInMicroUnits = toMicroUnits(amount, 6, "u128");
 
