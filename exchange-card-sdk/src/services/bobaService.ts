@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import { ERC20__factory } from "../artifacts";
 import { BOBA_CHAIN_ID, DEFAULT_EVM_GAS_LIMIT } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
-import { BobaChainId } from "../types";
+import type { BobaChainId } from "../types";
 
 export type TransferBobaParams = {
 	amount: string | number;
