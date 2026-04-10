@@ -24,7 +24,7 @@
 		"@near-js/tokens": "^2.5.1",
 		"@typechain/ethers-v6": "^0.5.1",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "^24.3.1",
+		"@types/node": "^25.6.0",
 		"dotenv": "^17.2.2",
 		"mocha": "^11.7.2",
 		"prettier": "^3.6.2",
@@ -32,7 +32,7 @@
 		"ts-mocha": "^11.1.0",
 		"ts-node": "^10.9.2",
 		"typechain": "^8.3.2",
-		"typescript": "^5.9.2"
+		"typescript": "^6.0.2"
 	},
 	"files": [
 		"dist"
