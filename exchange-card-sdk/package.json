@@ -58,9 +58,10 @@
 		"clean": "rimraf dist",
 		"format": "prettier --write .",
 		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\"",
+		"prepare": "npm run build",
 		"test": "ts-mocha -p ./tsconfig.test.json -t 1000000"
 	},
 	"type": "module",
 	"types": "dist/index.d.ts",
-	"version": "1.11.3"
+	"version": "1.11.4"
 }
