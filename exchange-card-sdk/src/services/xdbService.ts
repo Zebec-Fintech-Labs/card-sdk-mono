@@ -5,7 +5,7 @@ import {
 	Operation,
 	TimeoutInfinite,
 	TransactionBuilder,
-} from "@stellar/stellar-sdk";
+} from "@zebec-fintech/stellar-sdk";
 
 import { XDB_NETWORK, XDB_RPC_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
