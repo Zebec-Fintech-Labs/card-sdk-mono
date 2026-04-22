@@ -1,467 +1,534 @@
-# EVM Zebec Card Sdk
+# EVM Zebec Card SDK
 
-An sdk for interacting with zebec instant card evm contract.
+An SDK for interacting with Zebec Instant Card EVM contracts.
 
 ## Installation
 
-Install package using yarn or npm
+```bash
+npm install @zebec-network/evm-card-sdk
 
-```
-yarn add zic-evm-sdk
-
-npm install zic-evm-sdk
+yarn add @zebec-network/evm-card-sdk
 ```
 
-## Usage
+## Supported Chains
 
-### Create Service Instance
+| Chain           | Chain ID |
+| --------------- | -------- |
+| Ethereum        | 1        |
+| Sepolia         | 11155111 |
+| Base            | 8453     |
+| BSC             | 56       |
+| BSC Testnet     | 97       |
+| Odyssey         | 153153   |
+| Odyssey Testnet | 131313   |
+| Polygon         | 137      |
+| Polygon Amoy    | 80002    |
 
-To use this sdk you should first create a `ZebecCardService` instance. To create an instance you need signer and chainId.
-Supported chains are Sepolia, Mainnet (Ethereum), BSC, Base, BscTestnet
+The `SupportedChain` enum and `parseSupportedChain` helper are exported for use with chain IDs.
+
+---
+
+## Quick Start
 
 ```ts
-const signer = <ethers.Signer Instance> // most wallet provider have way to create signer
-const chainId = ODYSSEY_TESTNET_CHAIN_ID;
+import { ZebecCardService, SupportedChain } from "@zebec-network/evm-card-sdk";
+import { ethers } from "ethers";
 
-const service = new ZebecCardService(signer, chainId);
+const provider = new ethers.BrowserProvider(window.ethereum);
+const signer = await provider.getSigner();
+
+const service = new ZebecCardService(signer, SupportedChain.Sepolia);
 ```
 
-### Deposit Usdc
+> **Odyssey chains** (`OdysseyTestnet`, `Odyssey`) use a different contract (`OdysseyZebecCard`) and support a different set of methods. See chain-specific notes in each method below.
 
-To deposit you first need to approve the zebec card contract to make use to amount to be deposited. Then you can perform deposit action.
+---
+
+## API Reference
+
+### `ZebecCardService`
+
+#### Constructor
 
 ```ts
-const amount = "1000";
-const token = await service.usdcToken.getAddress();
-const spender = await service.zebecCard.getAddress();
-const approval = await service.approve({
-	amount,
-	spender,
-	token,
+new ZebecCardService(signer: ethers.Signer, chainId: number)
+```
+
+| Parameter | Type             | Description                          |
+| --------- | ---------------- | ------------------------------------ |
+| `signer`  | `ethers.Signer`  | Ethers signer from your wallet       |
+| `chainId` | `number`         | One of the supported chain IDs above |
+
+**Public properties:**
+
+| Property    | Type                            | Description                        |
+| ----------- | ------------------------------- | ---------------------------------- |
+| `zebecCard` | `ZebecCard \| OdysseyZebecCard` | Main Zebec Card contract           |
+| `usdcToken` | `Token`                         | USDC ERC-20 contract               |
+| `weth`      | `Weth`                          | WETH contract                      |
+| `signer`    | `ethers.Signer`                 | Signer passed to the constructor   |
+| `chainId`   | `number`                        | Chain ID passed to the constructor |
+
+---
+
+### Token Utilities
+
+#### `approve`
+
+Approves a token spender. Only submits a transaction if the current allowance is less than the requested amount. Returns `null` if no approval is needed.
+
+```ts
+const tx = await service.approve({
+  token: tokenAddress,   // ERC-20 token address
+  spender: spenderAddress,
+  amount: "1000",        // Human-readable amount (e.g. USDC units)
 });
 
-if (approval) {
-	const receipt0 = await approval.wait();
-	console.log("approval hash:", receipt0?.hash);
+if (tx) {
+  const receipt = await tx.wait();
+  console.log("approval hash:", receipt?.hash);
 }
-
-const response = await service.depositUsdc({ amount });
-const receipt1 = await response.wait();
-console.log("txhash:", receipt1?.hash);
 ```
 
-### Withdraw Usdc
+#### `wrapEth`
 
-Withdraw can performed by call withdraw method in service.
-
-```ts
-const response = await service.withdraw({ amount: "10" });
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
-```
-
-### Fetch user deposit balance
+Wraps native ETH into WETH.
 
 ```ts
-const cardBalance = await service.getUserBalance({ userAddress: signer });
-console.log("card balance:", cardBalance0);
-```
-
-### Fetch swap data
-
-To fetch swap data. You can fetch swap data by calling `api.card.zebec.io/swap/get1inchswapquotes?<params>`.
-
-```ts
-const brett = "0x532f27101965dd16442E59d40670FaF5eBB142E4";
-const amount = "1";
-const dstToken = await service.usdcToken.getAddress();
-
-const urlParams = new URLSearchParams({
-	src,
-	dst,
-	from,
-	origin,
-	amount,
-	slippage: slippage.toString(),
-	compatibility: "true",
-	chainId: chainId.toString(),
-	receiver,
-	disableEstimate: "true",
-});
-
-//api.card.zebec.io/swap/get1inchswapquotes?src=0x9Cf0ED013e67DB12cA3AF8e7506fE401aA14dAd6&dst=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&from=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&origin=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&amount=1&slippage=5&compatibility=true&chainId=1&receiver=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&disableEstimate=true
-
-const url = BASE_BACKEND_API_URL + `/swap/get1inchswapquotes?${urlParams}`;
-console.log("url:", url);
-
-const swapData = await(
-	await fetch(url, {
-		headers: {
-			Accept: "application/json",
-			"Content-Type": "application/json; charset=utf-8",
-		},
-	}),
-).json();
-```
-
-### Swap And Deposit
-
-Swap and deposit is supposed to be performed when user has to deposit token other than usdc. The contract takes certain amount of USDC as fee for providing swap feature. It can done by calling `swapAndDeposit` method in service. The same data obtained by calling `fetchSwapData` can passed to that method. Before depositing user's token, you are required to approve the ZebecCard contract to spend the token because, token is first transferred to ZebecCard contract being swapped to USDC.
-
-```ts
-const swapAndData = ...
-
-const approval = await service.approve({
-    token: brett,
-    amount,
-    spender: service.zebecCard,
-});
-
-if (approval) {
-    const receipt = await approval.wait();
-    console.log("approval hash:", receipt?.hash);
-}
-
-const response = await service.swapAndDeposit(data);
-const receipt1 = await response.wait();
-console.log("txhash:", receipt1?.hash);
-```
-
-### Buy card
-
-Card purchase consume user's usdc deposits. To buy card you have to call `buyCard` method in service.
-
-```ts
-const response = await service.buyCard({
-	amount: "199",
-	cardTypeId: "103108509702",
-	buyerEmail: "user@gmail.com",
-});
-
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
-```
-
-### Get total amount of card purchased in a day last time
-
-```ts
-const userAddress = "<address>";
-const cardPurchase = await service.getCardPurhcaseOfDay({ userAddress });
-console.log("card purchase:", cardPurchase);
-```
-
-### Direct Buy Direct
-
-```ts
-const amount = "1000";
-console.log("amount: ", amount);
-const token = await service.usdcToken.getAddress();
-const spender = await service.zebecCard.getAddress();
-
-const approval = await service.approve({
-	amount,
-	spender,
-	token,
-});
-
-console.log("approval:", approval);
-
-if (approval) {
-	const receipt0 = await approval.wait();
-	console.log("approval hash:", receipt0?.hash);
-}
-
-const response = await service.buyCardDirect({
-	amount,
-	cardTypeId: "103108509702",
-	buyerEmail: "user@gmail.com",
-});
-
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
-```
-
-### Fetch swap quote
-
-```ts
-const urlParams = new URLSearchParams({
-	src,
-	dst,
-	from,
-	origin,
-	amount,
-	slippage: slippage.toString(),
-	compatibility: "true",
-	chainId: chainId.toString(),
-	receiver,
-	disableEstimate: "true",
-});
-
-const url = BASE_BACKEND_API_URL + `/swap/get1inchswapquotes?${urlParams}`;
-console.log("url:", url);
-
-const response = await(
-	await fetch(url, {
-		headers: {
-			Accept: "application/json",
-			"Content-Type": "application/json; charset=utf-8",
-		},
-	}),
-).json();
-
-return response;
-```
-
-### Swap And Direct Buy Card
-
-```ts
-const brett = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
-const amount = "1";
-const spender = await service.zebecCard.getAddress();
-
-const approval1 = await service.approve({
-	amount,
-	spender,
-	token: brett,
-});
-
-if (approval1) {
-	const receipt1 = await approval1.wait();
-	console.log("approval hash:", receipt1?.hash);
-}
-
-const response = await service.swapAndBuyCardDirect({
-	...data,
-	cardTypeId: "103108509702",
-	buyerEmail: "user@gmail.com",
-});
-const receipt2 = await response.wait();
-console.log("swap and buycard hash:", receipt2?.hash);
-```
-
-> Note: Swap and buycard direct works in all supported chain expected odyssey.
-
-### Swap and Buy Card Directly in Odyssey Chain
-
-```ts
-const buyerEmail = "shrestharoshan768@gmail.com";
-const swapAmount = "1265";
-console.log("signer: ", signer.address);
-const swapAndBuyParams: SwapAndBuyCardParamsOdyssey = {
-	cardTypeId: "103251238082",
-	buyerEmail,
-	ether: swapAmount,
-	slippage: 1,
-};
-
-const response = await service.swapAndBuyCardOdyssey(swapAndBuyParams);
-const receipt = await response.wait();
-console.log("hash: ", receipt?.hash);
-```
-
-### Generate Yield
-
-To transfer usdc from user's vault to yield provider, user has to call the generateYield method. After the trasaction success, user will receive equivalent aUSDC token of respective chain. This token will increase gradually as time passes and is required to withdraw yield.
-
-```ts
-const amount = "100";
-const response = await service.generateYield({ amount });
-const receipt1 = await response.wait();
-console.log("txhash:", receipt1?.hash);
-```
-
-### Withdraw Yield
-
-To withdraw yield user has to first give allowance the zebec contract to spend the aUSDC token. After approval is given, the withdraw methods can called.
-
-```ts
-const spender = await service.zebecCard.getAddress();
-const token = getATokenAddress(SEPOLIA_CHAIN_ID);
-const amount = "100";
-
-const approval = await service.approve({
-	token,
-	amount,
-	spender,
-});
-
-if (approval) {
-	const receipt0 = await approval.wait();
-	console.log("approval hash:", receipt0?.hash);
-}
-
-const response = await service.withdrawYield({ amount });
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
-```
-
-### Wrap Native Currency
-
-```ts
-const amount = "0.001";
-const response = await service.wrapEth({ amount });
-const receipt = await response.wait();
+const tx = await service.wrapEth({ amount: "0.001" });
+const receipt = await tx.wait();
 console.log("txHash:", receipt?.hash);
 ```
 
-### Admin functionality
+---
 
-To call admin functions you need to create instance of `ZebecCardService` with admin signer. View functions call be called regardless of any signer but write functions are authorized to call by only admin.
+### Card Purchase
 
-### Get Card Config
+#### `buyCardDirect`
 
-```ts
-const cardConfig: CardConfig = await service.getCardConfig();
-console.log("cardConfig:", cardConfig);
-```
-
-### Get Admin Address
+Buys a card in a single transaction — USDC is pulled directly from the user's wallet (no prior vault deposit needed). Requires approval of the `ZebecCard` contract to spend USDC. Works on all supported chains.
 
 ```ts
-const admin: string = await service.getAdmin();
-console.log("admin:", admin);
-```
+const token = await service.usdcToken.getAddress();
+const spender = await service.zebecCard.getAddress();
+const amount = "199";
 
-### Set Native Fee
+const approval = await service.approve({ token, spender, amount });
+if (approval) {
+  await approval.wait();
+}
 
-```ts
-const response = await service.setNativeFee({ feeInPercent: "1.5" });
-const receipt = await response.wait();
+const tx = await service.buyCardDirect({
+  amount,
+  cardType: "carbon",
+  buyerEmail: "user@example.com",
+});
+const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
 ```
 
-### Set NonNative Fee
+Card type mapping:
+
+| `cardType` value | Contract value     |
+| ---------------- | ------------------ |
+| `"silver"`       | `"non_reloadable"` |
+| `"carbon"`       | `"reloadable"`     |
+
+---
+
+### Swap & Buy
+
+These methods allow users to pay with tokens other than USDC. The contract handles the swap to USDC internally.
+
+> **Non-Odyssey chains** use the 1inch aggregator. **Odyssey chains** use a native ETH swap path.
+
+#### Fetching Swap Quote
+
+Fetch swap data from the Zebec backend before calling swap methods:
 
 ```ts
-const response = await service.setNonNativeFee({ feeInPercent: "2.5" });
-const receipt = await response.wait();
+const urlParams = new URLSearchParams({
+  src,               // source token address
+  dst,               // destination token address (USDC)
+  from,              // user wallet address
+  origin,            // user wallet address
+  amount,            // amount in source token smallest unit
+  slippage: "5",
+  compatibility: "true",
+  chainId: chainId.toString(),
+  receiver,          // ZebecCard contract address
+  disableEstimate: "true",
+});
+
+const url = `https://api.card.zebec.io/swap/get1inchswapquotes?${urlParams}`;
+const swapData = await fetch(url, {
+  headers: { Accept: "application/json", "Content-Type": "application/json; charset=utf-8" },
+}).then((r) => r.json());
+```
+
+#### `swapAndBuyCardDirect`
+
+Swaps a source token to USDC and buys a card in one transaction. **Non-Odyssey chains only.**
+
+Requires approval of the `ZebecCard` contract to spend the source token.
+
+```ts
+const approval = await service.approve({
+  token: srcTokenAddress,
+  spender: await service.zebecCard.getAddress(),
+  amount: srcAmount,
+});
+if (approval) await approval.wait();
+
+const tx = await service.swapAndBuyCardDirect({
+  swapData,
+  cardType: "carbon",
+  buyerEmail: "user@example.com",
+});
+const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
 ```
 
-### Set Revenue Fee
+#### `swapAndBuyCardOdyssey`
+
+Swaps native ETH to USDC and buys a card in one transaction. **Odyssey chains only.**
 
 ```ts
-const response = await service.setRevenueFee({ feeInPercent: "5.0" });
-const receipt = await response.wait();
+const tx = await service.swapAndBuyCardOdyssey({
+  cardType: "silver",
+  buyerEmail: "user@example.com",
+  ether: "1265",   // Amount of native ETH (in smallest unit)
+  slippage: 1,     // Slippage tolerance in percent
+});
+const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
 ```
 
-### Set Revenue Vault
+---
+
+### Query Methods
+
+#### `getUserBalance`
+
+Returns the user's USDC vault balance as a human-readable string.
 
 ```ts
-const vaultAddress = "<address>";
-const response = await service.setRevenueVault({ vaultAddress });
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
+const balance = await service.getUserBalance({ userAddress: signerAddress });
+console.log("balance:", balance);
 ```
 
-### Set Commission Vault
+#### `getCardPurhcaseOfDay`
+
+Returns the user's card purchase info for the current day.
 
 ```ts
-const vaultAddress = "<address>";
-const response = await service.setCommissionVault({ vaultAddress });
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
+const purchase = await service.getCardPurhcaseOfDay({ userAddress: signerAddress });
+console.log("total purchased today:", purchase.totalCardPurchased);
+console.log("timestamp:", purchase.cardPurchasedTimestamp);
 ```
 
-### Set Card Vault
+Returns a `CardPurchaseOfDay` object:
 
 ```ts
-const vaultAddress = "<address>";
-const response = await service.setCardVault({ vaultAddress });
-const receipt = await response.wait();
-console.log("txhash:", receipt?.hash);
-```
-
-###
-
-Fetc
-
-### Creating Token Contract Instance
-
-The SDK export Token contract factory as well. You can create token contract object in following way.
-
-```ts
-const tokenAddress = "<token adddress>";
-const signer = <ethers.Signer Instance>;
-const token = Token__factory.connect(tokenAddress, signer);
-```
-
-You can use this object to interact with ERC20 Token contracts. For example, fetching token balance of user would be like:
-
-```ts
-const walletAddress = "<address>";
-const balance = await token.balanceOf(walletAddress);
-```
-
-### Parsing events from logs
-
-The sdk provides ZebecCard contract factory which can be used to create ethers interface for parsing events from logs.
-
-```ts
-function parseLogs(logs: readonly Log[]) {
-	const zebecCardInterface = ZebecCard__factory.createInterface();
-	return logs.map((l) => zebecCardInterface.parseLog(l)).filter(Boolean) as LogDescription[];
+{
+  totalCardPurchased: string;     // Total USDC value purchased today
+  cardPurchasedTimestamp: number; // Unix timestamp of last purchase
 }
 ```
 
-You can create function that parse receipt logs to LogDescription
+#### `getCardConfig`
+
+Returns the current contract configuration.
 
 ```ts
-
+const config = await service.getCardConfig();
+console.log(config);
 ```
 
-### Parsing deposit event
+Returns a `CardConfig` object:
 
 ```ts
-const url = "<RPC URL>";
-const provider = new ethers.JsonRpcProvider(url);
-
-const hash = "0x787b49fe1d8896ab53ebe0b39828aa7f50d5c8c33521ca75bbcf071cec8306cb";
-const receipt = await provider.getTransactionReceipt(hash);
-assert(receipt, "Could not find receipt.");
-const zebecCardEvents = parseLogs(receipt.logs);
-const depositedEvent = zebecCardEvents.find((e) => e.name === "Deposited");
-assert(depositedEvent, "Could not find Deposited event");
-
-depositedEvent.args.map((arg, i) => console.log("arg %d: %o", i, arg));
+{
+  nativeFeePercent: string;
+  nonNativeFeePercent: string;
+  revenueFeePercent: string;
+  totalCardSold: bigint;
+  cardVault: string;
+  revenueVault: string;
+  commissionVault: string;
+  usdcAddress: string;
+  minCardAmount: string;
+  maxCardAmount: string;
+  dailyCardPurchaseLimit: string;
+}
 ```
 
-### Parsing withdraw event
+#### `getFeeTiers`
+
+Returns configured fee tiers.
 
 ```ts
-const hash = "0x8b3dd458428323f60ce53cdfed5412d5228f020082881e2434381259b607fe75";
-const receipt = await provider.getTransactionReceipt(hash);
-assert(receipt, "Could not find receipt.");
-const zebecCardEvents = parseLogs(receipt.logs);
-const withdrawnEvent = zebecCardEvents.find((e) => e.name === "Withdrawn");
-assert(withdrawnEvent, "Could not find Withdrawn event");
-
-withdrawnEvent.args.map((arg, i) => console.log("arg %d: %o", i, arg));
+const tiers = await service.getFeeTiers();
+// [{ feePercent: "1.5", minAmount: "0", maxAmount: "500" }, ...]
 ```
 
-### Parsing card purchase event
+#### `getAdmin`
+
+Returns the admin (owner) address of the contract.
 
 ```ts
-const hash = "0xf81179e1a79293b2e7ee012a57b03a093cc33f647bdc3c20be9c63b97557c392";
-const receipt = await provider.getTransactionReceipt(hash);
-assert(receipt, "Could not find receipt.");
-const zebecCardEvents = parseLogs(receipt.logs);
-const cardPurchasedEvent = zebecCardEvents.find((e) => e.name === "CardPurchased");
-assert(cardPurchasedEvent, "Could not find CardPurchased event");
-
-cardPurchasedEvent.args.map((arg, i) => console.log("arg %d: %o", i, arg));
+const admin = await service.getAdmin();
+console.log("admin:", admin);
 ```
 
-### Parsing swap and deposit event
+#### `getCustomFee`
+
+Returns the custom fee configured for a specific token, as a percentage string.
 
 ```ts
-const hash = "";
-const receipt = await provider.getTransactionReceipt(hash);
-assert(receipt, "Could not find receipt.");
-const zebecCardEvents = parseLogs(receipt.logs);
-const swappedEvent = zebecCardEvents.find((e) => e.name === "Swapped");
-assert(swappedEvent, "Could not find Swapped event");
-
-swappedEvent.args.map((arg, i) => console.log("arg %d: %o", i, arg));
+const fee = await service.getCustomFee({ tokenAddress: "0x..." });
+console.log("fee:", fee); // e.g. "2.5"
 ```
+
+#### `getReloadableFee`
+
+Returns the reloadable (carbon) card fee as a percentage string. **Non-Odyssey chains only.**
+
+```ts
+const fee = await service.getReloadableFee();
+console.log("reloadable fee:", fee);
+```
+
+#### `getMinimumUsdcAmount`
+
+Returns the minimum USDC amount for a given ETH amount with slippage applied. **Odyssey chains only.**
+
+```ts
+const minUsdc = await service.getMinimumUsdcAmount("1265", 1);
+console.log("min USDC:", minUsdc);
+```
+
+---
+
+### Admin Methods
+
+Admin methods can only be called by the contract owner. Use a `ZebecCardService` instance created with the admin signer.
+
+#### `setNativeFee`
+
+```ts
+await (await service.setNativeFee({ feeInPercent: "1.5" })).wait();
+```
+
+#### `setNonNativeFee`
+
+```ts
+await (await service.setNonNativeFee({ feeInPercent: "2.5" })).wait();
+```
+
+#### `setRevenueFee`
+
+```ts
+await (await service.setRevenueFee({ feeInPercent: "5.0" })).wait();
+```
+
+#### `setRevenueVault`
+
+```ts
+await (await service.setRevenueVault({ vaultAddress: "0x..." })).wait();
+```
+
+#### `setCommissionVault`
+
+```ts
+await (await service.setCommissionVault({ vaultAddress: "0x..." })).wait();
+```
+
+#### `setCardVault`
+
+```ts
+await (await service.setCardVault({ vaultAddress: "0x..." })).wait();
+```
+
+#### `setUsdcAddress`
+
+```ts
+await (await service.setUsdcAddress({ tokenAddress: "0x..." })).wait();
+```
+
+#### `setMinCardAmount`
+
+```ts
+await (await service.setMinCardAmount({ minCardAmount: "10" })).wait();
+```
+
+#### `setMaxCardAmount`
+
+```ts
+await (await service.setMaxCardAmount({ maxCardAmount: "1000" })).wait();
+```
+
+#### `setDailyCardPurchaseLimit`
+
+```ts
+await (await service.setDailyCardPurchaseLimit({ dailyCardPurchaseLimit: "5000" })).wait();
+```
+
+#### `setFee` (Odyssey chains only)
+
+Updates the fee for a given amount range, or inserts a new tier if the range doesn't exist.
+
+```ts
+await (await service.setFee({ minAmount: "0", maxAmount: "500", feePercent: "1.5" })).wait();
+```
+
+#### `setFeeTiers`
+
+Replaces all fee tiers.
+
+```ts
+await (await service.setFeeTiers({
+  feeTiers: [
+    { feePercent: "1.0", minAmount: "0",   maxAmount: "200" },
+    { feePercent: "1.5", minAmount: "200", maxAmount: "500" },
+    { feePercent: "2.0", minAmount: "500", maxAmount: "9999" },
+  ],
+})).wait();
+```
+
+#### `setCustomFee`
+
+Sets a custom fee percentage for a specific token.
+
+```ts
+await (await service.setCustomFee({ tokenAddress: "0x...", fee: "3.0" })).wait();
+```
+
+#### `setReloadableFee` (Non-Odyssey chains only)
+
+Sets the fee for reloadable (carbon) cards.
+
+```ts
+await (await service.setReloadableFee({ fee: "1.0" })).wait();
+```
+
+---
+
+## Using Contract Factories
+
+The SDK exports Typechain-generated factory classes for creating contract instances directly.
+
+```ts
+import { Token__factory, ZebecCard__factory } from "@zebec-network/evm-card-sdk";
+import { ethers } from "ethers";
+
+// Create an ERC-20 token contract instance
+const token = Token__factory.connect(tokenAddress, signer);
+const balance = await token.balanceOf(walletAddress);
+
+// Create a ZebecCard interface for parsing logs
+function parseLogs(logs: readonly ethers.Log[]) {
+  const iface = ZebecCard__factory.createInterface();
+  return logs.map((l) => iface.parseLog(l)).filter(Boolean) as ethers.LogDescription[];
+}
+```
+
+---
+
+## Parsing Contract Events
+
+Use the ZebecCard interface to decode transaction receipt logs.
+
+```ts
+import { ethers } from "ethers";
+import { ZebecCard__factory } from "@zebec-network/evm-card-sdk";
+
+const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+function parseLogs(logs: readonly ethers.Log[]) {
+  const iface = ZebecCard__factory.createInterface();
+  return logs.map((l) => iface.parseLog(l)).filter(Boolean) as ethers.LogDescription[];
+}
+
+// Deposited event
+const receipt = await provider.getTransactionReceipt(txHash);
+const events = parseLogs(receipt!.logs);
+const deposited = events.find((e) => e.name === "Deposited");
+deposited?.args.forEach((arg, i) => console.log(`arg ${i}:`, arg));
+
+// Withdrawn event
+const withdrawn = events.find((e) => e.name === "Withdrawn");
+
+// CardPurchased event
+const cardPurchased = events.find((e) => e.name === "CardPurchased");
+
+// Swapped event
+const swapped = events.find((e) => e.name === "Swapped");
+```
+
+---
+
+## Exported Constants & Helpers
+
+```ts
+import {
+  SupportedChain,
+  ODYSSEY_CHAIN_IDS,
+  ZEBEC_CARD_ADDRESS,
+  USDC_ADDRESS,
+  WETH_ADDRESS,
+  ATOKEN_ADDRESS,
+  DEFAULT_GAS_LIMIT,
+  parseSupportedChain,
+} from "@zebec-network/evm-card-sdk";
+
+// Get ZebecCard contract address for a chain
+const contractAddress = ZEBEC_CARD_ADDRESS[SupportedChain.Sepolia];
+
+// Parse a raw chain ID to SupportedChain enum (throws if unsupported)
+const chain = parseSupportedChain(11155111); // SupportedChain.Sepolia
+
+// Check if a chain is an Odyssey chain
+const isOdyssey = ODYSSEY_CHAIN_IDS.includes(chainId);
+```
+
+---
+
+## Exported ABIs
+
+Raw ABIs are available for use with other libraries:
+
+```ts
+import {
+  ZEBEC_CARD_ABI,
+  ERC20_TOKEN_ABI,
+  WETH_ABI,
+  AGGREGATOR_ROUTER_V6_ABI,
+} from "@zebec-network/evm-card-sdk";
+```
+
+---
+
+## TypeScript Types
+
+```ts
+import type {
+  CardType,
+  CardConfig,
+  FeeTier,
+  CardPurchaseOfDay,
+  SwapData,
+  SwapAndBuyCardParams,
+  SwapAndBuyCardParamsOdyssey,
+} from "@zebec-network/evm-card-sdk";
+```
+
+| Type                          | Description                                      |
+| ----------------------------- | ------------------------------------------------ |
+| `CardType`                    | `"silver" \| "carbon"`                           |
+| `CardConfig`                  | Full contract configuration object               |
+| `FeeTier`                     | `{ feePercent, minAmount, maxAmount }`           |
+| `CardPurchaseOfDay`           | `{ totalCardPurchased, cardPurchasedTimestamp }` |
+| `SwapData`                    | Swap quote data from the Zebec backend           |
+| `SwapAndBuyCardParams`        | Parameters for `swapAndBuyCardDirect`            |
+| `SwapAndBuyCardParamsOdyssey` | Parameters for `swapAndBuyCardOdyssey`           |

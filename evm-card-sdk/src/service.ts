@@ -1,6 +1,3 @@
-import BigNumber from "bignumber.js";
-import { ethers } from "ethers";
-
 import {
 	areDatesOfSameDay,
 	bpsToPercent,
@@ -8,15 +5,17 @@ import {
 	isEmailValid,
 	percentToBps,
 } from "@zebec-network/core-utils";
+import BigNumber from "bignumber.js";
+import { ethers } from "ethers";
 
 import {
-	OdysseyZebecCard,
+	type OdysseyZebecCard,
 	OdysseyZebecCard__factory,
-	Token,
+	type Token,
 	Token__factory,
-	Weth,
+	type Weth,
 	Weth__factory,
-	ZebecCard,
+	type ZebecCard,
 	ZebecCard__factory,
 } from "./artifacts";
 import {
@@ -312,13 +311,19 @@ export class ZebecCardService {
 		overrides?: ethers.Overrides;
 	}): Promise<ethers.ContractTransactionResponse> {
 		const decimals = await this.usdcToken.decimals();
-		const dailyCardPurchaseLimit = ethers.parseUnits(params.dailyCardPurchaseLimit, decimals);
+		const dailyCardPurchaseLimit = ethers.parseUnits(
+			params.dailyCardPurchaseLimit,
+			decimals,
+		);
 
 		const overrides = {
 			...params.overrides,
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
-		return this.zebecCard.setDailyCardBuyLimit(dailyCardPurchaseLimit, overrides);
+		return this.zebecCard.setDailyCardBuyLimit(
+			dailyCardPurchaseLimit,
+			overrides,
+		);
 	}
 
 	/**
@@ -339,7 +344,12 @@ export class ZebecCardService {
 			...params.overrides,
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
-		return (this.zebecCard as OdysseyZebecCard).setFee(minAmount, maxAmount, fee, overrides);
+		return (this.zebecCard as OdysseyZebecCard).setFee(
+			minAmount,
+			maxAmount,
+			fee,
+			overrides,
+		);
 	}
 
 	/**
@@ -379,15 +389,25 @@ export class ZebecCardService {
 			...params.overrides,
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
-		return this.zebecCard.setCustomTokenFee(params.tokenAddress, fee, overrides);
+		return this.zebecCard.setCustomTokenFee(
+			params.tokenAddress,
+			fee,
+			overrides,
+		);
 	}
 
-	async getCustomFee(params: { tokenAddress: string; overrides?: ethers.Overrides }) {
+	async getCustomFee(params: {
+		tokenAddress: string;
+		overrides?: ethers.Overrides;
+	}) {
 		const fee = await this.zebecCard.getCustomTokenFee(params.tokenAddress);
 		return bpsToPercent(fee.toString());
 	}
 
-	async setReloadableFee(params: { fee: string | number; overrides?: ethers.Overrides }) {
+	async setReloadableFee(params: {
+		fee: string | number;
+		overrides?: ethers.Overrides;
+	}) {
 		const fee = percentToBps(params.fee.toString());
 		const overrides = {
 			...params.overrides,
@@ -468,9 +488,9 @@ export class ZebecCardService {
 		if (parsedAmount > vaultBalance) {
 			throw new Error(
 				"Not enough balance. Vault balance: " +
-					ethers.formatUnits(vaultBalance, decimals) +
-					" Requested amount: " +
-					params.amount,
+				ethers.formatUnits(vaultBalance, decimals) +
+				" Requested amount: " +
+				params.amount,
 			);
 		}
 
@@ -481,14 +501,16 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
 		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
-		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const lastCardPurchaseDate = new Date(
+			Number(cardPurchaseInfo.unixInRecord * 1000n),
+		);
 		const today = new Date();
 
 		let cardPurchaseOfDay = 0n;
@@ -501,9 +523,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -536,8 +558,14 @@ export class ZebecCardService {
 
 		const { swapParams, ether } = params.swapData;
 
-		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
-		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcToken = Token__factory.connect(
+			swapParams.description.srcToken,
+			this.signer,
+		);
+		const dstToken = Token__factory.connect(
+			swapParams.description.dstToken,
+			this.signer,
+		);
 		const srcTokenDecimals = await srcToken.decimals();
 		const dstTokenDecimals = await dstToken.decimals();
 
@@ -547,8 +575,14 @@ export class ZebecCardService {
 			dstToken: swapParams.description.dstToken,
 			srcReceiver: swapParams.description.srcReceiver,
 			dstReceiver: swapParams.description.dstReceiver,
-			amount: ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals),
-			minReturnAmount: ethers.parseUnits(swapParams.description.minReturnAmount, dstTokenDecimals),
+			amount: ethers.parseUnits(
+				swapParams.description.srcAmount,
+				srcTokenDecimals,
+			),
+			minReturnAmount: ethers.parseUnits(
+				swapParams.description.minReturnAmount,
+				dstTokenDecimals,
+			),
 			flags: BigInt(swapParams.description.flags),
 		};
 		const routeData = swapParams.routeData;
@@ -557,10 +591,15 @@ export class ZebecCardService {
 			...params.overrides,
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
-		return (this.zebecCard as ZebecCard).swapAndDeposit(executor, description, routeData, {
-			value: ethers.parseEther(ether),
-			...overrides,
-		});
+		return (this.zebecCard as ZebecCard).swapAndDeposit(
+			executor,
+			description,
+			routeData,
+			{
+				value: ethers.parseEther(ether),
+				...overrides,
+			},
+		);
 	}
 
 	async buyCardDirect(params: {
@@ -583,14 +622,16 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
 		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
-		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const lastCardPurchaseDate = new Date(
+			Number(cardPurchaseInfo.unixInRecord * 1000n),
+		);
 		const today = new Date();
 
 		let cardPurchaseOfDay = 0n;
@@ -603,9 +644,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -643,14 +684,23 @@ export class ZebecCardService {
 			swapData: { swapParams, ether },
 		} = params;
 
-		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
-		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcToken = Token__factory.connect(
+			swapParams.description.srcToken,
+			this.signer,
+		);
+		const dstToken = Token__factory.connect(
+			swapParams.description.dstToken,
+			this.signer,
+		);
 		const srcTokenDecimals = await srcToken.decimals();
 		const dstTokenDecimals = await dstToken.decimals();
 
 		const executor = swapParams.executor;
 
-		const amount = ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals);
+		const amount = ethers.parseUnits(
+			swapParams.description.srcAmount,
+			srcTokenDecimals,
+		);
 		const minReturnAmount = ethers.parseUnits(
 			swapParams.description.minReturnAmount,
 			dstTokenDecimals,
@@ -671,32 +721,42 @@ export class ZebecCardService {
 		const minRange = cardConfig.minCardAmount;
 		const maxRange = cardConfig.maxCardAmount;
 
-		const fee = await this.zebecCard.getCustomTokenFee(swapParams.description.srcToken);
+		const fee = await this.zebecCard.getCustomTokenFee(
+			swapParams.description.srcToken,
+		);
 
 		const feeAmount = BigNumber(minReturnAmount.toString()).times(
 			BigNumber(fee.toString()).div(10000),
 		);
 
 		const amountAfterFeeDeduction = BigInt(
-			BigNumber(minReturnAmount.toString()).minus(feeAmount).toFixed(0, BigNumber.ROUND_DOWN),
+			BigNumber(minReturnAmount.toString())
+				.minus(feeAmount)
+				.toFixed(0, BigNumber.ROUND_DOWN),
 		);
 
-		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
+		if (
+			amountAfterFeeDeduction < minRange ||
+			amountAfterFeeDeduction > maxRange
+		) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, dstTokenDecimals) +
-					" - " +
-					ethers.formatUnits(maxRange, dstTokenDecimals),
+				ethers.formatUnits(minRange, dstTokenDecimals) +
+				" - " +
+				ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
 		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
-		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const lastCardPurchaseDate = new Date(
+			Number(cardPurchaseInfo.unixInRecord * 1000n),
+		);
 		const today = new Date();
 
 		let cardPurchaseOfDay = 0n;
 		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
-			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + amountAfterFeeDeduction;
+			cardPurchaseOfDay =
+				cardPurchaseInfo.totalCardBoughtPerDay + amountAfterFeeDeduction;
 		} else {
 			cardPurchaseOfDay = amountAfterFeeDeduction;
 		}
@@ -704,9 +764,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-					" Today's purchase amount will be: " +
-					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+				" Today's purchase amount will be: " +
+				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -731,10 +791,9 @@ export class ZebecCardService {
 
 	async swapAndBuyCardOdyssey(params: SwapAndBuyCardParamsOdyssey) {
 		const swapEtherAmount = ethers.parseEther(params.ether);
-		const minAmount = await (this.zebecCard as OdysseyZebecCard).getMinimumUSDCAmount(
-			swapEtherAmount,
-			params.slippage,
-		);
+		const minAmount = await (
+			this.zebecCard as OdysseyZebecCard
+		).getMinimumUSDCAmount(swapEtherAmount, params.slippage);
 		const overrides = {
 			...params.overrides,
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
@@ -757,30 +816,6 @@ export class ZebecCardService {
 	}
 
 	/**
-	 * Deposit usdc from user's vault to yield provider
-	 * @param params
-	 * @returns
-	 */
-	async generateYield(params: {
-		amount: string;
-		overrides?: ethers.Overrides;
-	}): Promise<ethers.ContractTransactionResponse> {
-		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
-			throw new Error("Method not supported for this chain");
-		}
-
-		const decimals = await this.usdcToken.decimals();
-		const parsedAmount = ethers.parseUnits(params.amount, decimals);
-
-		const overrides = {
-			...params.overrides,
-			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
-		};
-
-		return (this.zebecCard as ZebecCard).generateYield(parsedAmount, overrides);
-	}
-
-	/**
 	 * Gets minimum usdc amount for given ether amount
 	 * @param etherAmount
 	 * @param slippage
@@ -788,34 +823,10 @@ export class ZebecCardService {
 	 */
 	async getMinimumUsdcAmount(etherAmount: string, slippage: number) {
 		const parsedEtherAmount = ethers.parseEther(etherAmount);
-		const minAmount = await (this.zebecCard as OdysseyZebecCard).getMinimumUSDCAmount(
-			parsedEtherAmount,
-			slippage,
-		);
+		const minAmount = await (
+			this.zebecCard as OdysseyZebecCard
+		).getMinimumUSDCAmount(parsedEtherAmount, slippage);
 		return ethers.formatUnits(minAmount, BigInt(6));
-	}
-
-	/**
-	 *  Withdaw deposits and yield from yield provider
-	 * @param params
-	 * @returns
-	 */
-	async withdrawYield(params: {
-		amount: string;
-		overrides?: ethers.Overrides;
-	}): Promise<ethers.ContractTransactionResponse> {
-		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
-			throw new Error("Method not supported for this chain");
-		}
-
-		const decimals = await this.usdcToken.decimals();
-		const parsedAmount = ethers.parseUnits(params.amount, decimals);
-		const overrides = {
-			...params.overrides,
-			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
-		};
-
-		return (this.zebecCard as ZebecCard).withdrawYield(parsedAmount, overrides);
 	}
 
 	/**
@@ -823,7 +834,9 @@ export class ZebecCardService {
 	 * @param params
 	 * @returns
 	 */
-	async getUserBalance(params: { userAddress: ethers.AddressLike }): Promise<string> {
+	async getUserBalance(params: {
+		userAddress: ethers.AddressLike;
+	}): Promise<string> {
 		const decimals = await this.usdcToken.decimals();
 		const cardBalance = await this.zebecCard.cardBalances(params.userAddress);
 		const formattedBalance = ethers.formatUnits(cardBalance, decimals);
@@ -840,7 +853,10 @@ export class ZebecCardService {
 	}): Promise<CardPurchaseOfDay> {
 		const decimals = await this.usdcToken.decimals();
 		const cardPurchase = await this.zebecCard.cardPurchases(params.userAddress);
-		const totalCardPurchased = ethers.formatUnits(cardPurchase.totalCardBoughtPerDay, decimals);
+		const totalCardPurchased = ethers.formatUnits(
+			cardPurchase.totalCardBoughtPerDay,
+			decimals,
+		);
 		const cardPurchasedTimestamp = Number(cardPurchase.unixInRecord.toString());
 
 		return {
@@ -856,13 +872,24 @@ export class ZebecCardService {
 	async getCardConfig(): Promise<CardConfig> {
 		const cardConfig = await this.zebecCard.cardConfig();
 		const nativeFeePercent = bpsToPercent(cardConfig.nativeFee.toString());
-		const nonNativeFeePercent = bpsToPercent(cardConfig.nonNativeFee.toString());
+		const nonNativeFeePercent = bpsToPercent(
+			cardConfig.nonNativeFee.toString(),
+		);
 		const revenueFeePercent = bpsToPercent(cardConfig.revenueFee.toString());
 
 		const decimals = await this.usdcToken.decimals();
-		const minCardAmount = ethers.formatUnits(cardConfig.minCardAmount, decimals);
-		const maxCardAmount = ethers.formatUnits(cardConfig.maxCardAmount, decimals);
-		const dailyCardPurchaseLimit = ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals);
+		const minCardAmount = ethers.formatUnits(
+			cardConfig.minCardAmount,
+			decimals,
+		);
+		const maxCardAmount = ethers.formatUnits(
+			cardConfig.maxCardAmount,
+			decimals,
+		);
+		const dailyCardPurchaseLimit = ethers.formatUnits(
+			cardConfig.dailyCardBuyLimit,
+			decimals,
+		);
 
 		return {
 			cardVault: cardConfig.cardVault,

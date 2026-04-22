@@ -1,8 +1,14 @@
 import { ethers } from "ethers";
 import { describe } from "mocha";
 
-import { SupportedChain, ZebecCardService } from "../src";
-import { getProvider, getSigners } from "./shared";
+import {
+	SupportedChain,
+	ZebecCardService,
+} from "../src";
+import {
+	getProvider,
+	getSigners,
+} from "./shared";
 
 const chainId = SupportedChain.BscTestnet;
 const provider = getProvider(chainId);
