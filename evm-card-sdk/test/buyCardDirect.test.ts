@@ -10,7 +10,7 @@ import {
 	getSigners,
 } from "./shared";
 
-const chainId = SupportedChain.BscTestnet;
+const chainId = SupportedChain.Sepolia;
 const provider = getProvider(chainId);
 
 const signers = getSigners(provider);
@@ -43,6 +43,9 @@ describe("ZebecCardService: buycardDirect", () => {
 				amount,
 				spender,
 				token,
+				overrides: {
+					gasLimit: 300000
+				}
 			});
 
 			if (approval) {
