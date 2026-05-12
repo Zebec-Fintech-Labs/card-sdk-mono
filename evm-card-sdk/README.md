@@ -12,19 +12,26 @@ yarn add @zebec-network/evm-card-sdk
 
 ## Supported Chains
 
-| Chain           | Chain ID |
-| --------------- | -------- |
-| Ethereum        | 1        |
-| Sepolia         | 11155111 |
-| Base            | 8453     |
-| BSC             | 56       |
-| BSC Testnet     | 97       |
-| Odyssey         | 153153   |
-| Odyssey Testnet | 131313   |
-| Polygon         | 137      |
-| Polygon Amoy    | 80002    |
+| Chain           | Chain ID | Enum value                      |
+| --------------- | -------- | ------------------------------- |
+| Ethereum        | 1        | `SupportedChain.Mainnet`        |
+| Sepolia         | 11155111 | `SupportedChain.Sepolia`        |
+| Base            | 8453     | `SupportedChain.Base`           |
+| BSC             | 56       | `SupportedChain.Bsc`            |
+| BSC Testnet     | 97       | `SupportedChain.BscTestnet`     |
+| Odyssey         | 153153   | `SupportedChain.Odyssey`        |
+| Odyssey Testnet | 131313   | `SupportedChain.OdysseyTestnet` |
+| Polygon         | 137      | `SupportedChain.Polygon`        |
+| Polygon Amoy    | 80002    | `SupportedChain.PolygonAmoy`    |
 
-The `SupportedChain` enum and `parseSupportedChain` helper are exported for use with chain IDs.
+The `SupportedChain` enum and `parseSupportedChain(chainId)` helper are exported for use with chain IDs. `parseSupportedChain` throws if the chain is unsupported — handy for validating user input before constructing the service.
+
+```ts
+import { parseSupportedChain, ODYSSEY_CHAIN_IDS } from "@zebec-network/evm-card-sdk";
+
+const chain = parseSupportedChain(11155111); // SupportedChain.Sepolia
+const isOdyssey = ODYSSEY_CHAIN_IDS.includes(chain);
+```
 
 ---
 
@@ -40,7 +47,18 @@ const signer = await provider.getSigner();
 const service = new ZebecCardService(signer, SupportedChain.Sepolia);
 ```
 
-> **Odyssey chains** (`OdysseyTestnet`, `Odyssey`) use a different contract (`OdysseyZebecCard`) and support a different set of methods. See chain-specific notes in each method below.
+> **Odyssey chains** (`OdysseyTestnet`, `Odyssey`) use a different contract (`OdysseyZebecCard`) and support a different set of methods. The service throws `Method not supported for this chain` when you call a method that is not available on the current chain. See chain-specific notes in each method below.
+
+### Two ways to buy a card
+
+The SDK supports two purchase flows:
+
+1. **Direct purchase** (`buyCardDirect`) — single transaction; USDC (or any supported token via `swapAndBuyCardDirect` / `swapAndBuyCardOdyssey`) is pulled from the user's wallet at purchase time. Available on **all chains**.
+2. **Vault-based purchase** (`depositUsdc` → `buyCard`) — user first tops up an on-contract USDC vault, then buys cards from that balance. `withdraw` returns unused vault balance. **Non-Odyssey chains only.**
+
+### Gas overrides
+
+Every write method accepts an optional `overrides?: ethers.Overrides`. The SDK applies `DEFAULT_GAS_LIMIT = 3_000_000` when `overrides.gasLimit` is not provided.
 
 ---
 
@@ -68,6 +86,23 @@ new ZebecCardService(signer: ethers.Signer, chainId: number)
 | `weth`      | `Weth`                          | WETH contract                      |
 | `signer`    | `ethers.Signer`                 | Signer passed to the constructor   |
 | `chainId`   | `number`                        | Chain ID passed to the constructor |
+
+#### Method availability
+
+| Method                                  | Non-Odyssey | Odyssey | Notes                                    |
+| --------------------------------------- | :---------: | :-----: | ---------------------------------------- |
+| `approve` / `wrapEth`                   |      ✅     |   ✅    | Token utilities                          |
+| `depositUsdc`                           |      ✅     |   ❌    | Vault top-up                             |
+| `withdraw`                              |      ✅     |   ❌    | Vault withdrawal                         |
+| `buyCard`                               |      ✅     |   ❌    | From vault balance                       |
+| `buyCardDirect`                         |      ✅     |   ✅    | From wallet (no vault)                   |
+| `swapAndDeposit`                        |      ✅     |   ❌    | 1inch swap → vault                       |
+| `swapAndBuyCardDirect`                  |      ✅     |   ❌    | 1inch swap → card                        |
+| `swapAndBuyCardOdyssey`                 |      ❌     |   ✅    | Native ETH swap → card                   |
+| `setReloadableFee` / `getReloadableFee` |      ✅     |   ❌    | Carbon (reloadable) card fee             |
+| `setFee`                                |      ❌     |   ✅    | Per-tier fee on Odyssey                  |
+| `getMinimumUsdcAmount`                  |      ❌     |   ✅    | Computes min USDC for a given ETH amount |
+| All other admin/query                   |      ✅     |   ✅    |                                          |
 
 ---
 
@@ -102,11 +137,71 @@ console.log("txHash:", receipt?.hash);
 
 ---
 
+### Vault Flow (Non-Odyssey only)
+
+`ZebecCard` keeps a per-user USDC balance ("card vault") on-contract. Top it up with `depositUsdc`, buy cards from it with `buyCard`, and withdraw any leftover with `withdraw`. None of these methods are available on Odyssey chains — they throw `Method not supported for this chain`.
+
+#### `depositUsdc`
+
+Deposits USDC from the user's wallet into their card vault. Requires the `ZebecCard` contract to be approved as an USDC spender first.
+
+```ts
+const token = await service.usdcToken.getAddress();
+const spender = await service.zebecCard.getAddress();
+const amount = "1000";
+
+const approval = await service.approve({ token, spender, amount });
+if (approval) await approval.wait();
+
+const tx = await service.depositUsdc({ amount });
+await tx.wait();
+```
+
+#### `withdraw`
+
+Withdraws USDC from the user's card vault back to their wallet.
+
+```ts
+const tx = await service.withdraw({ amount: "5.0" });
+await tx.wait();
+```
+
+#### `buyCard`
+
+Buys a card by debiting the user's vault balance. The SDK validates locally before submitting:
+
+- email format (via the `isEmailValid` helper)
+- vault balance ≥ requested amount
+- amount within `minCardAmount` / `maxCardAmount` from `cardConfig`
+- daily purchase total ≤ `dailyCardBuyLimit`
+
+```ts
+const tx = await service.buyCard({
+  amount: "199",
+  cardType: "silver",
+  buyerEmail: "user@example.com",
+});
+await tx.wait();
+```
+
+#### `swapAndDeposit`
+
+Swaps a source token to USDC via the 1inch aggregator and deposits the result into the user's vault in a single transaction. Use [`fetchSwapData`](#fetching-swap-quote) below to obtain `swapData`. The source token must be approved both for the 1inch router (so the aggregator can pull it) and for the `ZebecCard` contract.
+
+```ts
+const tx = await service.swapAndDeposit({ swapData });
+await tx.wait();
+```
+
+---
+
 ### Card Purchase
 
 #### `buyCardDirect`
 
-Buys a card in a single transaction — USDC is pulled directly from the user's wallet (no prior vault deposit needed). Requires approval of the `ZebecCard` contract to spend USDC. Works on all supported chains.
+Buys a card in a single transaction — USDC is pulled directly from the user's wallet (no prior vault deposit needed). Requires approval of the `ZebecCard` contract to spend USDC. Works on **all supported chains**.
+
+The SDK validates email format, amount range, and daily purchase limit before submitting.
 
 ```ts
 const token = await service.usdcToken.getAddress();
@@ -127,7 +222,7 @@ const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
 ```
 
-Card type mapping:
+Card type mapping (handled internally — pass `"silver"` or `"carbon"`):
 
 | `cardType` value | Contract value     |
 | ---------------- | ------------------ |
