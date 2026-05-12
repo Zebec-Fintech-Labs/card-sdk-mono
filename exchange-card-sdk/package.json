@@ -6,14 +6,14 @@
 		"@near-js/transactions": "^2.5.1",
 		"@near-js/types": "^2.5.1",
 		"@near-js/utils": "^2.5.1",
-		"@provablehq/sdk": "^0.10.2",
+		"@provablehq/sdk": "^0.10.5",
 		"@zebec-fintech/stellar-sdk": "^15.0.2",
-		"algosdk": "^3.4.0",
-		"axios": "^1.15.0",
-		"bignumber.js": "^10.0.2",
-		"ethers": "^6.15.0",
-		"quais": "^1.0.0-alpha.52",
-		"xrpl": "^4.4.1"
+		"algosdk": "^3.5.2",
+		"axios": "^1.16.0",
+		"bignumber.js": "^11.1.1",
+		"ethers": "^6.16.0",
+		"quais": "^1.0.0-alpha.54",
+		"xrpl": "^4.6.0"
 	},
 	"description": "An sdk for purchasing silver card in zebec",
 	"devDependencies": {
