@@ -1,14 +1,8 @@
 import { ethers } from "ethers";
 import { describe } from "mocha";
 
-import {
-	SupportedChain,
-	ZebecCardService,
-} from "../src";
-import {
-	getProvider,
-	getSigners,
-} from "./shared";
+import { SupportedChain, ZebecCardService } from "../src";
+import { getProvider, getSigners } from "./shared";
 
 const chainId = SupportedChain.Sepolia;
 const provider = getProvider(chainId);
@@ -44,8 +38,8 @@ describe("ZebecCardService: buycardDirect", () => {
 				spender,
 				token,
 				overrides: {
-					gasLimit: 300000
-				}
+					gasLimit: 300000,
+				},
 			});
 
 			if (approval) {
