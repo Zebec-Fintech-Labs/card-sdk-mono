@@ -1,6 +1,6 @@
 import { describe } from "mocha";
 
-import { QuaiService, QuaiWallet } from "../src";
+import { QuaiService, type QuaiWallet } from "../src";
 import { getQuaiProvider, getQuaiSigners } from "./setup";
 
 const provider = getQuaiProvider();

@@ -1,6 +1,6 @@
 import { describe, it } from "mocha";
 
-import { StellarService, StellarWallet } from "../src";
+import { StellarService, type StellarWallet } from "../src";
 import { getStellarSigner } from "./setup";
 
 const signer = getStellarSigner();
@@ -12,8 +12,7 @@ const wallet: StellarWallet = {
 		return signedTransaction.toString("base64");
 	},
 };
-const apiKey = process.env.API_KEY!;
-const encryptionKey = process.env.ENCRYPTION_KEY!;
+
 const service = new StellarService(wallet, {
 	sandbox: true, // Set true for testing and dev environment
 });

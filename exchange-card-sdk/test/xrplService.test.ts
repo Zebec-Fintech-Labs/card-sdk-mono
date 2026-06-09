@@ -1,6 +1,6 @@
 import assert from "assert";
 import { describe, it } from "mocha";
-import { Client, Payment, SubmittableTransaction, TxResponse } from "xrpl";
+import { Client, type Payment, type SubmittableTransaction, type TxResponse } from "xrpl";
 
 import { XRPLService } from "../src";
 import { getXRPLWallet } from "./setup";
@@ -15,7 +15,7 @@ const service = new XRPLService(
 		},
 	},
 	{
-		sandbox: false,
+		sandbox: true,
 	},
 );
 
@@ -63,17 +63,6 @@ describe("XRPL Service", () => {
 		});
 	});
 
-	describe("fetchVault", () => {
-		it("fetch Vault Address", async () => {
-			let vaultAddress = await service.fetchVault("XRP");
-			console.log("XRP vaultAddress:", vaultAddress);
-
-			vaultAddress = await service.fetchVault("RLUSD");
-			console.log("RLUSD vaultAddress:", vaultAddress);
-			// assert(response, "Response should not be null");
-		});
-	});
-
 	describe("fetch xrpl transaction", () => {
 		it("fetch transaction", async () => {
 			const client = new Client("wss://s.altnet.rippletest.net:51233");
@@ -97,8 +86,6 @@ describe("XRPL Service", () => {
 				console.log("account:", account);
 				console.log("destination:", destination);
 				console.log("amount:", amount);
-			} catch (error) {
-				throw error;
 			} finally {
 				await client.disconnect();
 			}

@@ -1,8 +1,7 @@
-import { describe } from "mocha";
-
 import { Action, FunctionCall, Transfer } from "@near-js/transactions";
+import { describe, it } from "mocha";
 
-import { NearService, NearWallet } from "../src";
+import { NearService, type NearWallet } from "../src";
 import { getNearAccounts } from "./setup";
 
 const accounts = getNearAccounts();
@@ -17,7 +16,9 @@ const nearWallet: NearWallet = {
 	signAndSendTransaction: async (transaction) => {
 		const actions = transaction.actions.map((item) => {
 			if (item.type === "Transfer") {
-				return new Action({ transfer: new Transfer({ deposit: BigInt(item.params.deposit) }) });
+				return new Action({
+					transfer: new Transfer({ deposit: BigInt(item.params.deposit) }),
+				});
 			}
 
 			if (item.type === "FunctionCall") {
