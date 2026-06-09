@@ -44,5 +44,5 @@
 		"test": "ts-mocha -p ./tsconfig.json -t 1000000"
 	},
 	"types": "dist/index.d.ts",
-	"version": "1.2.1"
+	"version": "1.2.2"
 }
