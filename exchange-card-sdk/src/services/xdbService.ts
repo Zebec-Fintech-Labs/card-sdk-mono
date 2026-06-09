@@ -45,11 +45,11 @@ export class XDBService {
 	 *
 	 * @returns {Promise<string>} A promise that resolves to the Vault address.
 	 */
-	async fetchVault(symbol: string = "XDB"): Promise<{
+	async fetchVaultByAsset(asset: string): Promise<{
 		address: string;
 		tag?: string;
 	}> {
-		const data = await this.apiService.fetchVault(symbol);
+		const data = await this.apiService.fetchVaultByTokenAddress(asset);
 		return data;
 	}
 
@@ -58,12 +58,11 @@ export class XDBService {
 	 *
 	 * @param params - The parameters required to purchase a card.
 	 * @returns A promise that resolves to an array containing the transaction details and the API response.
-	 * @throws {InvalidEmailError} If the recipient's email address is invalid.
-	 * @throws {Error} If the quote is invalid or expired, if there is not enough balance, or if the transaction fails.
+	 * @throws `Error` If there is not enough balance, or if the transaction fails.
 	 */
 	async transferXDB(amount: string): Promise<string> {
 		// Fetch deposit address
-		const vault = await this.fetchVault("XDB");
+		const vault = await this.fetchVaultByAsset("xdb");
 		const recipientAddress = vault.address;
 		const tag = vault.tag || "0";
 
@@ -133,8 +132,8 @@ export class XDBService {
 	/**
 	 * Retrieves the balance of the specified wallet.
 	 *
-	 * @param {string} wallet - The public key of the wallet to get the balance for.
-	 * @returns {Promise<string>} - A promise that resolves to the balance of the wallet.
+	 * @param wallet - The public key of the wallet to get the balance for.
+	 * @returns - A promise that resolves to the balance of the wallet.
 	 */
 	async getNativeBalance(wallet: string): Promise<string> {
 		const account = await this.server.loadAccount(wallet);
@@ -145,9 +144,9 @@ export class XDBService {
 	/**
 	 * Retrieves the balance of a specific token for the specified wallet.
 	 *
-	 * @param {string} wallet - The public key of the wallet to get the token balance for.
-	 * @param {Asset} asset - The asset object representing the token.
-	 * @returns {Promise<string>} - A promise that resolves to the balance of the token.
+	 * @param wallet - The public key of the wallet to get the token balance for.
+	 * @param asset - The asset object representing the token.
+	 * @returns - A promise that resolves to the balance of the token.
 	 */
 	async getTokenBalance(wallet: string, asset: Asset): Promise<string> {
 		const account = await this.server.loadAccount(wallet);

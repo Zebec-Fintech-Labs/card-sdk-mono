@@ -45,30 +45,32 @@ export class StellarService {
 	/**
 	 * Fetches the Vault address.
 	 *
-	 * @returns {Promise<string>} A promise that resolves to the Vault address.
+	 * @returns A promise that resolves to the Vault address.
 	 */
-	async fetchVault(symbol = "XLM") {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByAsset(asset: string) {
+		const data = await this.apiService.fetchVaultByTokenAddress(asset);
 		return data;
 	}
 
 	/**
 	 * Purchases a card by transferring XDB tokens.
 	 *
-	 * @param params - The parameters required to purchase a card.
+	 * @param amount - The amount required to purchase a card.
 	 * @returns A promise that resolves to an array containing the transaction details and the API response.
-	 * @throws {InvalidEmailError} If the recipient's email address is invalid.
-	 * @throws {Error} If the quote is invalid or expired, if there is not enough balance, or if the transaction fails.
+	 * @throws If the recipient's email address is invalid.
+	 * @throws If the quote is invalid or expired, if there is not enough balance, or if the transaction fails.
 	 */
 	async transferXLM(amount: string): Promise<string> {
 		// Fetch deposit address
-		const vault = await this.fetchVault();
+		const vault = await this.fetchVaultByAsset(
+			"CAS3J7GYLGXMF6TDJBBYYSE3HQ6BBSMLNUQ34T6TZMYMW2EVH34XOWMA",
+		);
 
 		// Prepare transaction
 		const account = await this.server.loadAccount(this.wallet.address);
 		const fee = await this.server.fetchBaseFee();
 
-		const memo = Memo.id(vault.tag?.toString() || "");
+		const memo = Memo.id(vault.tag?.toString() || "0");
 
 		// Check Wallet balance
 		const balance = await this.getWalletBalance(this.wallet.address);
@@ -130,23 +132,22 @@ export class StellarService {
 	/**
 	 * Transfers USDC tokens.
 	 *
-	 * @param {string} amount - The amount of USDC to transfer.
-	 * @returns {Promise<string>} A promise that resolves to the transaction hash.
-	 * @throws {Error} If there is not enough USDC balance or if the transaction fails.
+	 * @param amount - The amount of USDC to transfer.
+	 * @returns A promise that resolves to the transaction hash.
+	 * @throws If there is not enough USDC balance or if the transaction fails.
 	 */
 	async transferUSDC(amount: string): Promise<string> {
-		// Fetch deposit address
-		const vault = await this.fetchVault("XLM-USDC");
-
-		// Prepare transaction
-		const account = await this.server.loadAccount(this.wallet.address);
-		const fee = await this.server.fetchBaseFee();
-
 		// Create USDC asset object
 		const usdcAsset = new Asset(
 			"USDC",
 			this.sandbox ? STELLAR_USDC_ISSUER.Sandbox : STELLAR_USDC_ISSUER.Production,
 		);
+		// Fetch deposit address
+		const vault = await this.fetchVaultByAsset(`${usdcAsset.code}:${usdcAsset.issuer}`);
+
+		// Prepare transaction
+		const account = await this.server.loadAccount(this.wallet.address);
+		const fee = await this.server.fetchBaseFee();
 
 		// Check Wallet balance
 		const balance = await this.getTokenBalance(this.wallet.address, usdcAsset);
@@ -207,8 +208,8 @@ export class StellarService {
 	/**
 	 * Retrieves the balance of the specified wallet.
 	 *
-	 * @param {string} wallet - The public key of the wallet to get the balance for.
-	 * @returns {Promise<string>} - A promise that resolves to the balance of the wallet.
+	 * @param wallet - The public key of the wallet to get the balance for.
+	 * @returns - A promise that resolves to the balance of the wallet.
 	 */
 	async getWalletBalance(wallet: string) {
 		const account = await this.server.loadAccount(wallet);
@@ -219,9 +220,9 @@ export class StellarService {
 	/**
 	 * Retrieves the balance of a specific token for the specified wallet.
 	 *
-	 * @param {string} wallet - The public key of the wallet to get the token balance for.
-	 * @param {Asset} asset - The asset object representing the token.
-	 * @returns {Promise<string>} - A promise that resolves to the balance of the token.
+	 * @param wallet - The public key of the wallet to get the token balance for.
+	 * @param asset - The asset object representing the token.
+	 * @returns A promise that resolves to the balance of the token.
 	 */
 	async getTokenBalance(wallet: string, asset: Asset): Promise<string> {
 		const account = await this.server.loadAccount(wallet);

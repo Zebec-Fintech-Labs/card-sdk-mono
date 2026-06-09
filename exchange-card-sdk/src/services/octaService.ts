@@ -1,4 +1,4 @@
-import { ethers, parseEther } from "ethers";
+import { type ethers, parseEther } from "ethers";
 
 import { DEFAULT_EVM_GAS_LIMIT } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
@@ -25,8 +25,8 @@ export class OctaService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol = "OCTA"): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByTokenAddress(address: string): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVaultByTokenAddress(address);
 		return data;
 	}
 
@@ -35,7 +35,7 @@ export class OctaService {
 
 		const provider = this.signer.provider;
 
-		const vault = await this.fetchVault();
+		const vault = await this.fetchVaultByTokenAddress("octa-native");
 		const recipientAddress = vault.address;
 
 		if (!provider) {

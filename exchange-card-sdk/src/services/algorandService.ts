@@ -53,8 +53,8 @@ export class AlgorandService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol = "ALGO"): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByAssetId(assetId: string): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVaultByTokenAddress(assetId);
 		return data;
 	}
 
@@ -77,7 +77,7 @@ export class AlgorandService {
 				);
 			}
 
-			const vault = await this.fetchVault("ALGO");
+			const vault = await this.fetchVaultByAssetId("algo");
 			const recipientAddress = vault.address;
 
 			// Validate recipient address
@@ -140,7 +140,7 @@ export class AlgorandService {
 				);
 			}
 
-			const vault = await this.fetchVault("ALGO-USDC");
+			const vault = await this.fetchVaultByAssetId(config.assetId.toString());
 			const recipientAddress = vault.address;
 
 			// Validate recipient address

@@ -1,9 +1,8 @@
+import { JsonRpcProvider, type Provider } from "@near-js/providers";
+import type { CodeResult, FinalExecutionOutcome } from "@near-js/types";
+import { parseNearAmount } from "@near-js/utils";
 import assert from "assert";
 import { BigNumber } from "bignumber.js";
-
-import { JsonRpcProvider, Provider } from "@near-js/providers";
-import { CodeResult, FinalExecutionOutcome } from "@near-js/types";
-import { parseNearAmount } from "@near-js/utils";
 
 import { NEAR_RPC_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
@@ -143,8 +142,8 @@ export class NearService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol = "NEAR"): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByTokenAddress(address: string): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVaultByTokenAddress(address);
 		return data;
 	}
 
@@ -154,7 +153,7 @@ export class NearService {
 	}): Promise<FinalExecutionOutcome> {
 		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
 
-		const fetchVault = await this.fetchVault();
+		const fetchVault = await this.fetchVaultByTokenAddress("near");
 		const destination = fetchVault.address;
 		console.debug("destination:", destination);
 
@@ -242,11 +241,11 @@ export class NearService {
 		const signerId = params.signerId ? params.signerId : this.wallet.signerId;
 		console.log("signerId:", signerId);
 
-		const fetchVault = await this.fetchVault("NEAR-USDC");
+		const fetchVault = await this.fetchVaultByTokenAddress(params.tokenContractId);
 		const destination = fetchVault.address;
 		console.debug("destination:", destination);
 
-		let actions: Action[] = [];
+		const actions: Action[] = [];
 
 		const GAS = "30000000000000";
 

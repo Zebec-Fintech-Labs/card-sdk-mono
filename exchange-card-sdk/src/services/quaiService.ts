@@ -1,5 +1,5 @@
 import { parseQuai } from "quais";
-import { QuaiTransactionRequest } from "quais/providers";
+import type { QuaiTransactionRequest } from "quais/providers";
 
 import { DEFAULT_QUAI_GAS_LIMIT } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
@@ -31,15 +31,15 @@ export class QuaiService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol: string): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByTokenAddress(address: string): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVaultByTokenAddress(address);
 		return data;
 	}
 
 	async transferQuai(params: TransferQuaiParams): Promise<string> {
 		const parsedAmount = parseQuai(params.amount.toString());
 
-		const vault = await this.fetchVault("QUAI");
+		const vault = await this.fetchVaultByTokenAddress("quai");
 		const recipientAddress = vault.address;
 
 		const request: QuaiTransactionRequest = {

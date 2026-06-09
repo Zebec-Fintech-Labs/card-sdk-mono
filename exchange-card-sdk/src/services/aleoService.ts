@@ -134,8 +134,8 @@ export class AleoService {
 	 *
 	 * @returns {Promise<{ address: string }>} A promise that resolves to the vault address.
 	 */
-	async fetchVault(symbol = "ALEO"): Promise<{ address: string; tag?: string }> {
-		const data = await this.apiService.fetchVault(symbol);
+	async fetchVaultByTokenAddress(address: string): Promise<{ address: string; tag?: string }> {
+		const data = await this.apiService.fetchVaultByTokenAddress(address);
 		return data;
 	}
 
@@ -224,7 +224,7 @@ export class AleoService {
 		if (params.recipient) {
 			recipient = params.recipient;
 		} else {
-			const vault = await this.fetchVault("ALEO");
+			const vault = await this.fetchVaultByTokenAddress("credits.aleo");
 			if (!vault) {
 				throw new Error("Failed to fetch vault address");
 			}
@@ -271,14 +271,14 @@ export class AleoService {
 		const privateFee = params?.privateFee || false;
 		const fee = toMicroUnits(params.fee || 0.1, 6);
 		const programId = this.sandbox ? `test_${params.programId}` : params.programId;
-		const tokenSymbol = params.programId === "usad_stablecoin.aleo" ? "USAD" : "USDCX";
+		const tokenSymbol = params.programId === "usad_stablecoin.aleo" ? "usad" : "usdcx";
 		const functionName = transferType === "public" ? "transfer_public" : "transfer_private";
 
 		let recipient: string;
 		if (params.recipient) {
 			recipient = params.recipient;
 		} else {
-			const vault = await this.fetchVault(tokenSymbol);
+			const vault = await this.fetchVaultByTokenAddress(params.programId);
 			if (!vault) {
 				throw new Error("Failed to fetch vault address");
 			}
@@ -297,7 +297,7 @@ export class AleoService {
 				const [record, complianceProof] = await Promise.all([
 					this._getRecord(programId),
 					this._getComplianceProof(
-						tokenSymbol.toLowerCase() as "usad" | "usdcx",
+						tokenSymbol,
 						this.wallet.address,
 						this.sandbox ? Network.TESTNET : Network.MAINNET,
 					),
