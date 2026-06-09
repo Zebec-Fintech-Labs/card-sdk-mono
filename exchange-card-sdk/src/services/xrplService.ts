@@ -101,7 +101,7 @@ export class XRPLService {
 		}
 
 		const { address: destination, tag } = await this.fetchVaultByTokenAddress(
-			`${params.token.currency}:${params.token.issuer}`,
+			params.token.currency,
 		);
 		console.debug("destination:", destination);
 		console.debug("tag:", tag);
