@@ -23,7 +23,7 @@ export class ZebecCardAPIService {
 	}
 
 	/**
-	 * @deprecated Use {@link fetchVaultByMintAddress} instead
+	 * @deprecated Use {@link fetchVaultByTokenAddress} instead
 	 *
 	 * @param symbol Token symbol
 	 * @returns An object containing address and tag (optional)
@@ -36,11 +36,11 @@ export class ZebecCardAPIService {
 	}
 
 	/**
-	 * 
+	 *
 	 * @param address mint address
 	 * @returns An object containing address and tag (optional)
 	 */
-	async fetchVaultByMintAddress(address: string) {
+	async fetchVaultByTokenAddress(address: string) {
 		const response = await this.api.get(`/tokens/deposit-address`, {
 			params: {
 				mintAddress: address,
@@ -65,8 +65,8 @@ export class ZebecCardAPIService {
 
 		if ("tag" in data.data && data.data.tag && typeof data.data.tag !== "string") {
 			throw new Error(
-				`Invalid response shape for fetching vault address by mint address. data:\n${String(data)}`
-			)
+				`Invalid response shape for fetching vault address by mint address. data:\n${String(data)}`,
+			);
 		}
 
 		return data.data as { address: string; tag?: string };
