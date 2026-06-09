@@ -293,6 +293,21 @@
     buffer "^6.0.3"
     sha.js "^2.4.12"
 
+"@stellar/stellar-sdk@^15.1.0":
+  version "15.1.0"
+  resolved "https://registry.npmjs.org/@stellar/stellar-sdk/-/stellar-sdk-15.1.0.tgz#cff0345963addcfcaff2bac8c3e4c4f3a2f5ab63"
+  integrity sha512-GsJUcWx2yboVzYdhTe/LHS3V1wVLSHkUkglC5bBoYWGJt31vzIhbSGno60NP9CdCTNkLJdnrsLJ63oA58Zvh5A==
+  dependencies:
+    "@stellar/stellar-base" "^15.0.0"
+    axios "1.15.0"
+    bignumber.js "^9.3.1"
+    commander "^14.0.3"
+    eventsource "^2.0.2"
+    feaxios "^0.0.23"
+    randombytes "^2.1.0"
+    toml "^3.0.0"
+    urijs "^1.19.11"
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.12"
   resolved "https://registry.npmjs.org/@tsconfig/node10/-/node10-1.0.12.tgz#be57ceac1e4692b41be9de6be8c32a106636dba4"
@@ -366,21 +381,6 @@
   dependencies:
     "@xrplf/isomorphic" "^1.0.1"
     ripple-keypairs "^2.0.0"
-
-"@zebec-fintech/stellar-sdk@^15.0.2":
-  version "15.0.2"
-  resolved "https://registry.npmjs.org/@zebec-fintech/stellar-sdk/-/stellar-sdk-15.0.2.tgz#82de41ebc824b1cca36f3cab4d6e6f617fed8726"
-  integrity sha512-C2601KMkpA+8+1p5sFWgURDjLMUCxE1YE6WyDnvxR8FynKB7uBYpIzTCEJcaFa7RiIw0vG5kbbLlXn4bnLoA/w==
-  dependencies:
-    "@stellar/stellar-base" "^15.0.0"
-    axios "^1.15.0"
-    bignumber.js "^9.3.1"
-    commander "^14.0.3"
-    eventsource "^2.0.2"
-    feaxios "^0.0.23"
-    randombytes "^2.1.0"
-    toml "^3.0.0"
-    urijs "^1.19.11"
 
 "@zebec-network/core-utils@^1.3.1":
   version "1.3.1"
@@ -487,7 +487,16 @@ available-typed-arrays@^1.0.7:
   dependencies:
     possible-typed-array-names "^1.0.0"
 
-axios@^1.15.0, axios@^1.16.0:
+axios@1.15.0:
+  version "1.15.0"
+  resolved "https://registry.npmjs.org/axios/-/axios-1.15.0.tgz#0fcee91ef03d386514474904b27863b2c683bf4f"
+  integrity sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==
+  dependencies:
+    follow-redirects "^1.15.11"
+    form-data "^4.0.5"
+    proxy-from-env "^2.1.0"
+
+axios@^1.16.0:
   version "1.16.0"
   resolved "https://registry.npmjs.org/axios/-/axios-1.16.0.tgz#f8e5dd931cef2a5f8c32216d5784eda2f8750eb7"
   integrity sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==
@@ -925,7 +934,7 @@ flat@^5.0.2:
   resolved "https://registry.npmjs.org/flat/-/flat-5.0.2.tgz#8ca6fe332069ffa9d324c327198c598259ceb241"
   integrity sha512-b6suED+5/3rTpUBdG1gupIl8MPFCAMA0QXwmljLhvCUKcUvdE4gWky9zpuGCcXHOsz4J9wPGNWq6OKpmIzz3hQ==
 
-follow-redirects@^1.16.0:
+follow-redirects@^1.15.11, follow-redirects@^1.16.0:
   version "1.16.0"
   resolved "https://registry.npmjs.org/follow-redirects/-/follow-redirects-1.16.0.tgz#28474a159d3b9d11ef62050a14ed60e4df6d61bc"
   integrity sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==
