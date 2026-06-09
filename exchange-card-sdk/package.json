@@ -6,7 +6,7 @@
 		"@near-js/transactions": "^2.5.1",
 		"@near-js/types": "^2.5.1",
 		"@near-js/utils": "^2.5.1",
-		"@provablehq/sdk": "^0.10.5",
+		"@provablehq/sdk": "^0.11.0",
 		"@stellar/stellar-sdk": "^15.1.0",
 		"algosdk": "^3.5.2",
 		"axios": "^1.16.0",
