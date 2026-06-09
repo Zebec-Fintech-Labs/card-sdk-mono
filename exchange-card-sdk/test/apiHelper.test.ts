@@ -1,5 +1,5 @@
 import assert from "assert";
-
+import { describe, it } from "mocha";
 import { CARD_API_URL, ZebecCardAPIService } from "../src";
 
 describe("ZebecCardAPIService", () => {
@@ -32,9 +32,12 @@ describe("ZebecCardAPIService", () => {
 		const expectedUrl = CARD_API_URL.Production;
 		assert.strictEqual(service.apiUrl, expectedUrl, "API URL should match sandbox URL");
 
-		const vault = await service.fetchVaultByMintAddress("31566704");
+		// const usdcAsset = new Asset("USDC", STELLAR_USDC_ISSUER.Production);
+		const vault = await service.fetchVaultByTokenAddress(
+			`524C555344000000000000000000000000000000`,
+		);
 		console.log("Fetched vault:", vault);
 
 		assert.ok(vault?.address, "Vault address should be defined");
-	})
+	});
 });
