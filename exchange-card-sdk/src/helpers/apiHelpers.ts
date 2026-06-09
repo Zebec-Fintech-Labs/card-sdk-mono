@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from "axios";
 
 import { CARD_API_URL } from "../constants";
 
@@ -17,13 +17,58 @@ export class ZebecCardAPIService {
 		try {
 			await this.api.get("/health");
 			return true;
-		} catch (error) {
+		} catch (_) {
 			throw new Error("Card service is down. Please try again later.");
 		}
 	}
 
+	/**
+	 * @deprecated Use {@link fetchVaultByMintAddress} instead
+	 *
+	 * @param symbol Token symbol
+	 * @returns An object containing address and tag (optional)
+	 */
 	async fetchVault(symbol: string) {
-		const { data } = await this.api.get(`/tokens/deposit-address`, { params: { symbol } });
+		const { data } = await this.api.get(`/tokens/deposit-address`, {
+			params: { symbol },
+		});
+		return data.data as { address: string; tag?: string };
+	}
+
+	/**
+	 * 
+	 * @param address mint address
+	 * @returns An object containing address and tag (optional)
+	 */
+	async fetchVaultByMintAddress(address: string) {
+		const response = await this.api.get(`/tokens/deposit-address`, {
+			params: {
+				mintAddress: address,
+			},
+		});
+
+		const data = response.data as unknown;
+
+		if (
+			!data ||
+			typeof data !== "object" ||
+			!("data" in data) ||
+			!data.data ||
+			typeof data.data !== "object" ||
+			!("address" in data.data) ||
+			typeof data.data.address !== "string"
+		) {
+			throw new Error(
+				`Invalid response shape for fetching vault address by mint address. data:\n${String(data)}`,
+			);
+		}
+
+		if ("tag" in data.data && data.data.tag && typeof data.data.tag !== "string") {
+			throw new Error(
+				`Invalid response shape for fetching vault address by mint address. data:\n${String(data)}`
+			)
+		}
+
 		return data.data as { address: string; tag?: string };
 	}
 }
