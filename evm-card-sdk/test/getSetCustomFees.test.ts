@@ -12,7 +12,7 @@ console.log("signer", signer.address);
 describe("ZebecCardService:Admin functions", () => {
 	describe("getCustomFee()", () => {
 		it("Should get custom fee", async () => {
-			const tokenAddress = "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d";
+			const tokenAddress = "0xf486ad071f3bee968384d2e39e2d8af0fcf6fd46";
 			const customFee = await service.getCustomFee({ tokenAddress });
 			console.log("customFee:", customFee);
 		});
@@ -20,8 +20,8 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setCustomFee()", () => {
 		it("Should set Custom fee", async () => {
-			const tokenAddress = "";
-			const fee = 0.5;
+			const tokenAddress = "0xf486ad071f3bee968384d2e39e2d8af0fcf6fd46";
+			const fee = 0;
 			const response = await service.setCustomFee({ tokenAddress, fee });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);

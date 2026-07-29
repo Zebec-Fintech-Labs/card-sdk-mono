@@ -75,6 +75,34 @@ export declare namespace ZebecCard {
 		maxCardAmount: bigint;
 		dailyCardBuyLimit: bigint;
 	};
+
+	export type PartnerConfigStruct = {
+		enabled: boolean;
+		defaultFee: BigNumberish;
+		cardVault: AddressLike;
+		revenueVault: AddressLike;
+		reloadableFee: BigNumberish;
+		minCardAmount: BigNumberish;
+		maxCardAmount: BigNumberish;
+	};
+
+	export type PartnerConfigStructOutput = [
+		enabled: boolean,
+		defaultFee: bigint,
+		cardVault: string,
+		revenueVault: string,
+		reloadableFee: bigint,
+		minCardAmount: bigint,
+		maxCardAmount: bigint,
+	] & {
+		enabled: boolean;
+		defaultFee: bigint;
+		cardVault: string;
+		revenueVault: string;
+		reloadableFee: bigint;
+		minCardAmount: bigint;
+		maxCardAmount: bigint;
+	};
 }
 
 export declare namespace IAggregationRouterV6 {
@@ -114,6 +142,7 @@ export interface ZebecCardInterface extends Interface {
 			| "aavePool"
 			| "buyCard"
 			| "buyCardDirect"
+			| "buyCardDirectForPartner"
 			| "cardBalances"
 			| "cardConfig"
 			| "cardPurchases"
@@ -123,10 +152,15 @@ export interface ZebecCardInterface extends Interface {
 			| "getCustomTokenFee"
 			| "getFee"
 			| "getFeeTiers"
+			| "getPartnerFee"
+			| "getPartnerFeeTiers"
+			| "getPartnerTokenFee"
 			| "getReloadableFee"
 			| "initialize"
 			| "oneInchRouter"
 			| "owner"
+			| "partnerConfigs"
+			| "partnerFeeTiers"
 			| "proxiableUUID"
 			| "reloadableFee"
 			| "renounceOwnership"
@@ -140,11 +174,16 @@ export interface ZebecCardInterface extends Interface {
 			| "setMinCardAmount"
 			| "setNativeFee"
 			| "setNonNativeFee"
+			| "setPartnerConfig"
+			| "setPartnerEnabled"
+			| "setPartnerFeeTiers"
+			| "setPartnerTokenFee"
 			| "setReloadableFee"
 			| "setRevenueFee"
 			| "setRevenueVault"
 			| "setUsdcAddress"
 			| "swapAndBuy"
+			| "swapAndBuyForPartner"
 			| "swapAndDeposit"
 			| "transferOwnership"
 			| "upgradeToAndCall"
@@ -160,6 +199,7 @@ export interface ZebecCardInterface extends Interface {
 			| "Deposited"
 			| "Initialized"
 			| "OwnershipTransferred"
+			| "PartnerCardPurchased"
 			| "Swapped"
 			| "Upgraded"
 			| "WithdrawYield"
@@ -173,6 +213,10 @@ export interface ZebecCardInterface extends Interface {
 		functionFragment: "buyCardDirect",
 		values: [BigNumberish, string, string],
 	): string;
+	encodeFunctionData(
+		functionFragment: "buyCardDirectForPartner",
+		values: [BytesLike, BigNumberish, string, string],
+	): string;
 	encodeFunctionData(functionFragment: "cardBalances", values: [AddressLike]): string;
 	encodeFunctionData(functionFragment: "cardConfig", values?: undefined): string;
 	encodeFunctionData(functionFragment: "cardPurchases", values: [AddressLike]): string;
@@ -182,6 +226,12 @@ export interface ZebecCardInterface extends Interface {
 	encodeFunctionData(functionFragment: "getCustomTokenFee", values: [AddressLike]): string;
 	encodeFunctionData(functionFragment: "getFee", values: [BigNumberish]): string;
 	encodeFunctionData(functionFragment: "getFeeTiers", values?: undefined): string;
+	encodeFunctionData(functionFragment: "getPartnerFee", values: [BytesLike, BigNumberish]): string;
+	encodeFunctionData(functionFragment: "getPartnerFeeTiers", values: [BytesLike]): string;
+	encodeFunctionData(
+		functionFragment: "getPartnerTokenFee",
+		values: [BytesLike, AddressLike],
+	): string;
 	encodeFunctionData(functionFragment: "getReloadableFee", values?: undefined): string;
 	encodeFunctionData(
 		functionFragment: "initialize",
@@ -196,6 +246,11 @@ export interface ZebecCardInterface extends Interface {
 	): string;
 	encodeFunctionData(functionFragment: "oneInchRouter", values?: undefined): string;
 	encodeFunctionData(functionFragment: "owner", values?: undefined): string;
+	encodeFunctionData(functionFragment: "partnerConfigs", values: [BytesLike]): string;
+	encodeFunctionData(
+		functionFragment: "partnerFeeTiers",
+		values: [BytesLike, BigNumberish],
+	): string;
 	encodeFunctionData(functionFragment: "proxiableUUID", values?: undefined): string;
 	encodeFunctionData(functionFragment: "reloadableFee", values?: undefined): string;
 	encodeFunctionData(functionFragment: "renounceOwnership", values?: undefined): string;
@@ -215,6 +270,19 @@ export interface ZebecCardInterface extends Interface {
 	encodeFunctionData(functionFragment: "setMinCardAmount", values: [BigNumberish]): string;
 	encodeFunctionData(functionFragment: "setNativeFee", values: [BigNumberish]): string;
 	encodeFunctionData(functionFragment: "setNonNativeFee", values: [BigNumberish]): string;
+	encodeFunctionData(
+		functionFragment: "setPartnerConfig",
+		values: [BytesLike, ZebecCard.PartnerConfigStruct],
+	): string;
+	encodeFunctionData(functionFragment: "setPartnerEnabled", values: [BytesLike, boolean]): string;
+	encodeFunctionData(
+		functionFragment: "setPartnerFeeTiers",
+		values: [BytesLike, ZebecCard.FeeTierStruct[]],
+	): string;
+	encodeFunctionData(
+		functionFragment: "setPartnerTokenFee",
+		values: [BytesLike, AddressLike, BigNumberish],
+	): string;
 	encodeFunctionData(functionFragment: "setReloadableFee", values: [BigNumberish]): string;
 	encodeFunctionData(functionFragment: "setRevenueFee", values: [BigNumberish]): string;
 	encodeFunctionData(functionFragment: "setRevenueVault", values: [AddressLike]): string;
@@ -222,6 +290,17 @@ export interface ZebecCardInterface extends Interface {
 	encodeFunctionData(
 		functionFragment: "swapAndBuy",
 		values: [AddressLike, IAggregationRouterV6.SwapDescriptionStruct, BytesLike, string, string],
+	): string;
+	encodeFunctionData(
+		functionFragment: "swapAndBuyForPartner",
+		values: [
+			BytesLike,
+			AddressLike,
+			IAggregationRouterV6.SwapDescriptionStruct,
+			BytesLike,
+			string,
+			string,
+		],
 	): string;
 	encodeFunctionData(
 		functionFragment: "swapAndDeposit",
@@ -241,6 +320,7 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "aavePool", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "buyCard", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "buyCardDirect", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "buyCardDirectForPartner", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "cardBalances", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "cardConfig", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "cardPurchases", data: BytesLike): Result;
@@ -250,10 +330,15 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "getCustomTokenFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "getFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "getFeeTiers", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "getPartnerFee", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "getPartnerFeeTiers", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "getPartnerTokenFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "getReloadableFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "initialize", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "oneInchRouter", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "partnerConfigs", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "partnerFeeTiers", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "proxiableUUID", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "reloadableFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "renounceOwnership", data: BytesLike): Result;
@@ -267,11 +352,16 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "setMinCardAmount", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setNativeFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setNonNativeFee", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "setPartnerConfig", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "setPartnerEnabled", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "setPartnerFeeTiers", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "setPartnerTokenFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setReloadableFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setRevenueFee", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setRevenueVault", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setUsdcAddress", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndBuy", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "swapAndBuyForPartner", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndDeposit", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "transferOwnership", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "upgradeToAndCall", data: BytesLike): Result;
@@ -343,6 +433,37 @@ export namespace OwnershipTransferredEvent {
 	export interface OutputObject {
 		previousOwner: string;
 		newOwner: string;
+	}
+	export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+	export type Filter = TypedDeferredTopicFilter<Event>;
+	export type Log = TypedEventLog<Event>;
+	export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace PartnerCardPurchasedEvent {
+	export type InputTuple = [
+		partnerId: BytesLike,
+		from: AddressLike,
+		amount: BigNumberish,
+		cardType: string,
+		userEmail: string,
+		purchasedAt: BigNumberish,
+	];
+	export type OutputTuple = [
+		partnerId: string,
+		from: string,
+		amount: bigint,
+		cardType: string,
+		userEmail: string,
+		purchasedAt: bigint,
+	];
+	export interface OutputObject {
+		partnerId: string;
+		from: string;
+		amount: bigint;
+		cardType: string;
+		userEmail: string;
+		purchasedAt: bigint;
 	}
 	export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
 	export type Filter = TypedDeferredTopicFilter<Event>;
@@ -476,6 +597,12 @@ export interface ZebecCard extends BaseContract {
 		"nonpayable"
 	>;
 
+	buyCardDirectForPartner: TypedContractMethod<
+		[partnerId: BytesLike, amount: BigNumberish, cardType: string, userEmail: string],
+		[void],
+		"nonpayable"
+	>;
+
 	cardBalances: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
 	cardConfig: TypedContractMethod<
@@ -526,6 +653,24 @@ export interface ZebecCard extends BaseContract {
 
 	getFeeTiers: TypedContractMethod<[], [ZebecCard.FeeTierStructOutput[]], "view">;
 
+	getPartnerFee: TypedContractMethod<
+		[partnerId: BytesLike, amount: BigNumberish],
+		[bigint],
+		"view"
+	>;
+
+	getPartnerFeeTiers: TypedContractMethod<
+		[partnerId: BytesLike],
+		[ZebecCard.FeeTierStructOutput[]],
+		"view"
+	>;
+
+	getPartnerTokenFee: TypedContractMethod<
+		[partnerId: BytesLike, tokenAddress: AddressLike],
+		[bigint],
+		"view"
+	>;
+
 	getReloadableFee: TypedContractMethod<[], [bigint], "view">;
 
 	initialize: TypedContractMethod<
@@ -544,6 +689,34 @@ export interface ZebecCard extends BaseContract {
 	oneInchRouter: TypedContractMethod<[], [string], "view">;
 
 	owner: TypedContractMethod<[], [string], "view">;
+
+	partnerConfigs: TypedContractMethod<
+		[arg0: BytesLike],
+		[
+			[boolean, bigint, string, string, bigint, bigint, bigint] & {
+				enabled: boolean;
+				defaultFee: bigint;
+				cardVault: string;
+				revenueVault: string;
+				reloadableFee: bigint;
+				minCardAmount: bigint;
+				maxCardAmount: bigint;
+			},
+		],
+		"view"
+	>;
+
+	partnerFeeTiers: TypedContractMethod<
+		[arg0: BytesLike, arg1: BigNumberish],
+		[
+			[bigint, bigint, bigint] & {
+				minAmount: bigint;
+				maxAmount: bigint;
+				fee: bigint;
+			},
+		],
+		"view"
+	>;
 
 	proxiableUUID: TypedContractMethod<[], [string], "view">;
 
@@ -583,6 +756,30 @@ export interface ZebecCard extends BaseContract {
 
 	setNonNativeFee: TypedContractMethod<[nonNativeFee: BigNumberish], [void], "nonpayable">;
 
+	setPartnerConfig: TypedContractMethod<
+		[partnerId: BytesLike, config: ZebecCard.PartnerConfigStruct],
+		[void],
+		"nonpayable"
+	>;
+
+	setPartnerEnabled: TypedContractMethod<
+		[partnerId: BytesLike, enabled: boolean],
+		[void],
+		"nonpayable"
+	>;
+
+	setPartnerFeeTiers: TypedContractMethod<
+		[partnerId: BytesLike, newTiers: ZebecCard.FeeTierStruct[]],
+		[void],
+		"nonpayable"
+	>;
+
+	setPartnerTokenFee: TypedContractMethod<
+		[partnerId: BytesLike, tokenAddress: AddressLike, customizedFee: BigNumberish],
+		[void],
+		"nonpayable"
+	>;
+
 	setReloadableFee: TypedContractMethod<[fee: BigNumberish], [void], "nonpayable">;
 
 	setRevenueFee: TypedContractMethod<[revenueFee: BigNumberish], [void], "nonpayable">;
@@ -593,6 +790,19 @@ export interface ZebecCard extends BaseContract {
 
 	swapAndBuy: TypedContractMethod<
 		[
+			executor: AddressLike,
+			desc: IAggregationRouterV6.SwapDescriptionStruct,
+			routeData: BytesLike,
+			cardType: string,
+			userEmail: string,
+		],
+		[void],
+		"payable"
+	>;
+
+	swapAndBuyForPartner: TypedContractMethod<
+		[
+			partnerId: BytesLike,
 			executor: AddressLike,
 			desc: IAggregationRouterV6.SwapDescriptionStruct,
 			routeData: BytesLike,
@@ -642,6 +852,13 @@ export interface ZebecCard extends BaseContract {
 		nameOrSignature: "buyCardDirect",
 	): TypedContractMethod<
 		[amount: BigNumberish, cardType: string, userEmail: string],
+		[void],
+		"nonpayable"
+	>;
+	getFunction(
+		nameOrSignature: "buyCardDirectForPartner",
+	): TypedContractMethod<
+		[partnerId: BytesLike, amount: BigNumberish, cardType: string, userEmail: string],
 		[void],
 		"nonpayable"
 	>;
@@ -700,6 +917,15 @@ export interface ZebecCard extends BaseContract {
 	getFunction(
 		nameOrSignature: "getFeeTiers",
 	): TypedContractMethod<[], [ZebecCard.FeeTierStructOutput[]], "view">;
+	getFunction(
+		nameOrSignature: "getPartnerFee",
+	): TypedContractMethod<[partnerId: BytesLike, amount: BigNumberish], [bigint], "view">;
+	getFunction(
+		nameOrSignature: "getPartnerFeeTiers",
+	): TypedContractMethod<[partnerId: BytesLike], [ZebecCard.FeeTierStructOutput[]], "view">;
+	getFunction(
+		nameOrSignature: "getPartnerTokenFee",
+	): TypedContractMethod<[partnerId: BytesLike, tokenAddress: AddressLike], [bigint], "view">;
 	getFunction(nameOrSignature: "getReloadableFee"): TypedContractMethod<[], [bigint], "view">;
 	getFunction(
 		nameOrSignature: "initialize",
@@ -717,6 +943,32 @@ export interface ZebecCard extends BaseContract {
 	>;
 	getFunction(nameOrSignature: "oneInchRouter"): TypedContractMethod<[], [string], "view">;
 	getFunction(nameOrSignature: "owner"): TypedContractMethod<[], [string], "view">;
+	getFunction(nameOrSignature: "partnerConfigs"): TypedContractMethod<
+		[arg0: BytesLike],
+		[
+			[boolean, bigint, string, string, bigint, bigint, bigint] & {
+				enabled: boolean;
+				defaultFee: bigint;
+				cardVault: string;
+				revenueVault: string;
+				reloadableFee: bigint;
+				minCardAmount: bigint;
+				maxCardAmount: bigint;
+			},
+		],
+		"view"
+	>;
+	getFunction(nameOrSignature: "partnerFeeTiers"): TypedContractMethod<
+		[arg0: BytesLike, arg1: BigNumberish],
+		[
+			[bigint, bigint, bigint] & {
+				minAmount: bigint;
+				maxAmount: bigint;
+				fee: bigint;
+			},
+		],
+		"view"
+	>;
 	getFunction(nameOrSignature: "proxiableUUID"): TypedContractMethod<[], [string], "view">;
 	getFunction(nameOrSignature: "reloadableFee"): TypedContractMethod<[], [bigint], "view">;
 	getFunction(nameOrSignature: "renounceOwnership"): TypedContractMethod<[], [void], "nonpayable">;
@@ -759,6 +1011,30 @@ export interface ZebecCard extends BaseContract {
 		nameOrSignature: "setNonNativeFee",
 	): TypedContractMethod<[nonNativeFee: BigNumberish], [void], "nonpayable">;
 	getFunction(
+		nameOrSignature: "setPartnerConfig",
+	): TypedContractMethod<
+		[partnerId: BytesLike, config: ZebecCard.PartnerConfigStruct],
+		[void],
+		"nonpayable"
+	>;
+	getFunction(
+		nameOrSignature: "setPartnerEnabled",
+	): TypedContractMethod<[partnerId: BytesLike, enabled: boolean], [void], "nonpayable">;
+	getFunction(
+		nameOrSignature: "setPartnerFeeTiers",
+	): TypedContractMethod<
+		[partnerId: BytesLike, newTiers: ZebecCard.FeeTierStruct[]],
+		[void],
+		"nonpayable"
+	>;
+	getFunction(
+		nameOrSignature: "setPartnerTokenFee",
+	): TypedContractMethod<
+		[partnerId: BytesLike, tokenAddress: AddressLike, customizedFee: BigNumberish],
+		[void],
+		"nonpayable"
+	>;
+	getFunction(
 		nameOrSignature: "setReloadableFee",
 	): TypedContractMethod<[fee: BigNumberish], [void], "nonpayable">;
 	getFunction(
@@ -774,6 +1050,20 @@ export interface ZebecCard extends BaseContract {
 		nameOrSignature: "swapAndBuy",
 	): TypedContractMethod<
 		[
+			executor: AddressLike,
+			desc: IAggregationRouterV6.SwapDescriptionStruct,
+			routeData: BytesLike,
+			cardType: string,
+			userEmail: string,
+		],
+		[void],
+		"payable"
+	>;
+	getFunction(
+		nameOrSignature: "swapAndBuyForPartner",
+	): TypedContractMethod<
+		[
+			partnerId: BytesLike,
 			executor: AddressLike,
 			desc: IAggregationRouterV6.SwapDescriptionStruct,
 			routeData: BytesLike,
@@ -832,6 +1122,13 @@ export interface ZebecCard extends BaseContract {
 		OwnershipTransferredEvent.InputTuple,
 		OwnershipTransferredEvent.OutputTuple,
 		OwnershipTransferredEvent.OutputObject
+	>;
+	getEvent(
+		key: "PartnerCardPurchased",
+	): TypedContractEvent<
+		PartnerCardPurchasedEvent.InputTuple,
+		PartnerCardPurchasedEvent.OutputTuple,
+		PartnerCardPurchasedEvent.OutputObject
 	>;
 	getEvent(
 		key: "Swapped",
@@ -905,6 +1202,17 @@ export interface ZebecCard extends BaseContract {
 			OwnershipTransferredEvent.InputTuple,
 			OwnershipTransferredEvent.OutputTuple,
 			OwnershipTransferredEvent.OutputObject
+		>;
+
+		"PartnerCardPurchased(bytes32,address,uint256,string,string,uint256)": TypedContractEvent<
+			PartnerCardPurchasedEvent.InputTuple,
+			PartnerCardPurchasedEvent.OutputTuple,
+			PartnerCardPurchasedEvent.OutputObject
+		>;
+		PartnerCardPurchased: TypedContractEvent<
+			PartnerCardPurchasedEvent.InputTuple,
+			PartnerCardPurchasedEvent.OutputTuple,
+			PartnerCardPurchasedEvent.OutputObject
 		>;
 
 		"Swapped(address,address,uint256,uint256,uint256,uint256)": TypedContractEvent<

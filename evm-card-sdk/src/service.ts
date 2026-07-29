@@ -49,6 +49,19 @@ export type CardConfig = {
 	dailyCardPurchaseLimit: string;
 };
 
+/**
+ * Partner-specific card purchase configs
+ */
+export type PartnerConfig = {
+	enabled: boolean;
+	defaultFeePercent: string;
+	cardVault: string;
+	revenueVault: string;
+	reloadableFeePercent: string;
+	minCardAmount: string;
+	maxCardAmount: string;
+};
+
 export type FeeTier = {
 	feePercent: string;
 	minAmount: string;
@@ -90,6 +103,10 @@ export type SwapAndBuyCardParams = {
 	cardType: CardType;
 	buyerEmail: string;
 	overrides?: ethers.Overrides;
+};
+
+export type SwapAndBuyCardParamsForPartner = SwapAndBuyCardParams & {
+	partnerId: ethers.BytesLike;
 };
 
 export type SwapAndBuyCardParamsOdyssey = {
@@ -383,6 +400,184 @@ export class ZebecCardService {
 
 	async getCustomFee(params: { tokenAddress: string; overrides?: ethers.Overrides }) {
 		const fee = await this.zebecCard.getCustomTokenFee(params.tokenAddress);
+		return bpsToPercent(fee.toString());
+	}
+
+	/**
+	 * Sets partner config. Can only be invoked by admin.
+	 */
+	async setPartnerConfig(params: {
+		partnerId: ethers.BytesLike;
+		config: PartnerConfig;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const config = {
+			enabled: params.config.enabled,
+			defaultFee: percentToBps(params.config.defaultFeePercent),
+			cardVault: params.config.cardVault,
+			revenueVault: params.config.revenueVault,
+			reloadableFee: percentToBps(params.config.reloadableFeePercent),
+			minCardAmount: ethers.parseUnits(params.config.minCardAmount, decimals),
+			maxCardAmount: ethers.parseUnits(params.config.maxCardAmount, decimals),
+		};
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).setPartnerConfig(params.partnerId, config, overrides);
+	}
+
+	/**
+	 * Enables or disables a partner. Can only be invoked by admin.
+	 */
+	async setPartnerEnabled(params: {
+		partnerId: ethers.BytesLike;
+		enabled: boolean;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).setPartnerEnabled(
+			params.partnerId,
+			params.enabled,
+			overrides,
+		);
+	}
+
+	/**
+	 * Sets fee tiers for a partner. Can only be invoked by admin.
+	 */
+	async setPartnerFeeTiers(params: {
+		partnerId: ethers.BytesLike;
+		feeTiers: FeeTier[];
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const parsedFeeTiers = await this._parseFeeTiers(params.feeTiers);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).setPartnerFeeTiers(
+			params.partnerId,
+			parsedFeeTiers,
+			overrides,
+		);
+	}
+
+	/**
+	 * Sets custom token fee for a partner. Can only be invoked by admin.
+	 */
+	async setPartnerTokenFee(params: {
+		partnerId: ethers.BytesLike;
+		tokenAddress: string;
+		fee: number | string;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const fee = percentToBps(params.fee.toString());
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).setPartnerTokenFee(
+			params.partnerId,
+			params.tokenAddress,
+			fee,
+			overrides,
+		);
+	}
+
+	/**
+	 * Gets partner config
+	 */
+	async getPartnerConfig(params: { partnerId: ethers.BytesLike }): Promise<PartnerConfig> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const config = await (this.zebecCard as ZebecCard).partnerConfigs(params.partnerId);
+
+		return {
+			enabled: config.enabled,
+			defaultFeePercent: bpsToPercent(config.defaultFee.toString()),
+			cardVault: config.cardVault,
+			revenueVault: config.revenueVault,
+			reloadableFeePercent: bpsToPercent(config.reloadableFee.toString()),
+			minCardAmount: ethers.formatUnits(config.minCardAmount, decimals),
+			maxCardAmount: ethers.formatUnits(config.maxCardAmount, decimals),
+		};
+	}
+
+	/**
+	 * Gets partner fee for a given purchase amount
+	 */
+	async getPartnerFee(params: { partnerId: ethers.BytesLike; amount: string }): Promise<string> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const parsedAmount = ethers.parseUnits(params.amount, decimals);
+		const fee = await (this.zebecCard as ZebecCard).getPartnerFee(params.partnerId, parsedAmount);
+
+		return ethers.formatUnits(fee, decimals);
+	}
+
+	/**
+	 * Gets partner fee tiers
+	 */
+	async getPartnerFeeTiers(params: { partnerId: ethers.BytesLike }): Promise<Array<FeeTier>> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const feeTiers = await (this.zebecCard as ZebecCard).getPartnerFeeTiers(params.partnerId);
+
+		return feeTiers.map<FeeTier>((feeTier) => {
+			return {
+				feePercent: bpsToPercent(feeTier.fee.toString()),
+				maxAmount: ethers.formatUnits(feeTier.maxAmount, decimals),
+				minAmount: ethers.formatUnits(feeTier.minAmount, decimals),
+			};
+		});
+	}
+
+	/**
+	 * Gets partner custom token fee
+	 */
+	async getPartnerTokenFee(params: {
+		partnerId: ethers.BytesLike;
+		tokenAddress: string;
+	}): Promise<string> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const fee = await (this.zebecCard as ZebecCard).getPartnerTokenFee(
+			params.partnerId,
+			params.tokenAddress,
+		);
 		return bpsToPercent(fee.toString());
 	}
 
@@ -716,6 +911,192 @@ export class ZebecCardService {
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
 		return (this.zebecCard as ZebecCard).swapAndBuy(
+			executor,
+			description,
+			routeData,
+			cardType === "carbon" ? "reloadable" : "non_reloadable",
+			emailHash,
+			{
+				value: ethers.parseEther(ether),
+				...overrides,
+			},
+		);
+	}
+
+	/**
+	 * Buys a card directly for a partner using USDC.
+	 */
+	async buyCardDirectForPartner(params: {
+		partnerId: ethers.BytesLike;
+		amount: string;
+		cardType: CardType;
+		buyerEmail: string;
+		overrides?: ethers.Overrides;
+	}) {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const parsedAmount = ethers.parseUnits(params.amount, decimals);
+
+		if (!isEmailValid(params.buyerEmail)) {
+			throw new Error("Invalid email: " + params.buyerEmail);
+		}
+
+		const partnerConfig = await (this.zebecCard as ZebecCard).partnerConfigs(params.partnerId);
+
+		if (!partnerConfig.enabled) {
+			throw new Error("Partner is not enabled");
+		}
+
+		const minRange = partnerConfig.minCardAmount;
+		const maxRange = partnerConfig.maxCardAmount;
+
+		if (parsedAmount < minRange || parsedAmount > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
+			);
+		}
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const today = new Date();
+
+		let cardPurchaseOfDay = 0n;
+		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + parsedAmount;
+		} else {
+			cardPurchaseOfDay = parsedAmount;
+		}
+
+		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+			throw new Error(
+				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(params.buyerEmail);
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+
+		return (this.zebecCard as ZebecCard).buyCardDirectForPartner(
+			params.partnerId,
+			parsedAmount,
+			params.cardType === "carbon" ? "reloadable" : "non_reloadable",
+			emailHash,
+			overrides,
+		);
+	}
+
+	/**
+	 * Swaps src token to USDC and buys a card directly for a partner.
+	 */
+	async swapAndBuyForPartner(params: SwapAndBuyCardParamsForPartner) {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const {
+			partnerId,
+			buyerEmail,
+			cardType,
+			swapData: { swapParams, ether },
+		} = params;
+
+		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
+		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcTokenDecimals = await srcToken.decimals();
+		const dstTokenDecimals = await dstToken.decimals();
+
+		const executor = swapParams.executor;
+
+		const amount = ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals);
+		const minReturnAmount = ethers.parseUnits(
+			swapParams.description.minReturnAmount,
+			dstTokenDecimals,
+		);
+		const description = {
+			srcToken: swapParams.description.srcToken,
+			dstToken: swapParams.description.dstToken,
+			srcReceiver: swapParams.description.srcReceiver,
+			dstReceiver: swapParams.description.dstReceiver,
+			amount,
+			minReturnAmount,
+			flags: BigInt(swapParams.description.flags),
+		};
+
+		const routeData = swapParams.routeData;
+
+		const partnerConfig = await (this.zebecCard as ZebecCard).partnerConfigs(partnerId);
+
+		if (!partnerConfig.enabled) {
+			throw new Error("Partner is not enabled");
+		}
+
+		const minRange = partnerConfig.minCardAmount;
+		const maxRange = partnerConfig.maxCardAmount;
+
+		const fee = await (this.zebecCard as ZebecCard).getPartnerTokenFee(
+			partnerId,
+			swapParams.description.srcToken,
+		);
+
+		const feeAmount = BigNumber(minReturnAmount.toString()).times(
+			BigNumber(fee.toString()).div(10000),
+		);
+
+		const amountAfterFeeDeduction = BigInt(
+			BigNumber(minReturnAmount.toString()).minus(feeAmount).toFixed(0, BigNumber.ROUND_DOWN),
+		);
+
+		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
+			);
+		}
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const today = new Date();
+
+		let cardPurchaseOfDay = 0n;
+		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + amountAfterFeeDeduction;
+		} else {
+			cardPurchaseOfDay = amountAfterFeeDeduction;
+		}
+
+		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+			throw new Error(
+				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(buyerEmail);
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
+		};
+		return (this.zebecCard as ZebecCard).swapAndBuyForPartner(
+			partnerId,
 			executor,
 			description,
 			routeData,
