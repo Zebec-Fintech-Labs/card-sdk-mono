@@ -19,7 +19,11 @@ export function getSigners(provider: ethers.Provider) {
 		throw new Error("Invalid private key format");
 	}
 
-	let signers = privateKeys.map((key) => new ethers.Wallet(key, provider));
+	let signers = privateKeys.map((key) => {
+		const wallet = new ethers.Wallet(key, provider);
+		console.log("wallet:", wallet.address);
+		return wallet;
+	});
 
 	return signers;
 }

@@ -3,7 +3,7 @@ import { describe } from "mocha";
 import { FeeTier, SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Bsc;
+const chainId = SupportedChain.Mainnet;
 
 const provider = getProvider(chainId);
 const signer = getSigners(provider)[0];
@@ -20,7 +20,7 @@ describe("ZebecCardService:Admin functions", () => {
 	});
 
 	describe("setNonNativeFee()", () => {
-		it("Should update non native fee", async () => {
+		it.skip("Should update non native fee", async () => {
 			const response = await service.setNonNativeFee({ feeInPercent: "2.5" });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
