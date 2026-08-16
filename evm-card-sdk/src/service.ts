@@ -118,6 +118,22 @@ export type SwapAndBuyCardParamsOdyssey = {
 };
 
 /**
+ * Backend-provided EIP-712 signature data for v2 fee verification.
+ * The backend signs the fee amount using ECDSA over EIP-712 structured data.
+ */
+export type CardV2SignatureData = {
+	/** EIP-712 ECDSA signature (hex string) from backend admin key */
+	signature: string;
+	/** Backend-signed total fee amount in USDC, human-readable (e.g. "0.5") */
+	feeAmount: string;
+};
+
+export type SwapAndBuyCardParamsV2 = SwapAndBuyCardParams & {
+	/** Backend-provided signature data for fee verification */
+	signatureData: CardV2SignatureData;
+};
+
+/**
  * A class which holds methods and properties to interact with Zebec Instanct Card evm contracts.
  * @example
  *
@@ -826,6 +842,104 @@ export class ZebecCardService {
 		}
 	}
 
+	/**
+	 * Buys a card directly with USDC using backend-signed fee amount (v2).
+	 *
+	 * The backend provides an EIP-712 signature over the fee amount to prevent fee manipulation.
+	 * The signature is verified on-chain before processing the card purchase.
+	 *
+	 * **Backend EIP-712 Payload:**
+	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
+	 * - Type: `DirectPaymentV2(address user, address token, uint256 amount, uint256 feeAmount, uint256 nonce)`
+	 * - Values: user = msg.sender, token = USDC address, amount/feeAmount = raw units, nonce = current nonces[user]
+	 *
+	 * @param params Purchase parameters including backend signature data
+	 * @returns Contract transaction response
+	 *
+	 * @example
+	 * // Backend provides signatureData after signing the fee
+	 * const signatureData = {
+	 *   feeAmount: "0.5",  // 0.5 USDC fee
+	 *   signature: "0x..." // EIP-712 signature from backend
+	 * };
+	 *
+	 * await service.buyCardDirectV2({
+	 *   amount: "10",
+	 *   cardType: "silver",
+	 *   buyerEmail: "user@example.com",
+	 *   signatureData
+	 * });
+	 */
+	async buyCardDirectV2(params: {
+		amount: string;
+		cardType: CardType;
+		buyerEmail: string;
+		signatureData: CardV2SignatureData;
+		overrides?: ethers.Overrides;
+	}): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const parsedAmount = ethers.parseUnits(params.amount, decimals);
+		const parsedFeeAmount = ethers.parseUnits(params.signatureData.feeAmount, decimals);
+
+		if (!isEmailValid(params.buyerEmail)) {
+			throw new Error("Invalid email: " + params.buyerEmail);
+		}
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const minRange = cardConfig.minCardAmount;
+		const maxRange = cardConfig.maxCardAmount;
+
+		if (parsedAmount < minRange || parsedAmount > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
+			);
+		}
+
+		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const today = new Date();
+
+		let cardPurchaseOfDay = 0n;
+		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + parsedAmount;
+		} else {
+			cardPurchaseOfDay = parsedAmount;
+		}
+
+		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+			throw new Error(
+				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(params.buyerEmail);
+		const cardTypeStr = params.cardType === "carbon" ? "reloadable" : "non_reloadable";
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+
+		return (this.zebecCard as ZebecCard).buyCardDirectV2(
+			parsedAmount,
+			parsedFeeAmount,
+			cardTypeStr,
+			emailHash,
+			params.signatureData.signature,
+			overrides,
+		);
+	}
+
 	async swapAndBuyCardDirect(params: SwapAndBuyCardParams) {
 		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
 			throw new Error("Method not supported for this chain");
@@ -916,6 +1030,137 @@ export class ZebecCardService {
 			routeData,
 			cardType === "carbon" ? "reloadable" : "non_reloadable",
 			emailHash,
+			{
+				value: ethers.parseEther(ether),
+				...overrides,
+			},
+		);
+	}
+
+	/**
+	 * Swaps tokens and buys a card using backend-signed swap fee (v2).
+	 *
+	 * The backend provides an EIP-712 signature over the swap fee amount to prevent fee manipulation.
+	 * The signature is verified on-chain before processing the swap and card purchase.
+	 *
+	 * **Backend EIP-712 Payload:**
+	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
+	 * - Type: `SwapAndBuyV2(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeAmount, uint256 nonce)`
+	 * - Values: user = msg.sender, srcToken/srcAmount from swap desc, dstToken = USDC, feeAmount = swap fee in USDC raw units, nonce = current nonces[user]
+	 *
+	 * @param params Swap and purchase parameters including backend signature data
+	 * @returns Contract transaction response
+	 *
+	 * @example
+	 * // Backend provides swap data + signatureData after signing the swap fee
+	 * const signatureData = {
+	 *   feeAmount: "0.25",  // 0.25 USDC swap fee
+	 *   signature: "0x..." // EIP-712 signature from backend
+	 * };
+	 *
+	 * await service.swapAndBuyCardDirectV2({
+	 *   swapData: { swapParams, ether },
+	 *   cardType: "silver",
+	 *   buyerEmail: "user@example.com",
+	 *   signatureData
+	 * });
+	 */
+	async swapAndBuyCardDirectV2(
+		params: SwapAndBuyCardParamsV2,
+	): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const {
+			buyerEmail,
+			cardType,
+			swapData: { swapParams, ether },
+			signatureData,
+		} = params;
+
+		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
+		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcTokenDecimals = await srcToken.decimals();
+		const dstTokenDecimals = await dstToken.decimals();
+
+		const executor = swapParams.executor;
+
+		const amount = ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals);
+		const minReturnAmount = ethers.parseUnits(
+			swapParams.description.minReturnAmount,
+			dstTokenDecimals,
+		);
+		const description = {
+			srcToken: swapParams.description.srcToken,
+			dstToken: swapParams.description.dstToken,
+			srcReceiver: swapParams.description.srcReceiver,
+			dstReceiver: swapParams.description.dstReceiver,
+			amount,
+			minReturnAmount,
+			flags: BigInt(swapParams.description.flags),
+		};
+
+		const routeData = swapParams.routeData;
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const minRange = cardConfig.minCardAmount;
+		const maxRange = cardConfig.maxCardAmount;
+
+		// Use backend-signed fee instead of getCustomTokenFee
+		const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
+
+		const amountAfterFeeDeduction = BigInt(
+			BigNumber(minReturnAmount.toString())
+				.minus(parsedFeeAmount.toString())
+				.toFixed(0, BigNumber.ROUND_DOWN),
+		);
+
+		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
+			);
+		}
+
+		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const today = new Date();
+
+		let cardPurchaseOfDay = 0n;
+		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + amountAfterFeeDeduction;
+		} else {
+			cardPurchaseOfDay = amountAfterFeeDeduction;
+		}
+
+		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+			throw new Error(
+				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(buyerEmail);
+		const cardTypeStr = cardType === "carbon" ? "reloadable" : "non_reloadable";
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+
+		return (this.zebecCard as ZebecCard).swapAndBuyV2(
+			executor,
+			description,
+			routeData,
+			parsedFeeAmount,
+			cardTypeStr,
+			emailHash,
+			signatureData.signature,
 			{
 				value: ethers.parseEther(ether),
 				...overrides,
@@ -1278,5 +1523,47 @@ export class ZebecCardService {
 			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT, // Default
 		};
 		return this.weth.deposit({ value: parsedAmount, ...overrides });
+	}
+
+	/**
+	 * Gets the current v2 nonce for a user.
+	 *
+	 * The backend needs this nonce to produce a valid EIP-712 signature for v2 transactions.
+	 * Each successful v2 transaction increments the user's nonce, providing replay protection.
+	 *
+	 * @param params User address to query
+	 * @returns The current nonce as a string
+	 *
+	 * @example
+	 * const nonce = await service.getUserNonce({ userAddress: "0x..." });
+	 * // Backend uses this nonce when signing the v2 payload
+	 */
+	async getUserNonce(params: { userAddress: ethers.AddressLike }): Promise<string> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const nonce = await (this.zebecCard as ZebecCard).nonces(params.userAddress);
+		return nonce.toString();
+	}
+
+	/**
+	 * Gets the admin address used for v2 signature verification.
+	 *
+	 * This is the address whose private key signs all v2 EIP-712 payloads.
+	 * It is distinct from the contract owner (returned by `getAdmin()`).
+	 *
+	 * @returns The v2 admin signer address
+	 *
+	 * @example
+	 * const v2Admin = await service.getV2Admin();
+	 * // This address must sign all v2 fee amounts
+	 */
+	async getV2Admin(): Promise<string> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		return (this.zebecCard as ZebecCard).admin();
 	}
 }
