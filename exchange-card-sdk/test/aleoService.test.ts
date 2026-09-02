@@ -1,57 +1,25 @@
-import {
-	type Account,
-	AleoKeyProvider,
-	AleoNetworkClient,
-	initThreadPool,
-	ProgramManager,
-} from "@provablehq/sdk/testnet.js";
+import { type Account, AleoNetworkClient, initThreadPool } from "@provablehq/sdk/testnet.js";
 
-import { ALEO_NETWORK_CLIENT_URL, AleoService, type AleoWallet, getTokenBySymbol } from "../src";
-import { getAleoAccounts } from "./setup";
+import { describe, it } from "mocha";
 
-const accounts = getAleoAccounts("testnet");
+import { ALEO_NETWORK_CLIENT_URL, AleoService, getTokenBySymbol } from "../src";
+import { createAleoWallet, getAleoAccounts } from "./setup";
+
+const accounts = getAleoAccounts();
 const account = accounts[1];
 console.log("address", account.toString());
-const client = new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL);
-client.setAccount(account as Account);
-const keyProvider = new AleoKeyProvider();
-const programManager = new ProgramManager(ALEO_NETWORK_CLIENT_URL, keyProvider);
+const networkClient = new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL, {
+	proverUri: "https://api.provable.com/prove",
+	recordScannerUri: "https://api.provable.com/scanner",
+});
+const wallet = await createAleoWallet(account);
+const service = await new AleoService(
+	wallet,
+	{ host: ALEO_NETWORK_CLIENT_URL },
+	{ sandbox: true },
+).ready();
 
-const wallet: AleoWallet = {
-	address: account.toString(),
-	decrypt: async (cipherText: string) => {
-		const decrypted = account.decryptRecord(cipherText).toString();
-		console.log("Decrypted record:", decrypted);
-		return decrypted;
-	},
-	requestRecords: async (program: string, _includePlaintext?: boolean) => {
-		// For testing purposes, we fetch records from the last 10,000 blocks. In a production environment, you would want to implement a more robust solution for fetching records;
-		const latestHeight = await client.getLatestHeight();
-		const records = await client.findUnspentRecords(latestHeight - 10000, latestHeight, [program]);
-		console.log(`Fetched records`, records);
-		return records;
-	},
-	executeTransaction: async (transaction) => {
-		console.log("transaction:", JSON.stringify(transaction, null, 2));
-
-		const tx = await programManager.buildExecutionTransaction({
-			functionName: transaction.function,
-			inputs: transaction.inputs,
-			priorityFee: transaction.fee || 0.1,
-			privateFee: transaction.privateFee || false,
-			programName: transaction.program,
-			privateKey: account.privateKey(),
-			keySearchParams: {
-				cacheKey: `${transaction.program}:${transaction.function}`,
-			},
-		});
-
-		const result = await client.submitTransaction(tx);
-		return { transactionId: result };
-	},
-};
-
-const service = new AleoService(wallet, {}, { sandbox: true });
+initThreadPool();
 
 describe("AleoService", () => {
 	it("should get aleo balance", async () => {
@@ -68,6 +36,7 @@ describe("AleoService", () => {
 		const result = await service.transferCredit({
 			amount: 0.01,
 			privateFee: false,
+			fee: 0.001,
 			transferType: "private",
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
@@ -75,9 +44,10 @@ describe("AleoService", () => {
 
 	it("should transfer stable coin", async () => {
 		const result = await service.transferStableCoin({
-			programId: "usad_stablecoin.aleo",
+			programId: "usdcx_stablecoin.aleo",
 			amount: 0.01,
 			privateFee: false,
+			fee: 0.001,
 			transferType: "private",
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
@@ -101,14 +71,13 @@ describe("AleoService", () => {
 
 describe("Aleo Transaction Parsing", () => {
 	it("should parse transfer credit transaction", async () => {
-		initThreadPool();
 
 		const receiver = accounts[1] as Account;
 		console.log("receiver address", receiver.toString());
 		const txId = "at1xr52jse7t5zqg6fmzkclh256pndlmywyvcdjj7q00sarxtz92gpqt9w5f6";
 
 		// fetch transaction details using AleoNetworkClient
-		const transaction = await client.getTransaction(txId);
+		const transaction = await networkClient.getTransaction(txId);
 
 		// fetch transaction
 		console.log("Parsed transaction:", JSON.stringify(transaction, null, 2));

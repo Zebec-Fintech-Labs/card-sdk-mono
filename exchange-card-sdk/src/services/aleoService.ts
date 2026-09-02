@@ -1,12 +1,47 @@
-import { AleoNetworkClient, SealanceMerkleTree } from "@provablehq/sdk/mainnet.js";
-import {
-	AleoNetworkClient as TestnetAleoNetworkClient,
-	SealanceMerkleTree as TestnetSealanceMerkleTree,
-} from "@provablehq/sdk/testnet.js";
-
 import { ALEO_NETWORK_CLIENT_URL } from "../constants";
 import { ZebecCardAPIService } from "../helpers/apiHelpers";
 import { fromMicroUnits, getTokenBySymbol, toMicroUnits } from "../utils";
+
+export type ProvableSdk =
+	| typeof import("@provablehq/sdk/mainnet.js")
+	| typeof import("@provablehq/sdk/testnet.js");
+
+/** Public Aleo REST client surface used by this SDK (network-agnostic). */
+export type ProvableNetworkClient = {
+	getProgramImports: (programId: string) => Promise<Record<string, unknown>>;
+	getProgramObject: (programId: string) => Promise<{
+		address: () => { to_string: () => string };
+		free: () => void;
+	}>;
+	getProgramMappingValue: (
+		programId: string,
+		mapping: string,
+		key: string,
+	) => Promise<string | undefined | null>;
+	getProgramMappingNames: (programId: string) => Promise<string[]>;
+	getPublicBalance: (address: string) => Promise<number>;
+};
+
+const sdkByNetwork = new Map<Network, Promise<ProvableSdk>>();
+
+/**
+ * Dynamically import the Provable SDK for `network`. Cached per network so
+ * subsequent calls reuse the same WASM instance.
+ */
+export function loadProvableSdk(network: Network): Promise<ProvableSdk> {
+	let pending = sdkByNetwork.get(network);
+	if (pending === undefined) {
+		const loaded: Promise<ProvableSdk> =
+			network === Network.MAINNET
+				? import("@provablehq/sdk/mainnet.js")
+				: import("@provablehq/sdk/testnet.js");
+		pending = loaded.then((sdk) => {
+			return sdk;
+		});
+		sdkByNetwork.set(network, pending);
+	}
+	return pending;
+}
 
 /**
  * Supported Aleo networks
@@ -14,7 +49,6 @@ import { fromMicroUnits, getTokenBySymbol, toMicroUnits } from "../utils";
 export enum Network {
 	MAINNET = "mainnet",
 	TESTNET = "testnet",
-	CANARY = "canary",
 }
 
 /**
@@ -37,6 +71,8 @@ export interface TransactionOptions {
 	 * The transaction fee to pay
 	 */
 	fee?: number;
+	/** Record to use for paying the transaction fee */
+	feeRecord?: string;
 	/**
 	 * Record indices to use
 	 */
@@ -45,12 +81,18 @@ export interface TransactionOptions {
 	 * Whether the fee is private
 	 */
 	privateFee?: boolean;
+	/**
+	 * Program names the wallet must load as external stacks for
+	 * `call.dynamic` dispatch. See `DYNAMIC_DISPATCH_IMPORTS`.
+	 */
+	imports?: string[];
 }
 
 interface AleoNetworkClientOptions {
 	headers?: {
 		[key: string]: string;
 	};
+	host?: string;
 	proverUri?: string;
 	recordScannerUri?: string;
 }
@@ -112,7 +154,9 @@ export class AleoService {
 	readonly wallet: AleoWallet;
 	readonly sandbox: boolean;
 	readonly apiService: ZebecCardAPIService;
-	readonly networkClient: AleoNetworkClient | TestnetAleoNetworkClient;
+	private readonly sdkReady: Promise<ProvableNetworkClient>;
+	readonly network: Network;
+	readonly host: string;
 
 	constructor(
 		wallet: AleoWallet,
@@ -123,10 +167,27 @@ export class AleoService {
 	) {
 		this.wallet = wallet;
 		this.sandbox = sdkOptions?.sandbox || false;
+		this.network = this.sandbox ? Network.TESTNET : Network.MAINNET;
+		this.host = aleoNetworkClientOptions?.host || ALEO_NETWORK_CLIENT_URL;
 		this.apiService = new ZebecCardAPIService(sdkOptions?.sandbox || false);
-		this.networkClient = this.sandbox
-			? new TestnetAleoNetworkClient(ALEO_NETWORK_CLIENT_URL, aleoNetworkClientOptions)
-			: new AleoNetworkClient(ALEO_NETWORK_CLIENT_URL, aleoNetworkClientOptions);
+		this.sdkReady = loadProvableSdk(this.network).then((sdk) => {
+			const client: ProvableNetworkClient = new sdk.AleoNetworkClient(this.host);
+			return client;
+		});
+	}
+
+	/**
+	 * Resolves when this network's Provable SDK (and WASM) has loaded.
+	 * Async methods wait on this automatically; await it before reading
+	 * {@link networkClient} directly.
+	 */
+	async ready(): Promise<this> {
+		await this.sdkReady;
+		return this;
+	}
+
+	async client(): Promise<ProvableNetworkClient> {
+		return this.sdkReady;
 	}
 
 	/**
@@ -145,7 +206,6 @@ export class AleoService {
 	 */
 	private async _getRecord(program: string, includePlaintext = false): Promise<string> {
 		const records = await this.wallet.requestRecords(program, includePlaintext);
-		console.debug("Fetched records:", records);
 		const unspent = records?.filter(
 			(r) => typeof r === "object" && r !== null && "spent" in r && !r.spent,
 		);
@@ -164,9 +224,9 @@ export class AleoService {
 				) {
 					throw new Error("Invalid record format");
 				}
-				console.debug("Decrypting record:", rec);
+				// console.debug("Decrypting record:", rec);
 				const plaintext = await this.wallet.decrypt(rec.recordCiphertext);
-				console.debug("Decrypted plaintext:", plaintext);
+				// console.debug("Decrypted plaintext:", plaintext);
 				return plaintext.replace(/\s+/g, " ").trim();
 			}),
 		);
@@ -194,13 +254,10 @@ export class AleoService {
 	private async _getComplianceProof(
 		stablecoinKey: "usad" | "usdcx",
 		senderAddress: string,
-		network: Network,
 	): Promise<string> {
-		if (network === Network.CANARY) {
-			throw new Error("Compliance proof generation is not supported on canary network");
-		}
-		const sealance = this.sandbox ? new TestnetSealanceMerkleTree() : new SealanceMerkleTree();
-		const url = NETWORK_CONFIG[network].freezeListApi[stablecoinKey];
+		const { SealanceMerkleTree } = await loadProvableSdk(this.network);
+		const sealance = new SealanceMerkleTree();
+		const url = NETWORK_CONFIG[this.network].freezeListApi[stablecoinKey];
 		const res = await fetch(url);
 		const freezeList = await res.json();
 		const tree = sealance.convertTreeToBigInt(freezeList);
@@ -296,11 +353,7 @@ export class AleoService {
 				// For private transfer, we need to find a record with sufficient balance
 				const [record, complianceProof] = await Promise.all([
 					this._getRecord(programId),
-					this._getComplianceProof(
-						tokenSymbol,
-						this.wallet.address,
-						this.sandbox ? Network.TESTNET : Network.MAINNET,
-					),
+					this._getComplianceProof(tokenSymbol, this.wallet.address),
 				]);
 				inputs = [recipient, amountInMicroUnits, record, complianceProof];
 				break;
@@ -321,7 +374,7 @@ export class AleoService {
 	}
 
 	async getPublicBalance(): Promise<string> {
-		const balance = await this.networkClient.getPublicBalance(this.wallet.address);
+		const balance = await (await this.client()).getPublicBalance(this.wallet.address);
 		const formattedAmount = fromMicroUnits(balance);
 		return formattedAmount;
 	}
@@ -332,7 +385,7 @@ export class AleoService {
 			throw new Error(`Token metadata for ${tokenSymbol} does not include decimals.`);
 		}
 
-		const mappingNames = await this.networkClient.getProgramMappingNames(tokenProgramId);
+		const mappingNames = await (await this.client()).getProgramMappingNames(tokenProgramId);
 
 		const balanceMappingName = mappingNames.includes("balances")
 			? "balances"
@@ -344,11 +397,9 @@ export class AleoService {
 			throw new Error("No public balance mapping found (no 'balances' or 'account').");
 		}
 
-		const balance = await this.networkClient.getProgramMappingValue(
-			tokenProgramId,
-			balanceMappingName,
-			this.wallet.address,
-		);
+		const balance = await (
+			await this.client()
+		).getProgramMappingValue(tokenProgramId, balanceMappingName, this.wallet.address);
 
 		if (balance) {
 			const regex = /(\d+)u\d+/;
