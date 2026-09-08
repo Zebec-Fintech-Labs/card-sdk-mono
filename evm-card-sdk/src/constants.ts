@@ -11,6 +11,7 @@ export enum SupportedChain {
 	Odyssey = 153153,
 	Polygon = 137,
 	PolygonAmoy = 80002,
+	RobinhoodTestnet = 46630,
 }
 
 export function parseSupportedChain(chainId: number) {
@@ -33,6 +34,8 @@ export function parseSupportedChain(chainId: number) {
 			return SupportedChain.Polygon;
 		case 80002:
 			return SupportedChain.PolygonAmoy;
+		case 46630:
+			return SupportedChain.RobinhoodTestnet;
 		default:
 			throw new Error(`Chain Id: ${chainId} not supported.`);
 	}
@@ -53,6 +56,7 @@ export const ZEBEC_CARD_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Odyssey]: "0x935D149eCB4E3F3824327e7d4357180a08aE8a15",
 	[SupportedChain.Polygon]: "0xB4f6E946E12200F4E0ba3B352B8DbF0a66635b53",
 	[SupportedChain.PolygonAmoy]: "0xB4f6E946E12200F4E0ba3B352B8DbF0a66635b53",
+	[SupportedChain.RobinhoodTestnet]: "0xaB96888b03D761A93f064E61d07A0E58d5f5De5f",
 };
 
 export const USDC_ADDRESS: Record<SupportedChain, string> = {
@@ -65,6 +69,7 @@ export const USDC_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Odyssey]: "0x8aBEE32587864cce7000e6f2820680874eD6100A",
 	[SupportedChain.Polygon]: "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359",
 	[SupportedChain.PolygonAmoy]: "0x935d149ecb4e3f3824327e7d4357180a08ae8a15",
+	[SupportedChain.RobinhoodTestnet]: "0x5237cC099d42E9368A8b261CAf491d7c23015418",
 };
 
 export const WETH_ADDRESS: Record<SupportedChain, string> = {
@@ -77,6 +82,7 @@ export const WETH_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Odyssey]: "0xF21Cbaf7bD040D686Bd390957770D2ea652E4013",
 	[SupportedChain.Polygon]: "0x0000000000000000000000000000000000001010",
 	[SupportedChain.PolygonAmoy]: "0x0000000000000000000000000000000000000000",
+	[SupportedChain.RobinhoodTestnet]: "0x0000000000000000000000000000000000000000",
 };
 
 export const ATOKEN_ADDRESS: Record<SupportedChain, string> = {
@@ -89,6 +95,7 @@ export const ATOKEN_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Odyssey]: "0x0000000000000000000000000000000000000000",
 	[SupportedChain.Polygon]: "0x0000000000000000000000000000000000000000",
 	[SupportedChain.PolygonAmoy]: "0x0000000000000000000000000000000000000000",
+	[SupportedChain.RobinhoodTestnet]: "0x0000000000000000000000000000000000000000",
 };
 
 export const DEFAULT_GAS_LIMIT = 3000000; // Default gas limit for transactions
