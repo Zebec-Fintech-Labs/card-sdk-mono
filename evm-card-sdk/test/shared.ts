@@ -61,6 +61,9 @@ function getRpcUrlForChain(chain: SupportedChain) {
 		case 46630:
 			rpcUrl = process.env.ROBINHOOD_TESTNET_RPC_URL;
 			break;
+		case 4663:
+			rpcUrl = process.env.ROBINHOOD_RPC_URL;
+			break;
 		default:
 			throw new Error("Unsupported chain");
 	}
