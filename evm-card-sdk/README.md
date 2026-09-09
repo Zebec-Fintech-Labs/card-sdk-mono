@@ -12,17 +12,19 @@ yarn add @zebec-network/evm-card-sdk
 
 ## Supported Chains
 
-| Chain           | Chain ID | Enum value                      |
-| --------------- | -------- | ------------------------------- |
-| Ethereum        | 1        | `SupportedChain.Mainnet`        |
-| Sepolia         | 11155111 | `SupportedChain.Sepolia`        |
-| Base            | 8453     | `SupportedChain.Base`           |
-| BSC             | 56       | `SupportedChain.Bsc`            |
-| BSC Testnet     | 97       | `SupportedChain.BscTestnet`     |
-| Odyssey         | 153153   | `SupportedChain.Odyssey`        |
-| Odyssey Testnet | 131313   | `SupportedChain.OdysseyTestnet` |
-| Polygon         | 137      | `SupportedChain.Polygon`        |
-| Polygon Amoy    | 80002    | `SupportedChain.PolygonAmoy`    |
+| Chain             | Chain ID | Enum value                        |
+| ----------------- | -------- | --------------------------------- |
+| Ethereum          | 1        | `SupportedChain.Mainnet`          |
+| Sepolia           | 11155111 | `SupportedChain.Sepolia`          |
+| Base              | 8453     | `SupportedChain.Base`             |
+| BSC               | 56       | `SupportedChain.Bsc`              |
+| BSC Testnet       | 97       | `SupportedChain.BscTestnet`       |
+| Odyssey           | 153153   | `SupportedChain.Odyssey`          |
+| Odyssey Testnet   | 131313   | `SupportedChain.OdysseyTestnet`   |
+| Polygon           | 137      | `SupportedChain.Polygon`          |
+| Polygon Amoy      | 80002    | `SupportedChain.PolygonAmoy`      |
+| Robinhood         | 4663     | `SupportedChain.Robinhood`        |
+| Robinhood Testnet | 46630    | `SupportedChain.RobinhoodTestnet` |
 
 The `SupportedChain` enum and `parseSupportedChain(chainId)` helper are exported for use with chain IDs. `parseSupportedChain` throws if the chain is unsupported — handy for validating user input before constructing the service.
 
@@ -89,20 +91,29 @@ new ZebecCardService(signer: ethers.Signer, chainId: number)
 
 #### Method availability
 
-| Method                                  | Non-Odyssey | Odyssey | Notes                                    |
-| --------------------------------------- | :---------: | :-----: | ---------------------------------------- |
-| `approve` / `wrapEth`                   |     ✅      |   ✅    | Token utilities                          |
-| `depositUsdc`                           |     ✅      |   ❌    | Vault top-up                             |
-| `withdraw`                              |     ✅      |   ❌    | Vault withdrawal                         |
-| `buyCard`                               |     ✅      |   ❌    | From vault balance                       |
-| `buyCardDirect`                         |     ✅      |   ✅    | From wallet (no vault)                   |
-| `swapAndDeposit`                        |     ✅      |   ❌    | 1inch swap → vault                       |
-| `swapAndBuyCardDirect`                  |     ✅      |   ❌    | 1inch swap → card                        |
-| `swapAndBuyCardOdyssey`                 |     ❌      |   ✅    | Native ETH swap → card                   |
-| `setReloadableFee` / `getReloadableFee` |     ✅      |   ❌    | Carbon (reloadable) card fee             |
-| `setFee`                                |     ❌      |   ✅    | Per-tier fee on Odyssey                  |
-| `getMinimumUsdcAmount`                  |     ❌      |   ✅    | Computes min USDC for a given ETH amount |
-| All other admin/query                   |     ✅      |   ✅    |                                          |
+| Method                                      | Non-Odyssey | Odyssey | Notes                                    |
+| ------------------------------------------- | :---------: | :-----: | ---------------------------------------- |
+| `approve` / `wrapEth`                       |     ✅      |   ✅    | Token utilities                          |
+| `depositUsdc`                               |     ✅      |   ❌    | Vault top-up                             |
+| `withdraw`                                  |     ✅      |   ❌    | Vault withdrawal                         |
+| `buyCard`                                   |     ✅      |   ❌    | From vault balance                       |
+| `buyCardDirect`                             |     ✅      |   ✅    | From wallet (no vault)                   |
+| `buyCardDirectV2`                           |     ✅      |   ❌    | From wallet with backend-signed fee      |
+| `buyCardDirectForPartner`                   |     ✅      |   ❌    | Partner direct purchase                  |
+| `swapAndDeposit`                            |     ✅      |   ❌    | 1inch swap → vault                       |
+| `swapAndBuyCardDirect`                      |     ✅      |   ❌    | 1inch swap → card                        |
+| `swapAndBuyCardDirectV2`                    |     ✅      |   ❌    | 1inch swap → card with signed fee        |
+| `swapAndBuyForPartner`                      |     ✅      |   ❌    | Partner swap → card                      |
+| `swapAndBuyCardOdyssey`                     |     ❌      |   ✅    | Native ETH swap → card                   |
+| `setReloadableFee` / `getReloadableFee`     |     ✅      |   ❌    | Carbon (reloadable) card fee             |
+| `setFee`                                    |     ❌      |   ✅    | Per-tier fee on Odyssey                  |
+| `getMinimumUsdcAmount`                      |     ❌      |   ✅    | Computes min USDC for a given ETH amount |
+| `setPartnerConfig` / `setPartnerEnabled`    |     ✅      |   ❌    | Partner admin                            |
+| `setPartnerFeeTiers` / `setPartnerTokenFee` |     ✅      |   ❌    | Partner fee admin                        |
+| `getPartnerConfig` / `getPartnerFee`        |     ✅      |   ❌    | Partner query                            |
+| `getPartnerFeeTiers` / `getPartnerTokenFee` |     ✅      |   ❌    | Partner fee query                        |
+| `getUserNonce` / `getV2Admin`               |     ✅      |   ❌    | V2 signature helpers                     |
+| All other admin/query                       |     ✅      |   ✅    |                                          |
 
 ---
 
@@ -229,6 +240,26 @@ Card type mapping (handled internally — pass `"silver"` or `"carbon"`):
 | `"silver"`       | `"non_reloadable"` |
 | `"carbon"`       | `"reloadable"`     |
 
+#### `buyCardDirectV2`
+
+Buys a card directly with USDC using a backend-signed fee amount (v2). **Non-Odyssey chains only.**
+
+The backend provides an EIP-712 signature over the fee amount to prevent fee manipulation. The signature is verified on-chain before processing the purchase.
+
+```ts
+const tx = await service.buyCardDirectV2({
+	amount: "10",
+	cardType: "silver",
+	buyerEmail: "user@example.com",
+	signatureData: {
+		feeAmount: "0.5", // USDC fee amount (human-readable)
+		signature: "0x...", // EIP-712 signature from backend
+	},
+});
+const receipt = await tx.wait();
+console.log("txhash:", receipt?.hash);
+```
+
 ---
 
 ### Swap & Buy
@@ -284,6 +315,33 @@ const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
 ```
 
+#### `swapAndBuyCardDirectV2`
+
+Swaps a source token to USDC and buys a card using a backend-signed swap fee (v2). **Non-Odyssey chains only.**
+
+The backend provides an EIP-712 signature over the swap fee amount to prevent fee manipulation. The signature is verified on-chain before processing the swap and card purchase.
+
+```ts
+const approval = await service.approve({
+	token: srcTokenAddress,
+	spender: await service.zebecCard.getAddress(),
+	amount: srcAmount,
+});
+if (approval) await approval.wait();
+
+const tx = await service.swapAndBuyCardDirectV2({
+	swapData: { swapParams, ether },
+	cardType: "carbon",
+	buyerEmail: "user@example.com",
+	signatureData: {
+		feeAmount: "0.25", // USDC swap fee (human-readable)
+		signature: "0x...", // EIP-712 signature from backend
+	},
+});
+const receipt = await tx.wait();
+console.log("txhash:", receipt?.hash);
+```
+
 #### `swapAndBuyCardOdyssey`
 
 Swaps native ETH to USDC and buys a card in one transaction. **Odyssey chains only.**
@@ -292,11 +350,45 @@ Swaps native ETH to USDC and buys a card in one transaction. **Odyssey chains on
 const tx = await service.swapAndBuyCardOdyssey({
 	cardType: "silver",
 	buyerEmail: "user@example.com",
-	ether: "1265", // Amount of native ETH (in smallest unit)
+	ether: "0.1", // Amount of native ETH (in ETH units)
 	slippage: 1, // Slippage tolerance in percent
 });
 const receipt = await tx.wait();
 console.log("txhash:", receipt?.hash);
+```
+
+---
+
+### Partner Flow (Non-Odyssey only)
+
+These methods allow purchasing cards through a registered partner. Partner configs, fee tiers, and token fees are set by the contract admin.
+
+#### `buyCardDirectForPartner`
+
+Buys a card directly with USDC for a partner. The partner must be enabled and the amount must be within the partner's configured range.
+
+```ts
+const tx = await service.buyCardDirectForPartner({
+	partnerId: ethers.id("partner-name"),
+	amount: "50",
+	cardType: "silver",
+	buyerEmail: "user@example.com",
+});
+await tx.wait();
+```
+
+#### `swapAndBuyForPartner`
+
+Swaps a source token to USDC and buys a card directly for a partner.
+
+```ts
+const tx = await service.swapAndBuyForPartner({
+	partnerId: ethers.id("partner-name"),
+	swapData: { swapParams, ether },
+	cardType: "carbon",
+	buyerEmail: "user@example.com",
+});
+await tx.wait();
 ```
 
 ---
@@ -399,8 +491,82 @@ console.log("reloadable fee:", fee);
 Returns the minimum USDC amount for a given ETH amount with slippage applied. **Odyssey chains only.**
 
 ```ts
-const minUsdc = await service.getMinimumUsdcAmount("1265", 1);
+const minUsdc = await service.getMinimumUsdcAmount("0.1", 1);
 console.log("min USDC:", minUsdc);
+```
+
+#### `getPartnerConfig`
+
+Returns the partner configuration for a given partner ID. **Non-Odyssey chains only.**
+
+```ts
+const config = await service.getPartnerConfig({ partnerId: ethers.id("partner-name") });
+console.log(config);
+```
+
+Returns a `PartnerConfig` object:
+
+```ts
+{
+	enabled: boolean;
+	defaultFeePercent: string;
+	cardVault: string;
+	revenueVault: string;
+	reloadableFeePercent: string;
+	minCardAmount: string;
+	maxCardAmount: string;
+}
+```
+
+#### `getPartnerFee`
+
+Returns the partner fee for a given purchase amount. **Non-Odyssey chains only.**
+
+```ts
+const fee = await service.getPartnerFee({
+	partnerId: ethers.id("partner-name"),
+	amount: "100",
+});
+console.log("partner fee:", fee);
+```
+
+#### `getPartnerFeeTiers`
+
+Returns configured fee tiers for a partner. **Non-Odyssey chains only.**
+
+```ts
+const tiers = await service.getPartnerFeeTiers({ partnerId: ethers.id("partner-name") });
+// [{ feePercent: "1.5", minAmount: "0", maxAmount: "500" }, ...]
+```
+
+#### `getPartnerTokenFee`
+
+Returns the custom token fee for a partner. **Non-Odyssey chains only.**
+
+```ts
+const fee = await service.getPartnerTokenFee({
+	partnerId: ethers.id("partner-name"),
+	tokenAddress: "0x...",
+});
+console.log("partner token fee:", fee);
+```
+
+#### `getUserNonce`
+
+Returns the current v2 nonce for a user. The backend needs this nonce to produce a valid EIP-712 signature for v2 transactions. **Non-Odyssey chains only.**
+
+```ts
+const nonce = await service.getUserNonce({ userAddress: signerAddress });
+console.log("nonce:", nonce);
+```
+
+#### `getV2Admin`
+
+Returns the admin address used for v2 signature verification. **Non-Odyssey chains only.**
+
+```ts
+const v2Admin = await service.getV2Admin();
+console.log("v2 admin:", v2Admin);
 ```
 
 ---
@@ -509,6 +675,70 @@ Sets the fee for reloadable (carbon) cards.
 await (await service.setReloadableFee({ fee: "1.0" })).wait();
 ```
 
+#### `setPartnerConfig` (Non-Odyssey chains only)
+
+Sets the configuration for a partner.
+
+```ts
+await (
+	await service.setPartnerConfig({
+		partnerId: ethers.id("partner-name"),
+		config: {
+			enabled: true,
+			defaultFeePercent: "1.5",
+			cardVault: "0x...",
+			revenueVault: "0x...",
+			reloadableFeePercent: "1.0",
+			minCardAmount: "10",
+			maxCardAmount: "1000",
+		},
+	})
+).wait();
+```
+
+#### `setPartnerEnabled` (Non-Odyssey chains only)
+
+Enables or disables a partner.
+
+```ts
+await (
+	await service.setPartnerEnabled({
+		partnerId: ethers.id("partner-name"),
+		enabled: true,
+	})
+).wait();
+```
+
+#### `setPartnerFeeTiers` (Non-Odyssey chains only)
+
+Replaces all fee tiers for a partner.
+
+```ts
+await (
+	await service.setPartnerFeeTiers({
+		partnerId: ethers.id("partner-name"),
+		feeTiers: [
+			{ feePercent: "1.0", minAmount: "0", maxAmount: "200" },
+			{ feePercent: "1.5", minAmount: "200", maxAmount: "500" },
+		],
+	})
+).wait();
+```
+
+#### `setPartnerTokenFee` (Non-Odyssey chains only)
+
+Sets a custom token fee percentage for a partner.
+
+```ts
+await (
+	await service.setPartnerTokenFee({
+		partnerId: ethers.id("partner-name"),
+		tokenAddress: "0x...",
+		fee: "3.0",
+	})
+).wait();
+```
+
 ---
 
 ## Using Contract Factories
@@ -612,20 +842,28 @@ import {
 import type {
 	CardType,
 	CardConfig,
+	PartnerConfig,
 	FeeTier,
 	CardPurchaseOfDay,
 	SwapData,
 	SwapAndBuyCardParams,
+	SwapAndBuyCardParamsForPartner,
 	SwapAndBuyCardParamsOdyssey,
+	CardV2SignatureData,
+	SwapAndBuyCardParamsV2,
 } from "@zebec-network/evm-card-sdk";
 ```
 
-| Type                          | Description                                      |
-| ----------------------------- | ------------------------------------------------ |
-| `CardType`                    | `"silver" \| "carbon"`                           |
-| `CardConfig`                  | Full contract configuration object               |
-| `FeeTier`                     | `{ feePercent, minAmount, maxAmount }`           |
-| `CardPurchaseOfDay`           | `{ totalCardPurchased, cardPurchasedTimestamp }` |
-| `SwapData`                    | Swap quote data from the Zebec backend           |
-| `SwapAndBuyCardParams`        | Parameters for `swapAndBuyCardDirect`            |
-| `SwapAndBuyCardParamsOdyssey` | Parameters for `swapAndBuyCardOdyssey`           |
+| Type                             | Description                                      |
+| -------------------------------- | ------------------------------------------------ |
+| `CardType`                       | `"silver" \| "carbon"`                           |
+| `CardConfig`                     | Full contract configuration object               |
+| `PartnerConfig`                  | Partner-specific card purchase configuration     |
+| `FeeTier`                        | `{ feePercent, minAmount, maxAmount }`           |
+| `CardPurchaseOfDay`              | `{ totalCardPurchased, cardPurchasedTimestamp }` |
+| `SwapData`                       | Swap quote data from the Zebec backend           |
+| `SwapAndBuyCardParams`           | Parameters for `swapAndBuyCardDirect`            |
+| `SwapAndBuyCardParamsForPartner` | Parameters for `swapAndBuyForPartner`            |
+| `SwapAndBuyCardParamsOdyssey`    | Parameters for `swapAndBuyCardOdyssey`           |
+| `CardV2SignatureData`            | Backend-signed EIP-712 fee data for v2 methods   |
+| `SwapAndBuyCardParamsV2`         | Parameters for `swapAndBuyCardDirectV2`          |
