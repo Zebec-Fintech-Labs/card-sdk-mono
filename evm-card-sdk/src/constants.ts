@@ -88,7 +88,7 @@ export const WETH_ADDRESS: Record<SupportedChain, string> = {
 	[SupportedChain.Polygon]: "0x0000000000000000000000000000000000001010",
 	[SupportedChain.PolygonAmoy]: "0x0000000000000000000000000000000000000000",
 	[SupportedChain.RobinhoodTestnet]: "0x0000000000000000000000000000000000000000",
-	[SupportedChain.Robinhood]: "0x0000000000000000000000000000000000000000",
+	[SupportedChain.Robinhood]: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
 };
 
 export const ATOKEN_ADDRESS: Record<SupportedChain, string> = {
