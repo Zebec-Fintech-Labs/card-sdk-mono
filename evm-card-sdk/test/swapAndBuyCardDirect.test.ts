@@ -4,7 +4,7 @@ import { describe } from "mocha";
 import { SupportedChain, USDC_ADDRESS, WETH_ADDRESS, ZebecCardService } from "../src";
 import { fetchSwapData, getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Mainnet;
+const chainId = SupportedChain.Robinhood;
 const provider = getProvider(chainId);
 const signers = getSigners(provider);
 const signer = signers[0];
@@ -23,24 +23,11 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 			const amount = "0.00252";
 			const spender = await service.zebecCard.getAddress();
 
-			const params = {
-				amount,
-				chainId: chainId,
-				dst: USDC_ADDRESS[chainId],
-				src: WETH,
-				from: spender,
-				origin: spender,
-				receiver: spender,
-				slippage: 0.5,
-			};
-
-			const data = await fetchSwapData(params);
-			console.log(data);
-
-			assert(!("error" in data), "Error in swap data response");
-			console.log("spender:", spender);
-
-			// Get current gas price and estimate gas
+			const wrapEth = await service.wrapEth({
+				amount
+			});
+			const wrapEthReceipt = await wrapEth.wait();
+			console.log("wrapEth hash:", wrapEthReceipt?.hash);
 
 			const approval1 = await service.approve({
 				amount,
@@ -52,6 +39,18 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 				const receipt1 = await approval1.wait();
 				console.log("approval hash:", receipt1?.hash);
 			}
+
+			const data = await fetchSwapData({
+				amount,
+				chainName: "ROBINHOOD",
+				slippage: 1,
+				srcSymbol: "ETH",
+				type: "EXACT_IN"
+			});
+			console.log(data);
+
+			assert(!("error" in data), "Error in swap data response");
+			console.log("spender:", spender);
 
 			const response = await service.swapAndBuyCardDirect({
 				cardType: "silver",

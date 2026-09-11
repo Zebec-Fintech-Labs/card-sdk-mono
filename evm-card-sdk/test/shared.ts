@@ -80,45 +80,26 @@ export function getProvider(chain: SupportedChain) {
 
 export const ONE_INCH_ROUTER_V6_ADDRESS = "0x111111125421cA6dc452d289314280a0f8842A65";
 
-const BASE_BACKEND_API_URL = "https://api.card.zebec.io";
+const BASE_BACKEND_API_URL = "https://api.superapp.zebec.io";
 
 export async function fetchSwapData(data: {
-	src: string;
-	dst: string;
-	receiver: string;
-	from: string;
-	origin: string;
-	chainId: number;
+	srcSymbol: string;
 	slippage: number;
+	chainName: string;
 	amount: string;
+	type: "EXACT_IN" | "EXACT_OUT";
 }) {
-	const { amount, chainId, dst, from, origin, receiver, slippage, src } = data;
-
-	// const amount = "0.001";
-	// const slippage = "3";
-	// const src = "";
-	// const receiver = "";
-	// const dst = "";
-	// const from = "";
-	// const origin = "";
-	// const chainId = "";
+	const { amount, chainName, slippage, srcSymbol, type } = data;
 
 	const urlParams = new URLSearchParams({
-		src,
-		dst,
-		from,
-		origin,
-		amount,
+		chainName: chainName.toUpperCase(),
 		slippage: slippage.toString(),
-		compatibility: "true",
-		chainId: chainId.toString(),
-		receiver,
-		disableEstimate: "true",
+		platform: "zebec-super-app",
+		type,
 	});
 
-	//api.card.zebec.io/swap/get1inchswapquotes?src=0x9Cf0ED013e67DB12cA3AF8e7506fE401aA14dAd6&dst=0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48&from=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&origin=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&amount=1&slippage=5&compatibility=true&chainId=1&receiver=0xCDdb8c03E3B2D04A52771E77B1FAD9daA8a38744&disableEstimate=true
-
-	const url = BASE_BACKEND_API_URL + `/swap/get1inchswapquotes?${urlParams}`;
+	// https://api.superapp.zebec.io/tokens/quotes/ZBCN_USD/10?type=EXACT_IN&slippage=1&platform=zebec-super-app&chainName=SOLANA
+	const url = BASE_BACKEND_API_URL + `/swap/quotes/${srcSymbol}_USD/${amount}?${urlParams}`;
 	console.log("url:", url);
 
 	const response = await (
