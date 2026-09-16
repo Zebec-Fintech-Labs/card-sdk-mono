@@ -3,7 +3,7 @@ import { describe } from "mocha";
 import { FeeTier, SupportedChain, ZebecCardService } from "../src";
 import { getProvider, getSigners } from "./shared";
 
-const chainId = SupportedChain.Mainnet;
+const chainId = SupportedChain.Robinhood;
 
 const provider = getProvider(chainId);
 const signer = getSigners(provider)[0];
@@ -37,7 +37,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setRevenueVault()", () => {
 		it("Should update revenue vault", async () => {
-			const vaultAddress = "0x5d00f4cde0EB3760176Ed3C26a7e155183232C3d";
+			const vaultAddress = "0xD9AAD9B117A65bd852f739010f512569f0366395";
 			const response = await service.setRevenueVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -46,7 +46,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setCommissionVault()", () => {
 		it("Should update commission vault", async () => {
-			const vaultAddress = "0x71d184Bd15DE33C8A17918D3Eb2337dB9bf337B4";
+			const vaultAddress = "0xD9AAD9B117A65bd852f739010f512569f0366395";
 			const response = await service.setCommissionVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -55,7 +55,7 @@ describe("ZebecCardService:Admin functions", () => {
 
 	describe("setCardVault()", () => {
 		it("Should update card vault", async () => {
-			const vaultAddress = "0xDeb5fDF3ec8428D776e9b637eCd30f1c8ef10efD";
+			const vaultAddress = "0xf5Cc3c1Ea6CD442EcCB4668FE54512D7C8B061f7";
 			const response = await service.setCardVault({ vaultAddress });
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
@@ -81,7 +81,7 @@ describe("ZebecCardService:Admin functions", () => {
 	});
 
 	describe("setMaxCardAmount()", () => {
-		it("Should update min card amount", async () => {
+		it("Should update max card amount", async () => {
 			const maxCardAmount = "1500";
 			const response = await service.setMaxCardAmount({ maxCardAmount });
 			const receipt = await response.wait();
@@ -101,9 +101,9 @@ describe("ZebecCardService:Admin functions", () => {
 	describe("setFeeTiers()", () => {
 		it("Should update fee tier", async () => {
 			const feeTiers: FeeTier[] = [
-				{ feePercent: "0.5", maxAmount: "1000.0", minAmount: "501.0" },
-				{ feePercent: "3", maxAmount: "500.0", minAmount: "101.0" },
-				{ feePercent: "6.5", maxAmount: "100.0", minAmount: "5.0" },
+				{ feePercent: "0.5", maxAmount: "1500.0", minAmount: "500.0" },
+				{ feePercent: "3", maxAmount: "500.0", minAmount: "100.0" },
+				{ feePercent: "6.5", maxAmount: "100.0", minAmount: "10.0" },
 			];
 			const response = await service.setFeeTiers({ feeTiers });
 			const receipt = await response.wait();
@@ -117,6 +117,17 @@ describe("ZebecCardService:Admin functions", () => {
 				minAmount: "101",
 				maxAmount: "500",
 				feePercent: "3.0",
+			});
+			const receipt = await response.wait();
+			console.log("txhash:", receipt?.hash);
+		});
+	});
+
+	describe("setCustomFee()", () => {
+		it("Should update custom fee for a token", async () => {
+			const response = await service.setCustomFee({
+				tokenAddress: "0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73",
+				fee: "1.5",
 			});
 			const receipt = await response.wait();
 			console.log("txhash:", receipt?.hash);
