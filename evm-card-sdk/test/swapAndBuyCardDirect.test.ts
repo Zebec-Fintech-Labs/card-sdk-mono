@@ -1,5 +1,6 @@
 import assert from "assert";
 import { describe } from "mocha";
+import { ethers } from "ethers";
 
 import { SupportedChain, USDC_ADDRESS, WETH_ADDRESS, ZebecCardService } from "../src";
 import { fetchSwapData, getProvider, getSigners } from "./shared";
@@ -20,14 +21,27 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 			// const brett = "0x532f27101965dd16442E59d40670FaF5eBB142E4";
 			// const mgames = "0xD92B53EF83afAf0d0A0167cF7aC5951AD1994824";
 			const WETH = WETH_ADDRESS[chainId];
-			const amount = "0.00252";
+			console.log("WETH:", WETH);
+			const amount = "0.005"; // ~$12.48 (taken from MetaMask swap quote)
 			const spender = await service.zebecCard.getAddress();
 
-			const wrapEth = await service.wrapEth({
-				amount
-			});
-			const wrapEthReceipt = await wrapEth.wait();
-			console.log("wrapEth hash:", wrapEthReceipt?.hash);
+			// Skip wrap if WETH balance is already sufficient
+			const wethContract = new ethers.Contract(
+				WETH,
+				["function balanceOf(address) view returns (uint256)"],
+				provider,
+			);
+			const wethBalance = await wethContract.balanceOf(signer.address);
+			console.log("WETH balance:", ethers.formatUnits(wethBalance, 18));
+			if (wethBalance < ethers.parseUnits(amount, 18)) {
+				const wrapEth = await service.wrapEth({
+					amount,
+				});
+				const wrapEthReceipt = await wrapEth.wait();
+				console.log("wrapEth hash:", wrapEthReceipt?.hash);
+			} else {
+				console.log("Skipping wrap, sufficient WETH already available");
+			}
 
 			const approval1 = await service.approve({
 				amount,
@@ -45,9 +59,10 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 				chainName: "ROBINHOOD",
 				slippage: 1,
 				srcSymbol: "ETH",
-				type: "EXACT_IN"
+				type: "EXACT_IN",
+				from: signer.address,
 			});
-			console.log(data);
+			console.log("Data before swap execution:", data);
 
 			assert(!("error" in data), "Error in swap data response");
 			console.log("spender:", spender);
