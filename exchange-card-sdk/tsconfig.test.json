@@ -1,9 +1,0 @@
-{
-	"compilerOptions": {
-		"module": "esnext",
-		"moduleResolution": "bundler",
-		"types": ["@types/mocha", "@types/node", "@types/jest"]
-	},
-	"extends": "./tsconfig.json",
-	"include": ["src", "test"]
-}
