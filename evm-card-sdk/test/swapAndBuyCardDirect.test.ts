@@ -3,15 +3,17 @@ import { describe } from "mocha";
 
 import { SupportedChain, USDC_ADDRESS, WETH_ADDRESS, ZebecCardService } from "../src";
 import { fetchSwapData, getProvider, getSigners } from "./shared";
+import { sha256Hash } from "@zebec-network/core-utils";
 
-const chainId = SupportedChain.Robinhood;
+const chainId = SupportedChain.Bsc;
 const provider = getProvider(chainId);
 const signers = getSigners(provider);
-const signer = signers[0];
 console.log(
 	"signers:",
 	signers.map((s) => s.address),
 );
+const signer = signers[2];
+console.log("used address:", signer.address);
 const service = new ZebecCardService(signer, chainId);
 
 describe("ZebecCardService: swapAndBuyCardDirect", () => {
@@ -19,20 +21,21 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 		it("Should transfer balance from user's wallet to revenue vault", async () => {
 			// const brett = "0x532f27101965dd16442E59d40670FaF5eBB142E4";
 			// const mgames = "0xD92B53EF83afAf0d0A0167cF7aC5951AD1994824";
+			const velo = "0xf486ad071f3bEE968384D2E39e2D8aF0fCf6fd46";
 			const WETH = WETH_ADDRESS[chainId];
-			const amount = "0.00252";
+			const amount = "2550.884";
 			const spender = await service.zebecCard.getAddress();
 
-			const wrapEth = await service.wrapEth({
-				amount
-			});
-			const wrapEthReceipt = await wrapEth.wait();
-			console.log("wrapEth hash:", wrapEthReceipt?.hash);
+			// const wrapEth = await service.wrapEth({
+			// 	amount
+			// });
+			// const wrapEthReceipt = await wrapEth.wait();
+			// console.log("wrapEth hash:", wrapEthReceipt?.hash);
 
 			const approval1 = await service.approve({
 				amount,
 				spender,
-				token: WETH,
+				token: velo,
 			});
 
 			if (approval1) {
@@ -42,10 +45,11 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 
 			const data = await fetchSwapData({
 				amount,
-				chainName: "ROBINHOOD",
+				chainName: "BINANCE",
 				slippage: 1,
-				srcSymbol: "ETH",
-				type: "EXACT_IN"
+				srcSymbol: "VELO",
+				type: "EXACT_IN",
+				platform: "orbit"
 			});
 			console.log(data);
 
@@ -54,7 +58,7 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 
 			const response = await service.swapAndBuyCardDirect({
 				cardType: "silver",
-				buyerEmail: "user@gmail.com",
+				buyerEmail: sha256Hash("user@gmail.com"),
 				swapData: data,
 			});
 			const receipt2 = await response.wait();

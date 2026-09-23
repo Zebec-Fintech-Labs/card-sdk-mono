@@ -88,18 +88,19 @@ export async function fetchSwapData(data: {
 	chainName: string;
 	amount: string;
 	type: "EXACT_IN" | "EXACT_OUT";
+	platform?: string;
 }) {
-	const { amount, chainName, slippage, srcSymbol, type } = data;
+	const { amount, chainName, slippage, srcSymbol, type, platform } = data;
 
 	const urlParams = new URLSearchParams({
 		chainName: chainName.toUpperCase(),
 		slippage: slippage.toString(),
-		platform: "zebec-super-app",
+		platform: platform ?? "zebec-super-app",
 		type,
 	});
 
 	// https://api.superapp.zebec.io/tokens/quotes/ZBCN_USD/10?type=EXACT_IN&slippage=1&platform=zebec-super-app&chainName=SOLANA
-	const url = BASE_BACKEND_API_URL + `/swap/quotes/${srcSymbol}_USD/${amount}?${urlParams}`;
+	const url = BASE_BACKEND_API_URL + `/tokens/quotes/${srcSymbol}_USD/${amount}?${urlParams}`;
 	console.log("url:", url);
 
 	const response = await (
