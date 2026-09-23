@@ -8,6 +8,7 @@
 		"@near-js/utils": "^2.5.1",
 		"@provablehq/sdk": "^0.11.9",
 		"@stellar/stellar-sdk": "^15.1.0",
+		"@types/node": "^26.6.2",
 		"algosdk": "^3.5.2",
 		"axios": "^1.16.0",
 		"bignumber.js": "^11.1.1",
@@ -25,14 +26,13 @@
 		"@typechain/ethers-v6": "^0.5.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^25.7.0",
-		"dotenv": "^17.4.2",
-		"mocha": "^11.7.5",
+		"dotenv": "^18.0.3",
+		"mocha": "^12.0.2",
 		"prettier": "^3.6.2",
 		"rimraf": "^6.0.1",
-		"ts-mocha": "^11.1.0",
-		"ts-node": "^10.9.2",
+		"tsx": "^4.23.15",
 		"typechain": "^8.3.2",
-		"typescript": "^6.0.2"
+		"typescript": "^6.0.3"
 	},
 	"files": [
 		"dist"
@@ -59,7 +59,7 @@
 		"format": "prettier --write .",
 		"gen:typechain": "typechain --target ethers-v6 --out-dir \"src/artifacts/typechain-types\" \"src/artifacts/abi/*.json\"",
 		"prepare": "npm run build",
-		"test": "ts-mocha -p ./tsconfig.test.json -t 1000000"
+		"test": "mocha -t 1000000 --"
 	},
 	"type": "module",
 	"types": "dist/index.d.ts",
