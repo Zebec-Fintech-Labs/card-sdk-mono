@@ -137,11 +137,15 @@ export type SwapAndBuyCardParamsV2 = SwapAndBuyCardParams & {
 
 /**
  * Backend-provided EIP-712 signature data for black card purchases.
- * Includes the signed daily card buy limit and expiry timestamp.
+ * Includes the signed daily card buy limit, amount range, and expiry timestamp.
  */
 export type BlackCardSignatureData = CardV2SignatureData & {
 	/** Backend-signed daily card buy limit in USDC, human-readable (e.g. "1000") */
 	dailyCardBuyLimit: string;
+	/** Backend-signed minimum card amount in USDC, human-readable (e.g. "5") */
+	minCardAmount: string;
+	/** Backend-signed maximum card amount in USDC, human-readable (e.g. "1000") */
+	maxCardAmount: string;
 };
 
 export type BuyBlackCardParams = {
@@ -702,9 +706,9 @@ export class ZebecCardService {
 		if (parsedAmount > vaultBalance) {
 			throw new Error(
 				"Not enough balance. Vault balance: " +
-					ethers.formatUnits(vaultBalance, decimals) +
-					" Requested amount: " +
-					params.amount,
+				ethers.formatUnits(vaultBalance, decimals) +
+				" Requested amount: " +
+				params.amount,
 			);
 		}
 
@@ -715,9 +719,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -735,9 +739,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -817,9 +821,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -837,9 +841,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -920,9 +924,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -940,9 +944,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -1017,9 +1021,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, dstTokenDecimals) +
-					" - " +
-					ethers.formatUnits(maxRange, dstTokenDecimals),
+				ethers.formatUnits(minRange, dstTokenDecimals) +
+				" - " +
+				ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1037,9 +1041,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-					" Today's purchase amount will be: " +
-					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+				" Today's purchase amount will be: " +
+				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -1144,9 +1148,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, dstTokenDecimals) +
-					" - " +
-					ethers.formatUnits(maxRange, dstTokenDecimals),
+				ethers.formatUnits(minRange, dstTokenDecimals) +
+				" - " +
+				ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1164,9 +1168,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-					" Today's purchase amount will be: " +
-					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+				" Today's purchase amount will be: " +
+				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -1232,23 +1236,15 @@ export class ZebecCardService {
 		const parsedAmount = ethers.parseUnits(params.amount, decimals);
 		const parsedFeeAmount = ethers.parseUnits(params.signatureData.feeAmount, decimals);
 		const parsedDailyLimit = ethers.parseUnits(params.signatureData.dailyCardBuyLimit, decimals);
+		const parsedMinAmount = ethers.parseUnits(params.signatureData.minCardAmount, decimals);
+		const parsedMaxAmount = ethers.parseUnits(params.signatureData.maxCardAmount, decimals);
 
 		if (!isEmailValid(params.buyerEmail)) {
 			throw new Error("Invalid email: " + params.buyerEmail);
 		}
 
-		const cardConfig = await this.zebecCard.cardConfig();
-		const minRange = cardConfig.minCardAmount;
-		const maxRange = cardConfig.maxCardAmount;
-
-		if (parsedAmount < minRange || parsedAmount > maxRange) {
-			throw new Error(
-				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
-			);
-		}
+		// Min/max validation is enforced on-chain using the backend-signed values,
+		// so no local cardConfig range check is needed here.
 
 		const emailHash = await hashSHA256(params.buyerEmail);
 		const cardTypeStr = params.cardType === "carbon" ? "reloadable" : "non_reloadable";
@@ -1262,6 +1258,8 @@ export class ZebecCardService {
 			parsedAmount,
 			parsedFeeAmount,
 			parsedDailyLimit,
+			parsedMinAmount,
+			parsedMaxAmount,
 			params.signatureData.validUntil,
 			cardTypeStr,
 			emailHash,
@@ -1319,27 +1317,13 @@ export class ZebecCardService {
 
 		const routeData = swapParams.routeData;
 
-		const cardConfig = await this.zebecCard.cardConfig();
-		const minRange = cardConfig.minCardAmount;
-		const maxRange = cardConfig.maxCardAmount;
-
 		const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
 		const parsedDailyLimit = ethers.parseUnits(signatureData.dailyCardBuyLimit, dstTokenDecimals);
+		const parsedMinAmount = ethers.parseUnits(signatureData.minCardAmount, dstTokenDecimals);
+		const parsedMaxAmount = ethers.parseUnits(signatureData.maxCardAmount, dstTokenDecimals);
 
-		const amountAfterFeeDeduction = BigInt(
-			BigNumber(minReturnAmount.toString())
-				.minus(parsedFeeAmount.toString())
-				.toFixed(0, BigNumber.ROUND_DOWN),
-		);
-
-		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
-			throw new Error(
-				"Amount must be with range: " +
-					ethers.formatUnits(minRange, dstTokenDecimals) +
-					" - " +
-					ethers.formatUnits(maxRange, dstTokenDecimals),
-			);
-		}
+		// Min/max validation is enforced on-chain using the backend-signed values,
+		// so no local cardConfig range check is needed here.
 
 		const emailHash = await hashSHA256(buyerEmail);
 		const cardTypeStr = cardType === "carbon" ? "reloadable" : "non_reloadable";
@@ -1355,6 +1339,8 @@ export class ZebecCardService {
 			routeData,
 			parsedFeeAmount,
 			parsedDailyLimit,
+			parsedMinAmount,
+			parsedMaxAmount,
 			signatureData.validUntil,
 			cardTypeStr,
 			emailHash,
@@ -1399,9 +1385,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, decimals) +
-					" - " +
-					ethers.formatUnits(maxRange, decimals),
+				ethers.formatUnits(minRange, decimals) +
+				" - " +
+				ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -1420,9 +1406,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-					" Today's purchase amount: " +
-					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+				" Today's purchase amount: " +
+				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -1505,9 +1491,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-					ethers.formatUnits(minRange, dstTokenDecimals) +
-					" - " +
-					ethers.formatUnits(maxRange, dstTokenDecimals),
+				ethers.formatUnits(minRange, dstTokenDecimals) +
+				" - " +
+				ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1526,9 +1512,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-					" Today's purchase amount will be: " +
-					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+				" Today's purchase amount will be: " +
+				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 

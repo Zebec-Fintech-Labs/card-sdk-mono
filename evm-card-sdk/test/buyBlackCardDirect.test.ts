@@ -22,6 +22,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const amount = "50";
 		const feeAmount = "0.5";
 		const dailyCardBuyLimit = "1000";
+		const minCardAmount = "5";
+		const maxCardAmount = "1000";
 		const token = await service.usdcToken.getAddress();
 		const spender = await service.zebecCard.getAddress();
 
@@ -42,6 +44,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const parsedAmount = ethers.parseUnits(amount, decimals);
 		const parsedFeeAmount = ethers.parseUnits(feeAmount, decimals);
 		const parsedDailyLimit = ethers.parseUnits(dailyCardBuyLimit, decimals);
+		const parsedMinAmount = ethers.parseUnits(minCardAmount, decimals);
+		const parsedMaxAmount = ethers.parseUnits(maxCardAmount, decimals);
 
 		const validUntil = BigInt(Math.floor(Date.now() / 1000) + 3600);
 
@@ -59,6 +63,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 				{ name: "amount", type: "uint256" },
 				{ name: "feeAmount", type: "uint256" },
 				{ name: "dailyCardBuyLimit", type: "uint256" },
+				{ name: "minCardAmount", type: "uint256" },
+				{ name: "maxCardAmount", type: "uint256" },
 				{ name: "validUntil", type: "uint256" },
 				{ name: "nonce", type: "uint256" },
 			],
@@ -70,6 +76,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 			amount: parsedAmount,
 			feeAmount: parsedFeeAmount,
 			dailyCardBuyLimit: parsedDailyLimit,
+			minCardAmount: parsedMinAmount,
+			maxCardAmount: parsedMaxAmount,
 			validUntil,
 			nonce,
 		};
@@ -83,6 +91,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 			signatureData: {
 				feeAmount,
 				dailyCardBuyLimit,
+				minCardAmount,
+				maxCardAmount,
 				validUntil,
 				signature,
 			},
@@ -97,6 +107,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const amount = "50";
 		const feeAmount = "0.5";
 		const dailyCardBuyLimit = "1000";
+		const minCardAmount = "5";
+		const maxCardAmount = "1000";
 		const token = await service.usdcToken.getAddress();
 		const spender = await service.zebecCard.getAddress();
 
@@ -115,6 +127,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const parsedAmount = ethers.parseUnits(amount, decimals);
 		const parsedFeeAmount = ethers.parseUnits(feeAmount, decimals);
 		const parsedDailyLimit = ethers.parseUnits(dailyCardBuyLimit, decimals);
+		const parsedMinAmount = ethers.parseUnits(minCardAmount, decimals);
+		const parsedMaxAmount = ethers.parseUnits(maxCardAmount, decimals);
 
 		// Expired timestamp (1 minute ago)
 		const validUntil = BigInt(Math.floor(Date.now() / 1000) - 60);
@@ -133,6 +147,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 				{ name: "amount", type: "uint256" },
 				{ name: "feeAmount", type: "uint256" },
 				{ name: "dailyCardBuyLimit", type: "uint256" },
+				{ name: "minCardAmount", type: "uint256" },
+				{ name: "maxCardAmount", type: "uint256" },
 				{ name: "validUntil", type: "uint256" },
 				{ name: "nonce", type: "uint256" },
 			],
@@ -144,6 +160,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 			amount: parsedAmount,
 			feeAmount: parsedFeeAmount,
 			dailyCardBuyLimit: parsedDailyLimit,
+			minCardAmount: parsedMinAmount,
+			maxCardAmount: parsedMaxAmount,
 			validUntil,
 			nonce,
 		};
@@ -158,6 +176,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 				signatureData: {
 					feeAmount,
 					dailyCardBuyLimit,
+					minCardAmount,
+					maxCardAmount,
 					validUntil,
 					signature,
 				},
@@ -175,6 +195,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const amount = "50";
 		const feeAmount = "0.5";
 		const dailyCardBuyLimit = "1000";
+		const minCardAmount = "5";
+		const maxCardAmount = "1000";
 		const token = await service.usdcToken.getAddress();
 		const spender = await service.zebecCard.getAddress();
 
@@ -193,6 +215,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 		const parsedAmount = ethers.parseUnits(amount, decimals);
 		const parsedFeeAmount = ethers.parseUnits(feeAmount, decimals);
 		const parsedDailyLimit = ethers.parseUnits(dailyCardBuyLimit, decimals);
+		const parsedMinAmount = ethers.parseUnits(minCardAmount, decimals);
+		const parsedMaxAmount = ethers.parseUnits(maxCardAmount, decimals);
 
 		const validUntil = BigInt(Math.floor(Date.now() / 1000) + 3600);
 		const tamperedValidUntil = validUntil + 3600n;
@@ -211,6 +235,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 				{ name: "amount", type: "uint256" },
 				{ name: "feeAmount", type: "uint256" },
 				{ name: "dailyCardBuyLimit", type: "uint256" },
+				{ name: "minCardAmount", type: "uint256" },
+				{ name: "maxCardAmount", type: "uint256" },
 				{ name: "validUntil", type: "uint256" },
 				{ name: "nonce", type: "uint256" },
 			],
@@ -222,6 +248,8 @@ describe("ZebecCardService: buyBlackCardDirect", () => {
 			amount: parsedAmount,
 			feeAmount: parsedFeeAmount,
 			dailyCardBuyLimit: parsedDailyLimit,
+			minCardAmount: parsedMinAmount,
+			maxCardAmount: parsedMaxAmount,
 			validUntil,
 			nonce,
 		};
