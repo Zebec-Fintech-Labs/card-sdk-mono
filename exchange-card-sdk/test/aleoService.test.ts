@@ -38,6 +38,7 @@ describe("AleoService", () => {
 			privateFee: false,
 			fee: 0.001,
 			transferType: "private",
+			recipient: accounts[0].address().to_string(),
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
 	});
