@@ -62,7 +62,7 @@ describe("ZebecCardService: swapAndBuyCardDirect", () => {
 				slippage: 1,
 				srcSymbol: "VELO",
 				type: "EXACT_IN",
-				platform: "orbit"
+				platform: "orbit",
 			});
 			console.log("Data before swap execution:", data);
 

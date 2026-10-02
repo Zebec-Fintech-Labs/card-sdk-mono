@@ -50,7 +50,7 @@ describe("ZebecCardService: buyCardDirectV2", () => {
 			}
 
 			// 3. Gather signature inputs
-			const nonce = "0";
+			const nonce = await service.getUserNonce({ userAddress: signer.address });
 			const usdcAddress = await service.usdcToken.getAddress();
 			const verifyingContract = await service.zebecCard.getAddress();
 			const decimals = await service.usdcToken.decimals();
@@ -77,15 +77,19 @@ describe("ZebecCardService: buyCardDirectV2", () => {
 					{ name: "token", type: "address" },
 					{ name: "amount", type: "uint256" },
 					{ name: "feeAmount", type: "uint256" },
+					{ name: "validUntil", type: "uint256" },
 					{ name: "nonce", type: "uint256" },
 				],
 			};
+
+			const validUntil = BigInt(Math.floor(Date.now() / 1000) + 3600);
 
 			const value = {
 				user: signer.address,
 				token: usdcAddress,
 				amount: parsedAmount,
 				feeAmount: parsedFeeAmount,
+				validUntil,
 				nonce,
 			};
 
@@ -100,6 +104,7 @@ describe("ZebecCardService: buyCardDirectV2", () => {
 				buyerEmail: "user@gmail.com",
 				signatureData: {
 					feeAmount,
+					validUntil,
 					signature,
 				},
 			});

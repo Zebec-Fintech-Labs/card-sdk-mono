@@ -141,6 +141,7 @@ export interface ZebecCardInterface extends Interface {
 			| "UPGRADE_INTERFACE_VERSION"
 			| "aavePool"
 			| "admin"
+			| "buyBlackCardDirect"
 			| "buyCard"
 			| "buyCardDirect"
 			| "buyCardDirectForPartner"
@@ -189,6 +190,7 @@ export interface ZebecCardInterface extends Interface {
 			| "setRevenueVault"
 			| "setUsdcAddress"
 			| "swapAndBuy"
+			| "swapAndBuyBlackCard"
 			| "swapAndBuyForPartner"
 			| "swapAndBuyV2"
 			| "swapAndDeposit"
@@ -202,6 +204,7 @@ export interface ZebecCardInterface extends Interface {
 
 	getEvent(
 		nameOrSignatureOrTopic:
+			| "BlackCardPurchased"
 			| "CardPurchased"
 			| "Deposited"
 			| "EIP712DomainChanged"
@@ -217,6 +220,10 @@ export interface ZebecCardInterface extends Interface {
 	encodeFunctionData(functionFragment: "UPGRADE_INTERFACE_VERSION", values?: undefined): string;
 	encodeFunctionData(functionFragment: "aavePool", values?: undefined): string;
 	encodeFunctionData(functionFragment: "admin", values?: undefined): string;
+	encodeFunctionData(
+		functionFragment: "buyBlackCardDirect",
+		values: [BigNumberish, BigNumberish, BigNumberish, BigNumberish, string, string, BytesLike],
+	): string;
 	encodeFunctionData(functionFragment: "buyCard", values: [BigNumberish, string, string]): string;
 	encodeFunctionData(
 		functionFragment: "buyCardDirect",
@@ -228,7 +235,7 @@ export interface ZebecCardInterface extends Interface {
 	): string;
 	encodeFunctionData(
 		functionFragment: "buyCardDirectV2",
-		values: [BigNumberish, BigNumberish, string, string, BytesLike],
+		values: [BigNumberish, BigNumberish, BigNumberish, string, string, BytesLike],
 	): string;
 	encodeFunctionData(functionFragment: "cardBalances", values: [AddressLike]): string;
 	encodeFunctionData(functionFragment: "cardConfig", values?: undefined): string;
@@ -310,6 +317,20 @@ export interface ZebecCardInterface extends Interface {
 		values: [AddressLike, IAggregationRouterV6.SwapDescriptionStruct, BytesLike, string, string],
 	): string;
 	encodeFunctionData(
+		functionFragment: "swapAndBuyBlackCard",
+		values: [
+			AddressLike,
+			IAggregationRouterV6.SwapDescriptionStruct,
+			BytesLike,
+			BigNumberish,
+			BigNumberish,
+			BigNumberish,
+			string,
+			string,
+			BytesLike,
+		],
+	): string;
+	encodeFunctionData(
 		functionFragment: "swapAndBuyForPartner",
 		values: [
 			BytesLike,
@@ -326,6 +347,7 @@ export interface ZebecCardInterface extends Interface {
 			AddressLike,
 			IAggregationRouterV6.SwapDescriptionStruct,
 			BytesLike,
+			BigNumberish,
 			BigNumberish,
 			string,
 			string,
@@ -349,6 +371,7 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "UPGRADE_INTERFACE_VERSION", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "aavePool", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "admin", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "buyBlackCardDirect", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "buyCard", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "buyCardDirect", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "buyCardDirectForPartner", data: BytesLike): Result;
@@ -397,6 +420,7 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "setRevenueVault", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "setUsdcAddress", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndBuy", data: BytesLike): Result;
+	decodeFunctionResult(functionFragment: "swapAndBuyBlackCard", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndBuyForPartner", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndBuyV2", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "swapAndDeposit", data: BytesLike): Result;
@@ -406,6 +430,40 @@ export interface ZebecCardInterface extends Interface {
 	decodeFunctionResult(functionFragment: "withdraw", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "withdrawYield", data: BytesLike): Result;
 	decodeFunctionResult(functionFragment: "zebecToken", data: BytesLike): Result;
+}
+
+export namespace BlackCardPurchasedEvent {
+	export type InputTuple = [
+		from: AddressLike,
+		id: BigNumberish,
+		amount: BigNumberish,
+		dailyCardBuyLimit: BigNumberish,
+		cardType: string,
+		userEmail: string,
+		purchasedAt: BigNumberish,
+	];
+	export type OutputTuple = [
+		from: string,
+		id: bigint,
+		amount: bigint,
+		dailyCardBuyLimit: bigint,
+		cardType: string,
+		userEmail: string,
+		purchasedAt: bigint,
+	];
+	export interface OutputObject {
+		from: string;
+		id: bigint;
+		amount: bigint;
+		dailyCardBuyLimit: bigint;
+		cardType: string;
+		userEmail: string;
+		purchasedAt: bigint;
+	}
+	export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+	export type Filter = TypedDeferredTopicFilter<Event>;
+	export type Log = TypedEventLog<Event>;
+	export type LogDescription = TypedLogDescription<Event>;
 }
 
 export namespace CardPurchasedEvent {
@@ -634,6 +692,20 @@ export interface ZebecCard extends BaseContract {
 
 	admin: TypedContractMethod<[], [string], "view">;
 
+	buyBlackCardDirect: TypedContractMethod<
+		[
+			amount: BigNumberish,
+			feeAmount: BigNumberish,
+			dailyCardBuyLimit: BigNumberish,
+			validUntil: BigNumberish,
+			cardType: string,
+			userEmail: string,
+			signature: BytesLike,
+		],
+		[void],
+		"nonpayable"
+	>;
+
 	buyCard: TypedContractMethod<
 		[amount: BigNumberish, cardType: string, userEmail: string],
 		[void],
@@ -656,6 +728,7 @@ export interface ZebecCard extends BaseContract {
 		[
 			amount: BigNumberish,
 			feeAmount: BigNumberish,
+			validUntil: BigNumberish,
 			cardType: string,
 			userEmail: string,
 			signature: BytesLike,
@@ -884,6 +957,22 @@ export interface ZebecCard extends BaseContract {
 		"payable"
 	>;
 
+	swapAndBuyBlackCard: TypedContractMethod<
+		[
+			executor: AddressLike,
+			desc: IAggregationRouterV6.SwapDescriptionStruct,
+			routeData: BytesLike,
+			feeAmount: BigNumberish,
+			dailyCardBuyLimit: BigNumberish,
+			validUntil: BigNumberish,
+			cardType: string,
+			userEmail: string,
+			signature: BytesLike,
+		],
+		[void],
+		"payable"
+	>;
+
 	swapAndBuyForPartner: TypedContractMethod<
 		[
 			partnerId: BytesLike,
@@ -903,6 +992,7 @@ export interface ZebecCard extends BaseContract {
 			desc: IAggregationRouterV6.SwapDescriptionStruct,
 			routeData: BytesLike,
 			feeAmount: BigNumberish,
+			validUntil: BigNumberish,
 			cardType: string,
 			userEmail: string,
 			signature: BytesLike,
@@ -941,6 +1031,21 @@ export interface ZebecCard extends BaseContract {
 	getFunction(nameOrSignature: "aavePool"): TypedContractMethod<[], [string], "view">;
 	getFunction(nameOrSignature: "admin"): TypedContractMethod<[], [string], "view">;
 	getFunction(
+		nameOrSignature: "buyBlackCardDirect",
+	): TypedContractMethod<
+		[
+			amount: BigNumberish,
+			feeAmount: BigNumberish,
+			dailyCardBuyLimit: BigNumberish,
+			validUntil: BigNumberish,
+			cardType: string,
+			userEmail: string,
+			signature: BytesLike,
+		],
+		[void],
+		"nonpayable"
+	>;
+	getFunction(
 		nameOrSignature: "buyCard",
 	): TypedContractMethod<
 		[amount: BigNumberish, cardType: string, userEmail: string],
@@ -967,6 +1072,7 @@ export interface ZebecCard extends BaseContract {
 		[
 			amount: BigNumberish,
 			feeAmount: BigNumberish,
+			validUntil: BigNumberish,
 			cardType: string,
 			userEmail: string,
 			signature: BytesLike,
@@ -1197,6 +1303,23 @@ export interface ZebecCard extends BaseContract {
 		"payable"
 	>;
 	getFunction(
+		nameOrSignature: "swapAndBuyBlackCard",
+	): TypedContractMethod<
+		[
+			executor: AddressLike,
+			desc: IAggregationRouterV6.SwapDescriptionStruct,
+			routeData: BytesLike,
+			feeAmount: BigNumberish,
+			dailyCardBuyLimit: BigNumberish,
+			validUntil: BigNumberish,
+			cardType: string,
+			userEmail: string,
+			signature: BytesLike,
+		],
+		[void],
+		"payable"
+	>;
+	getFunction(
 		nameOrSignature: "swapAndBuyForPartner",
 	): TypedContractMethod<
 		[
@@ -1218,6 +1341,7 @@ export interface ZebecCard extends BaseContract {
 			desc: IAggregationRouterV6.SwapDescriptionStruct,
 			routeData: BytesLike,
 			feeAmount: BigNumberish,
+			validUntil: BigNumberish,
 			cardType: string,
 			userEmail: string,
 			signature: BytesLike,
@@ -1247,6 +1371,13 @@ export interface ZebecCard extends BaseContract {
 	): TypedContractMethod<[amount: BigNumberish], [void], "nonpayable">;
 	getFunction(nameOrSignature: "zebecToken"): TypedContractMethod<[], [string], "view">;
 
+	getEvent(
+		key: "BlackCardPurchased",
+	): TypedContractEvent<
+		BlackCardPurchasedEvent.InputTuple,
+		BlackCardPurchasedEvent.OutputTuple,
+		BlackCardPurchasedEvent.OutputObject
+	>;
 	getEvent(
 		key: "CardPurchased",
 	): TypedContractEvent<
@@ -1319,6 +1450,17 @@ export interface ZebecCard extends BaseContract {
 	>;
 
 	filters: {
+		"BlackCardPurchased(address,uint256,uint256,uint256,string,string,uint256)": TypedContractEvent<
+			BlackCardPurchasedEvent.InputTuple,
+			BlackCardPurchasedEvent.OutputTuple,
+			BlackCardPurchasedEvent.OutputObject
+		>;
+		BlackCardPurchased: TypedContractEvent<
+			BlackCardPurchasedEvent.InputTuple,
+			BlackCardPurchasedEvent.OutputTuple,
+			BlackCardPurchasedEvent.OutputObject
+		>;
+
 		"CardPurchased(address,uint256,uint256,string,string,uint256)": TypedContractEvent<
 			CardPurchasedEvent.InputTuple,
 			CardPurchasedEvent.OutputTuple,

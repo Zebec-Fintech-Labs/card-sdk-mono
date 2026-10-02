@@ -126,11 +126,35 @@ export type CardV2SignatureData = {
 	signature: string;
 	/** Backend-signed total fee amount in USDC, human-readable (e.g. "0.5") */
 	feeAmount: string;
+	/** Unix timestamp (seconds) after which the signed quote expires */
+	validUntil: bigint;
 };
 
 export type SwapAndBuyCardParamsV2 = SwapAndBuyCardParams & {
 	/** Backend-provided signature data for fee verification */
 	signatureData: CardV2SignatureData;
+};
+
+/**
+ * Backend-provided EIP-712 signature data for black card purchases.
+ * Includes the signed daily card buy limit and expiry timestamp.
+ */
+export type BlackCardSignatureData = CardV2SignatureData & {
+	/** Backend-signed daily card buy limit in USDC, human-readable (e.g. "1000") */
+	dailyCardBuyLimit: string;
+};
+
+export type BuyBlackCardParams = {
+	amount: string;
+	cardType: CardType;
+	buyerEmail: string;
+	signatureData: BlackCardSignatureData;
+	overrides?: ethers.Overrides;
+};
+
+export type SwapAndBuyBlackCardParams = SwapAndBuyCardParams & {
+	/** Backend-provided signature data for fee verification */
+	signatureData: BlackCardSignatureData;
 };
 
 /**
@@ -933,6 +957,7 @@ export class ZebecCardService {
 		return (this.zebecCard as ZebecCard).buyCardDirectV2(
 			parsedAmount,
 			parsedFeeAmount,
+			params.signatureData.validUntil,
 			cardTypeStr,
 			emailHash,
 			params.signatureData.signature,
@@ -1158,6 +1183,179 @@ export class ZebecCardService {
 			description,
 			routeData,
 			parsedFeeAmount,
+			signatureData.validUntil,
+			cardTypeStr,
+			emailHash,
+			signatureData.signature,
+			{
+				value: ethers.parseEther(ether),
+				...overrides,
+			},
+		);
+	}
+
+	/**
+	 * Buys a card directly with USDC using a backend-signed fee and daily buy limit.
+	 *
+	 * The daily limit is signed per-request by the backend, allowing black card
+	 * holders higher limits than regular users without changing on-chain config.
+	 *
+	 * **Backend EIP-712 Payload:**
+	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
+	 * - Type: `BlackCardDirect(address user, address token, uint256 amount, uint256 feeAmount, uint256 dailyCardBuyLimit, uint256 validUntil, uint256 nonce)`
+	 *
+	 * @param params Black card purchase parameters
+	 * @returns Contract transaction response
+	 *
+	 * @example
+	 * const signatureData = {
+	 *   feeAmount: "0.5",
+	 *   dailyCardBuyLimit: "1000",
+	 *   validUntil: BigInt(Math.floor(Date.now() / 1000) + 3600),
+	 *   signature: "0x..."
+	 * };
+	 * await service.buyBlackCardDirect({
+	 *   amount: "50",
+	 *   cardType: "black",
+	 *   buyerEmail: "black@example.com",
+	 *   signatureData
+	 * });
+	 */
+	async buyBlackCardDirect(
+		params: BuyBlackCardParams,
+	): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const decimals = await this.usdcToken.decimals();
+		const parsedAmount = ethers.parseUnits(params.amount, decimals);
+		const parsedFeeAmount = ethers.parseUnits(params.signatureData.feeAmount, decimals);
+		const parsedDailyLimit = ethers.parseUnits(params.signatureData.dailyCardBuyLimit, decimals);
+
+		if (!isEmailValid(params.buyerEmail)) {
+			throw new Error("Invalid email: " + params.buyerEmail);
+		}
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const minRange = cardConfig.minCardAmount;
+		const maxRange = cardConfig.maxCardAmount;
+
+		if (parsedAmount < minRange || parsedAmount > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(params.buyerEmail);
+		const cardTypeStr = params.cardType === "carbon" ? "reloadable" : "non_reloadable";
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+
+		return (this.zebecCard as ZebecCard).buyBlackCardDirect(
+			parsedAmount,
+			parsedFeeAmount,
+			parsedDailyLimit,
+			params.signatureData.validUntil,
+			cardTypeStr,
+			emailHash,
+			params.signatureData.signature,
+			overrides,
+		);
+	}
+
+	/**
+	 * Swaps tokens to USDC via 1inch then loads a black card with a backend-signed
+	 * fee and daily buy limit.
+	 *
+	 * **Backend EIP-712 Payload:**
+	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
+	 * - Type: `BlackCardSwap(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeAmount, uint256 dailyCardBuyLimit, uint256 validUntil, uint256 nonce)`
+	 *
+	 * @param params Swap and black card purchase parameters
+	 * @returns Contract transaction response
+	 */
+	async swapAndBuyBlackCard(
+		params: SwapAndBuyBlackCardParams,
+	): Promise<ethers.ContractTransactionResponse> {
+		if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const {
+			buyerEmail,
+			cardType,
+			swapData: { swapParams, ether },
+			signatureData,
+		} = params;
+
+		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
+		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcTokenDecimals = await srcToken.decimals();
+		const dstTokenDecimals = await dstToken.decimals();
+
+		const executor = swapParams.executor;
+
+		const amount = ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals);
+		const minReturnAmount = ethers.parseUnits(
+			swapParams.description.minReturnAmount,
+			dstTokenDecimals,
+		);
+		const description = {
+			srcToken: swapParams.description.srcToken,
+			dstToken: swapParams.description.dstToken,
+			srcReceiver: swapParams.description.srcReceiver,
+			dstReceiver: swapParams.description.dstReceiver,
+			amount,
+			minReturnAmount,
+			flags: BigInt(swapParams.description.flags),
+		};
+
+		const routeData = swapParams.routeData;
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const minRange = cardConfig.minCardAmount;
+		const maxRange = cardConfig.maxCardAmount;
+
+		const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
+		const parsedDailyLimit = ethers.parseUnits(signatureData.dailyCardBuyLimit, dstTokenDecimals);
+
+		const amountAfterFeeDeduction = BigInt(
+			BigNumber(minReturnAmount.toString())
+				.minus(parsedFeeAmount.toString())
+				.toFixed(0, BigNumber.ROUND_DOWN),
+		);
+
+		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
+			);
+		}
+
+		const emailHash = await hashSHA256(buyerEmail);
+		const cardTypeStr = cardType === "carbon" ? "reloadable" : "non_reloadable";
+
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+
+		return (this.zebecCard as ZebecCard).swapAndBuyBlackCard(
+			executor,
+			description,
+			routeData,
+			parsedFeeAmount,
+			parsedDailyLimit,
+			signatureData.validUntil,
 			cardTypeStr,
 			emailHash,
 			signatureData.signature,
