@@ -46,5 +46,5 @@
 		"test:single": "mocha -t 1000000000 --"
 	},
 	"types": "dist/index.d.ts",
-	"version": "1.5.0"
+	"version": "1.5.1"
 }
