@@ -1,8 +1,4 @@
 {
-	"extension": [
-		"ts"
-	],
-	"node-option": [
-		"import=tsx"
-	]
+	"extension": ["ts"],
+	"node-option": ["import=tsx"]
 }

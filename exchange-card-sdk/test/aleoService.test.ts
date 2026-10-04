@@ -38,6 +38,7 @@ describe("AleoService", () => {
 			privateFee: false,
 			fee: 0.001,
 			transferType: "private",
+			recipient: accounts[0].address().to_string(),
 		});
 		console.log("Transfer transaction Id:", result.transactionId);
 	});
@@ -71,7 +72,6 @@ describe("AleoService", () => {
 
 describe("Aleo Transaction Parsing", () => {
 	it("should parse transfer credit transaction", async () => {
-
 		const receiver = accounts[1] as Account;
 		console.log("receiver address", receiver.toString());
 		const txId = "at1xr52jse7t5zqg6fmzkclh256pndlmywyvcdjj7q00sarxtz92gpqt9w5f6";
