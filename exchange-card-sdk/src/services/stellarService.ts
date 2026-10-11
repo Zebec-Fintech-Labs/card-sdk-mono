@@ -95,8 +95,8 @@ export class StellarService {
 			.build();
 
 		// Sign the transaction
-		const signedTxXdr = await this.wallet.signTransaction(transaction.toXDR());
-		const tx = TransactionBuilder.fromXDR(
+		const signedTxXdr = await this.wallet.signTransaction(transaction.toXdr());
+		const tx = TransactionBuilder.fromXdr(
 			signedTxXdr,
 			this.sandbox ? Networks.TESTNET : Networks.PUBLIC,
 		);
@@ -171,8 +171,8 @@ export class StellarService {
 			.build();
 
 		// Sign the transaction
-		const signedTxXdr = await this.wallet.signTransaction(transaction.toXDR());
-		const tx = TransactionBuilder.fromXDR(
+		const signedTxXdr = await this.wallet.signTransaction(transaction.toXdr());
+		const tx = TransactionBuilder.fromXdr(
 			signedTxXdr,
 			this.sandbox ? Networks.TESTNET : Networks.PUBLIC,
 		);
