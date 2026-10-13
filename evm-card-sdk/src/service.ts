@@ -132,7 +132,7 @@ export type CardV2SignatureData = {
 
 export type SwapAndBuyCardParamsV2 = SwapAndBuyCardParams & {
 	/** Backend-provided signature data for fee verification */
-	signatureData: CardV2SignatureData;
+	signatureData: Omit<CardV2SignatureData, "feeAmount"> & { feeBps: string };
 };
 
 /**
@@ -158,7 +158,7 @@ export type BuyBlackCardParams = {
 
 export type SwapAndBuyBlackCardParams = SwapAndBuyCardParams & {
 	/** Backend-provided signature data for fee verification */
-	signatureData: BlackCardSignatureData;
+	signatureData: Omit<BlackCardSignatureData, "feeAmount"> & { feeBps: string };
 };
 
 /**
@@ -706,9 +706,9 @@ export class ZebecCardService {
 		if (parsedAmount > vaultBalance) {
 			throw new Error(
 				"Not enough balance. Vault balance: " +
-				ethers.formatUnits(vaultBalance, decimals) +
-				" Requested amount: " +
-				params.amount,
+					ethers.formatUnits(vaultBalance, decimals) +
+					" Requested amount: " +
+					params.amount,
 			);
 		}
 
@@ -719,9 +719,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -739,9 +739,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -821,9 +821,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -841,9 +841,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -924,9 +924,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -944,9 +944,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -1008,7 +1008,10 @@ export class ZebecCardService {
 		const minRange = cardConfig.minCardAmount;
 		const maxRange = cardConfig.maxCardAmount;
 
-		const fee = await this.zebecCard.getCustomTokenFee(swapParams.description.srcToken);
+		const fee =
+			cardType === "carbon"
+				? await (this.zebecCard as ZebecCard).getReloadableFee()
+				: await this.zebecCard.getFee(minReturnAmount);
 
 		const feeAmount = BigNumber(minReturnAmount.toString()).times(
 			BigNumber(fee.toString()).div(10000),
@@ -1021,9 +1024,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1041,9 +1044,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -1074,8 +1077,8 @@ export class ZebecCardService {
 	 *
 	 * **Backend EIP-712 Payload:**
 	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
-	 * - Type: `SwapAndBuyV2(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeAmount, uint256 nonce)`
-	 * - Values: user = msg.sender, srcToken/srcAmount from swap desc, dstToken = USDC, feeAmount = swap fee in USDC raw units, nonce = current nonces[user]
+	 * - Type: `SwapAndBuyV2(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeBps, uint256 nonce)`
+	 * - Values: user = msg.sender, srcToken/srcAmount from swap desc, dstToken = USDC, feeBps = platform rate applied once to actual output, nonce = current nonces[user]
 	 *
 	 * @param params Swap and purchase parameters including backend signature data
 	 * @returns Contract transaction response
@@ -1083,7 +1086,7 @@ export class ZebecCardService {
 	 * @example
 	 * // Backend provides swap data + signatureData after signing the swap fee
 	 * const signatureData = {
-	 *   feeAmount: "0.25",  // 0.25 USDC swap fee
+	 *   feeBps: "100",  // 1% platform fee, no extra swap charge
 	 *   signature: "0x..." // EIP-712 signature from backend
 	 * };
 	 *
@@ -1137,7 +1140,9 @@ export class ZebecCardService {
 		const maxRange = cardConfig.maxCardAmount;
 
 		// Use backend-signed fee instead of getCustomTokenFee
-		const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
+		const feeBps = BigInt(signatureData.feeBps);
+		if (feeBps < 0n || feeBps >= 10000n) throw new Error("Invalid platform fee BPS");
+		const parsedFeeAmount = (minReturnAmount * feeBps) / 10000n;
 
 		const amountAfterFeeDeduction = BigInt(
 			BigNumber(minReturnAmount.toString())
@@ -1148,9 +1153,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1168,9 +1173,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -1186,7 +1191,7 @@ export class ZebecCardService {
 			executor,
 			description,
 			routeData,
-			parsedFeeAmount,
+			feeBps,
 			signatureData.validUntil,
 			cardTypeStr,
 			emailHash,
@@ -1274,7 +1279,7 @@ export class ZebecCardService {
 	 *
 	 * **Backend EIP-712 Payload:**
 	 * - Domain: `{ name: "ZebecCard", version: "2", chainId, verifyingContract }`
-	 * - Type: `BlackCardSwap(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeAmount, uint256 dailyCardBuyLimit, uint256 validUntil, uint256 nonce)`
+	 * - Type: `BlackCardSwap(address user, address srcToken, uint256 srcAmount, address dstToken, uint256 feeBps, uint256 dailyCardBuyLimit, uint256 validUntil, uint256 nonce)`
 	 *
 	 * @param params Swap and black card purchase parameters
 	 * @returns Contract transaction response
@@ -1317,7 +1322,8 @@ export class ZebecCardService {
 
 		const routeData = swapParams.routeData;
 
-		const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
+		const feeBps = BigInt(signatureData.feeBps);
+		if (feeBps < 0n || feeBps >= 10000n) throw new Error("Invalid platform fee BPS");
 		const parsedDailyLimit = ethers.parseUnits(signatureData.dailyCardBuyLimit, dstTokenDecimals);
 		const parsedMinAmount = ethers.parseUnits(signatureData.minCardAmount, dstTokenDecimals);
 		const parsedMaxAmount = ethers.parseUnits(signatureData.maxCardAmount, dstTokenDecimals);
@@ -1337,7 +1343,7 @@ export class ZebecCardService {
 			executor,
 			description,
 			routeData,
-			parsedFeeAmount,
+			feeBps,
 			parsedDailyLimit,
 			parsedMinAmount,
 			parsedMaxAmount,
@@ -1385,9 +1391,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -1406,9 +1412,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -1475,10 +1481,10 @@ export class ZebecCardService {
 		const minRange = partnerConfig.minCardAmount;
 		const maxRange = partnerConfig.maxCardAmount;
 
-		const fee = await (this.zebecCard as ZebecCard).getPartnerTokenFee(
-			partnerId,
-			swapParams.description.srcToken,
-		);
+		const fee =
+			cardType === "carbon"
+				? partnerConfig.reloadableFee
+				: await (this.zebecCard as ZebecCard).getPartnerFee(partnerId, minReturnAmount);
 
 		const feeAmount = BigNumber(minReturnAmount.toString()).times(
 			BigNumber(fee.toString()).div(10000),
@@ -1491,9 +1497,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1512,9 +1518,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
