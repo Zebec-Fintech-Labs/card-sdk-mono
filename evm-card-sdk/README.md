@@ -867,8 +867,3 @@ import type {
 | `SwapAndBuyCardParamsOdyssey`    | Parameters for `swapAndBuyCardOdyssey`           |
 | `CardV2SignatureData`            | Backend-signed EIP-712 fee data for v2 methods   |
 | `SwapAndBuyCardParamsV2`         | Parameters for `swapAndBuyCardDirectV2`          |
-
-
-## Unreleased single platform fee
-
-For signed swap purchases, pass `signatureData.feeBps` (an integer string, e.g. `"100"` for 1%). The contract calculates one platform fee on actual DEX output. `feeAmount` remains the signed amount for direct purchases; a backend swap fee amount is only an estimate. Swap EIP-712 types now sign `feeBps`, so upgrading only the SDK or backend is insufficient. The matching contract must be upgraded. These source changes have not been published.

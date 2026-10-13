@@ -1790,7 +1790,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "feeBps",
+        name: "feeAmount",
         type: "uint256",
       },
       {
@@ -1965,7 +1965,7 @@ const _abi = [
       },
       {
         internalType: "uint256",
-        name: "feeBps",
+        name: "feeAmount",
         type: "uint256",
       },
       {
