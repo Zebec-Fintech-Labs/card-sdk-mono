@@ -357,12 +357,12 @@
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-2.4.0.tgz#e6a3e98edbed3c8659b28bb8f9b18ca02ec8ea4b"
   integrity sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==
 
-"@provablehq/sdk@^0.12.0":
-  version "0.12.0"
-  resolved "https://registry.yarnpkg.com/@provablehq/sdk/-/sdk-0.12.0.tgz#f985bad0390f5748076d6b11e2d208de8d373bbd"
-  integrity sha512-xGOteR7nRF2Vx/6HUG8oB7tQ9myWLdINGC7dPfHgl/U1MQA4/eZTA+2+42700pxBo8UdFq5K1EdLoUpKlh9VIQ==
+"@provablehq/sdk@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@provablehq/sdk/-/sdk-0.13.0.tgz#c995a679a09d51c11fc77f210e44947c388187e0"
+  integrity sha512-WMTSojrh7Sr4HGwxM/F/3zWDSceMwCBdXnHA3hdsp/kQ6VDGa2ARi3EHAmgnTr+lMKv7zR/Kl8O1NeqB/7xeag==
   dependencies:
-    "@provablehq/wasm" "^0.12.0"
+    "@provablehq/wasm" "^0.13.0"
     "@scure/base" "^2.0.0"
     "@serenity-kit/noble-sodium" "0.2.3"
     comlink "^4.4.2"
@@ -370,10 +370,10 @@
     mime "^4.0.6"
     xmlhttprequest-ssl "^4.0.0"
 
-"@provablehq/wasm@^0.12.0":
-  version "0.12.0"
-  resolved "https://registry.yarnpkg.com/@provablehq/wasm/-/wasm-0.12.0.tgz#ebf35b4c18d9cbbe133e959aa40d2bcac914b376"
-  integrity sha512-Hk1lFmwkUWFBh/IgSxT/MiJCCyy2Bo4EeBHhDhBEqH7HvK2MkQ3eTDHoxto6svwGF9G/bnPxGaieC/Uqqd3Ahw==
+"@provablehq/wasm@^0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@provablehq/wasm/-/wasm-0.13.0.tgz#58dc86fe13d48139b8897dd6a7e1a1e747ec3414"
+  integrity sha512-Tz0mG4WANgPmodblzZm9kpNcBYoNUmAf3aR79DXhOtoKNb89R7YidVTDSvS+4Q8B7U0f1Q+IEp1OeaRxmnG5Kw==
 
 "@scure/base@2.4.0":
   version "2.4.0"
