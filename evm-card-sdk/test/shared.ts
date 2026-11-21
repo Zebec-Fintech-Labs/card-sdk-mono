@@ -225,7 +225,6 @@ export async function fetchSwapData(data: {
 		type,
 	});
 
-	// https://api.superapp.zebec.io/tokens/quotes/ZBCN_USD/10?type=EXACT_IN&slippage=1&platform=zebec-super-app&chainName=SOLANA
 	const url = BASE_BACKEND_API_URL + `/tokens/quotes/${srcSymbol}_USD/${amount}?${urlParams}`;
 	console.log("url:", url);
 
