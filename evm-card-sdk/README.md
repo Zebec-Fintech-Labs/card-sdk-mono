@@ -94,13 +94,10 @@ new ZebecCardService(signer: ethers.Signer, chainId: number)
 | Method                                      | Non-Odyssey | Odyssey | Notes                                    |
 | ------------------------------------------- | :---------: | :-----: | ---------------------------------------- |
 | `approve` / `wrapEth`                       |     ✅      |   ✅    | Token utilities                          |
-| `depositUsdc`                               |     ✅      |   ❌    | Vault top-up                             |
-| `withdraw`                                  |     ✅      |   ❌    | Vault withdrawal                         |
-| `buyCard`                                   |     ✅      |   ❌    | From vault balance                       |
+| `buyCard`                                   |     ✅      |   ✅    | Unified direct and swap purchase         |
 | `buyCardDirect`                             |     ✅      |   ✅    | From wallet (no vault)                   |
 | `buyCardDirectV2`                           |     ✅      |   ❌    | From wallet with backend-signed fee      |
 | `buyCardDirectForPartner`                   |     ✅      |   ❌    | Partner direct purchase                  |
-| `swapAndDeposit`                            |     ✅      |   ❌    | 1inch swap → vault                       |
 | `swapAndBuyCardDirect`                      |     ✅      |   ❌    | 1inch swap → card                        |
 | `swapAndBuyCardDirectV2`                    |     ✅      |   ❌    | 1inch swap → card with signed fee        |
 | `swapAndBuyForPartner`                      |     ✅      |   ❌    | Partner swap → card                      |
@@ -148,65 +145,77 @@ console.log("txHash:", receipt?.hash);
 
 ---
 
-### Vault Flow (Non-Odyssey only)
-
-`ZebecCard` keeps a per-user USDC balance ("card vault") on-contract. Top it up with `depositUsdc`, buy cards from it with `buyCard`, and withdraw any leftover with `withdraw`. None of these methods are available on Odyssey chains — they throw `Method not supported for this chain`.
-
-#### `depositUsdc`
-
-Deposits USDC from the user's wallet into their card vault. Requires the `ZebecCard` contract to be approved as an USDC spender first.
-
-```ts
-const token = await service.usdcToken.getAddress();
-const spender = await service.zebecCard.getAddress();
-const amount = "1000";
-
-const approval = await service.approve({ token, spender, amount });
-if (approval) await approval.wait();
-
-const tx = await service.depositUsdc({ amount });
-await tx.wait();
-```
-
-#### `withdraw`
-
-Withdraws USDC from the user's card vault back to their wallet.
-
-```ts
-const tx = await service.withdraw({ amount: "5.0" });
-await tx.wait();
-```
+### Card Purchase
 
 #### `buyCard`
 
-Buys a card by debiting the user's vault balance. The SDK validates locally before submitting:
+Buys a `"silver"`, `"carbon"`, or `"black"` card through one unified method. Provide exactly one payment flow:
 
-- email format (via the `isEmailValid` helper)
-- vault balance ≥ requested amount
-- amount within `minCardAmount` / `maxCardAmount` from `cardConfig`
-- daily purchase total ≤ `dailyCardBuyLimit`
+- `amount`: buy directly with USDC. The amount is human-readable and requires USDC approval.
+- `swapData`: swap a source token to USDC and buy the card in one transaction. This requires source-token approval and cannot be combined with `amount`.
+- `ether` and `slippage`: swap native ETH and buy a silver or carbon card on Odyssey. This flow does not support `signatureData` or black cards.
+
+For silver and carbon cards, omitting `signatureData` uses the unsigned v1 flow and passing it selects the backend-signed v2 flow. Black cards always require `BlackCardSignatureData`, including the signed daily limit and amount range.
+
+Unsigned direct silver/carbon purchases work on all supported chains. Native-ETH swaps are Odyssey-only; signed, `swapData`, and black-card purchases are non-Odyssey only.
 
 ```ts
 const tx = await service.buyCard({
 	amount: "199",
-	cardType: "silver",
+	cardType: "carbon",
 	buyerEmail: "user@example.com",
 });
 await tx.wait();
 ```
 
-#### `swapAndDeposit`
-
-Swaps a source token to USDC via the 1inch aggregator and deposits the result into the user's vault in a single transaction. Use [`fetchSwapData`](#fetching-swap-quote) below to obtain `swapData`. The source token must be approved both for the 1inch router (so the aggregator can pull it) and for the `ZebecCard` contract.
+Pass `swapData` instead of `amount` to swap before buying. Adding `signatureData` selects v2:
 
 ```ts
-const tx = await service.swapAndDeposit({ swapData });
+const tx = await service.buyCard({
+	swapData,
+	cardType: "silver",
+	buyerEmail: "user@example.com",
+	signatureData: {
+		feeAmount: "0.25",
+		validUntil: BigInt(Math.floor(Date.now() / 1000) + 3600),
+		signature: "0x...",
+	},
+});
 await tx.wait();
 ```
 
----
+On Odyssey, use `ether` and `slippage` to swap native ETH before buying:
 
-### Card Purchase
+```ts
+const tx = await service.buyCard({
+	ether: "0.1",
+	slippage: 1,
+	cardType: "carbon",
+	buyerEmail: "user@example.com",
+});
+await tx.wait();
+```
+
+For a black card, provide the extended signature data with either `amount` or `swapData`:
+
+```ts
+const tx = await service.buyCard({
+	amount: "50",
+	cardType: "black",
+	buyerEmail: "black@example.com",
+	signatureData: {
+		feeAmount: "0.5",
+		dailyCardBuyLimit: "1000",
+		minCardAmount: "5",
+		maxCardAmount: "1000",
+		validUntil: BigInt(Math.floor(Date.now() / 1000) + 3600),
+		signature: "0x...",
+	},
+});
+await tx.wait();
+```
+
+The method hashes `buyerEmail` with `sha256Hash`, except for Odyssey native-ETH swaps, whose contract receives the raw email. Carbon maps to `"reloadable"`; silver and black map to `"non_reloadable"`.
 
 #### `buyCardDirect`
 
@@ -850,20 +859,26 @@ import type {
 	SwapAndBuyCardParamsForPartner,
 	SwapAndBuyCardParamsOdyssey,
 	CardV2SignatureData,
+	BlackCardSignatureData,
+	BuyCardParams,
+	BuyCardOdysseyParams,
 	SwapAndBuyCardParamsV2,
 } from "@zebec-network/evm-card-sdk";
 ```
 
-| Type                             | Description                                      |
-| -------------------------------- | ------------------------------------------------ |
-| `CardType`                       | `"silver" \| "carbon"`                           |
-| `CardConfig`                     | Full contract configuration object               |
-| `PartnerConfig`                  | Partner-specific card purchase configuration     |
-| `FeeTier`                        | `{ feePercent, minAmount, maxAmount }`           |
-| `CardPurchaseOfDay`              | `{ totalCardPurchased, cardPurchasedTimestamp }` |
-| `SwapData`                       | Swap quote data from the Zebec backend           |
-| `SwapAndBuyCardParams`           | Parameters for `swapAndBuyCardDirect`            |
-| `SwapAndBuyCardParamsForPartner` | Parameters for `swapAndBuyForPartner`            |
-| `SwapAndBuyCardParamsOdyssey`    | Parameters for `swapAndBuyCardOdyssey`           |
-| `CardV2SignatureData`            | Backend-signed EIP-712 fee data for v2 methods   |
-| `SwapAndBuyCardParamsV2`         | Parameters for `swapAndBuyCardDirectV2`          |
+| Type                             | Description                                        |
+| -------------------------------- | -------------------------------------------------- |
+| `CardType`                       | `"silver" \| "carbon"`                             |
+| `CardConfig`                     | Full contract configuration object                 |
+| `PartnerConfig`                  | Partner-specific card purchase configuration       |
+| `FeeTier`                        | `{ feePercent, minAmount, maxAmount }`             |
+| `CardPurchaseOfDay`              | `{ totalCardPurchased, cardPurchasedTimestamp }`   |
+| `SwapData`                       | Swap quote data from the Zebec backend             |
+| `SwapAndBuyCardParams`           | Parameters for `swapAndBuyCardDirect`              |
+| `SwapAndBuyCardParamsForPartner` | Parameters for `swapAndBuyForPartner`              |
+| `SwapAndBuyCardParamsOdyssey`    | Parameters for `swapAndBuyCardOdyssey`             |
+| `CardV2SignatureData`            | Backend-signed EIP-712 fee data for v2 methods     |
+| `BlackCardSignatureData`         | Signed fee, daily limit, and range for black cards |
+| `BuyCardParams`                  | Unified direct/swap and card-specific parameters   |
+| `BuyCardOdysseyParams`           | Native-ETH swap parameters for Odyssey             |
+| `SwapAndBuyCardParamsV2`         | Parameters for `swapAndBuyCardDirectV2`            |

@@ -4,6 +4,7 @@ import {
 	hashSHA256,
 	isEmailValid,
 	percentToBps,
+	sha256Hash,
 } from "@zebec-network/core-utils";
 import BigNumber from "bignumber.js";
 import { ethers } from "ethers";
@@ -160,6 +161,47 @@ export type SwapAndBuyBlackCardParams = SwapAndBuyCardParams & {
 	/** Backend-provided signature data for fee verification */
 	signatureData: BlackCardSignatureData;
 };
+
+export type BuyCardPaymentParams =
+	| {
+			amount: string;
+			swapData?: never;
+			ether?: never;
+			slippage?: never;
+	  }
+	| {
+			amount?: never;
+			swapData: Omit<SwapData, "gas" | "gasPrice">;
+			ether?: never;
+			slippage?: never;
+	  };
+
+export type BuyCardOdysseyParams = {
+	amount?: never;
+	swapData?: never;
+	ether: string;
+	slippage: number;
+	cardType: "silver" | "carbon";
+	signatureData?: never;
+	buyerEmail: string;
+	overrides?: ethers.Overrides;
+};
+
+export type BuyCardParams =
+	| (BuyCardPaymentParams & {
+			buyerEmail: string;
+			overrides?: ethers.Overrides;
+	  } & (
+				| {
+						cardType: "silver" | "carbon";
+						signatureData?: CardV2SignatureData;
+				  }
+				| {
+						cardType: "black";
+						signatureData: BlackCardSignatureData;
+				  }
+			))
+	| BuyCardOdysseyParams;
 
 /**
  * A class which holds methods and properties to interact with Zebec Instanct Card evm contracts.
@@ -634,6 +676,294 @@ export class ZebecCardService {
 		return (this.zebecCard as ZebecCard).setReloadableFee(fee, overrides);
 	}
 
+	/**
+	 * Buys a card directly with USDC, through a token swap, or with native ETH on Odyssey.
+	 * Passing signatureData selects v2 fee verification. Black card purchases always require it.
+	 */
+	async buyCard(params: BuyCardParams): Promise<ethers.ContractTransactionResponse> {
+		const hasAmount = params.amount !== undefined;
+		const hasSwapData = params.swapData !== undefined;
+		const hasEther = params.ether !== undefined;
+		const hasSlippage = params.slippage !== undefined;
+		const hasOdysseySwap = hasEther || hasSlippage;
+		const requestedCardType: string = params.cardType;
+		const paymentMethodCount = [hasAmount, hasSwapData, hasOdysseySwap].filter(Boolean).length;
+
+		if (paymentMethodCount !== 1) {
+			throw new Error("Provide exactly one of amount, swapData, or ether");
+		}
+
+		if (hasOdysseySwap && (!hasEther || !hasSlippage)) {
+			throw new Error("Odyssey swaps require ether and slippage");
+		}
+
+		if (hasOdysseySwap && (requestedCardType === "black" || params.signatureData !== undefined)) {
+			throw new Error("Odyssey swaps only support unsigned silver or carbon card purchases");
+		}
+
+		if (params.cardType === "black" && params.signatureData === undefined) {
+			throw new Error("Black card purchases require signatureData");
+		}
+
+		if (!isEmailValid(params.buyerEmail)) {
+			throw new Error("Invalid email: " + params.buyerEmail);
+		}
+
+		const isV2 = params.signatureData !== undefined;
+		const isOdyssey = ODYSSEY_CHAIN_IDS.includes(this.chainId);
+		if ((hasOdysseySwap && !isOdyssey) || (isOdyssey && (hasSwapData || isV2))) {
+			throw new Error("Method not supported for this chain");
+		}
+
+		const emailHash = sha256Hash(params.buyerEmail);
+		const cardType = params.cardType === "carbon" ? "reloadable" : "non_reloadable";
+		const overrides = {
+			...params.overrides,
+			gasLimit: params.overrides?.gasLimit || DEFAULT_GAS_LIMIT,
+		};
+
+		if (params.ether !== undefined) {
+			const swapEtherAmount = ethers.parseEther(params.ether);
+			const minAmount = await (this.zebecCard as OdysseyZebecCard).getMinimumUSDCAmount(
+				swapEtherAmount,
+				params.slippage,
+			);
+
+			return (this.zebecCard as OdysseyZebecCard).swapAndBuy(
+				cardType,
+				params.buyerEmail,
+				minAmount,
+				{
+					value: swapEtherAmount,
+					...overrides,
+				},
+			);
+		}
+
+		if (params.amount !== undefined) {
+			const decimals = await this.usdcToken.decimals();
+			const parsedAmount = ethers.parseUnits(params.amount, decimals);
+
+			if (params.cardType === "black") {
+				const { signatureData } = params;
+				const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, decimals);
+				const parsedDailyLimit = ethers.parseUnits(signatureData.dailyCardBuyLimit, decimals);
+				const parsedMinAmount = ethers.parseUnits(signatureData.minCardAmount, decimals);
+				const parsedMaxAmount = ethers.parseUnits(signatureData.maxCardAmount, decimals);
+
+				return (this.zebecCard as ZebecCard).buyBlackCardDirect(
+					parsedAmount,
+					parsedFeeAmount,
+					parsedDailyLimit,
+					parsedMinAmount,
+					parsedMaxAmount,
+					signatureData.validUntil,
+					cardType,
+					emailHash,
+					signatureData.signature,
+					overrides,
+				);
+			}
+
+			const cardConfig = await this.zebecCard.cardConfig();
+			const minRange = cardConfig.minCardAmount;
+			const maxRange = cardConfig.maxCardAmount;
+
+			if (parsedAmount < minRange || parsedAmount > maxRange) {
+				throw new Error(
+					"Amount must be with range: " +
+						ethers.formatUnits(minRange, decimals) +
+						" - " +
+						ethers.formatUnits(maxRange, decimals),
+				);
+			}
+
+			const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+			const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+			const today = new Date();
+
+			let cardPurchaseOfDay = 0n;
+			if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+				cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + parsedAmount;
+			} else {
+				cardPurchaseOfDay = parsedAmount;
+			}
+
+			if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+				throw new Error(
+					"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+						ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+						" Today's purchase amount: " +
+						ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+				);
+			}
+
+			if (params.signatureData !== undefined) {
+				const parsedFeeAmount = ethers.parseUnits(params.signatureData.feeAmount, decimals);
+
+				return (this.zebecCard as ZebecCard).buyCardDirectV2(
+					parsedAmount,
+					parsedFeeAmount,
+					params.signatureData.validUntil,
+					cardType,
+					emailHash,
+					params.signatureData.signature,
+					overrides,
+				);
+			}
+
+			if (ODYSSEY_CHAIN_IDS.includes(this.chainId)) {
+				return (this.zebecCard as OdysseyZebecCard).buyCardDirect(
+					parsedAmount,
+					cardType,
+					emailHash,
+					overrides,
+				);
+			}
+
+			return (this.zebecCard as ZebecCard).buyCardDirect(
+				parsedAmount,
+				cardType,
+				emailHash,
+				overrides,
+			);
+		}
+
+		const swapData = params.swapData;
+		if (swapData === undefined) {
+			throw new Error("Swap data is required");
+		}
+
+		const { swapParams, ether } = swapData;
+		const srcToken = Token__factory.connect(swapParams.description.srcToken, this.signer);
+		const dstToken = Token__factory.connect(swapParams.description.dstToken, this.signer);
+		const srcTokenDecimals = await srcToken.decimals();
+		const dstTokenDecimals = await dstToken.decimals();
+		const executor = swapParams.executor;
+		const amount = ethers.parseUnits(swapParams.description.srcAmount, srcTokenDecimals);
+		const minReturnAmount = ethers.parseUnits(
+			swapParams.description.minReturnAmount,
+			dstTokenDecimals,
+		);
+		const description = {
+			srcToken: swapParams.description.srcToken,
+			dstToken: swapParams.description.dstToken,
+			srcReceiver: swapParams.description.srcReceiver,
+			dstReceiver: swapParams.description.dstReceiver,
+			amount,
+			minReturnAmount,
+			flags: BigInt(swapParams.description.flags),
+		};
+		const routeData = swapParams.routeData;
+
+		if (params.cardType === "black") {
+			const { signatureData } = params;
+			const parsedFeeAmount = ethers.parseUnits(signatureData.feeAmount, dstTokenDecimals);
+			const parsedDailyLimit = ethers.parseUnits(signatureData.dailyCardBuyLimit, dstTokenDecimals);
+			const parsedMinAmount = ethers.parseUnits(signatureData.minCardAmount, dstTokenDecimals);
+			const parsedMaxAmount = ethers.parseUnits(signatureData.maxCardAmount, dstTokenDecimals);
+
+			return (this.zebecCard as ZebecCard).swapAndBuyBlackCard(
+				executor,
+				description,
+				routeData,
+				parsedFeeAmount,
+				parsedDailyLimit,
+				parsedMinAmount,
+				parsedMaxAmount,
+				signatureData.validUntil,
+				cardType,
+				emailHash,
+				signatureData.signature,
+				{
+					value: ethers.parseEther(ether),
+					...overrides,
+				},
+			);
+		}
+
+		const cardConfig = await this.zebecCard.cardConfig();
+		const minRange = cardConfig.minCardAmount;
+		const maxRange = cardConfig.maxCardAmount;
+		let parsedFeeAmount: bigint | undefined;
+		let amountAfterFeeDeduction: bigint;
+
+		if (params.signatureData !== undefined) {
+			parsedFeeAmount = ethers.parseUnits(params.signatureData.feeAmount, dstTokenDecimals);
+			amountAfterFeeDeduction = BigInt(
+				BigNumber(minReturnAmount.toString())
+					.minus(parsedFeeAmount.toString())
+					.toFixed(0, BigNumber.ROUND_DOWN),
+			);
+		} else {
+			const fee = await this.zebecCard.getCustomTokenFee(swapParams.description.srcToken);
+			const feeAmount = BigNumber(minReturnAmount.toString()).times(
+				BigNumber(fee.toString()).div(10000),
+			);
+			amountAfterFeeDeduction = BigInt(
+				BigNumber(minReturnAmount.toString()).minus(feeAmount).toFixed(0, BigNumber.ROUND_DOWN),
+			);
+		}
+
+		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
+			throw new Error(
+				"Amount must be with range: " +
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
+			);
+		}
+
+		const cardPurchaseInfo = await this.zebecCard.cardPurchases(this.signer);
+		const lastCardPurchaseDate = new Date(Number(cardPurchaseInfo.unixInRecord * 1000n));
+		const today = new Date();
+
+		let cardPurchaseOfDay = 0n;
+		if (areDatesOfSameDay(today, lastCardPurchaseDate)) {
+			cardPurchaseOfDay = cardPurchaseInfo.totalCardBoughtPerDay + amountAfterFeeDeduction;
+		} else {
+			cardPurchaseOfDay = amountAfterFeeDeduction;
+		}
+
+		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
+			throw new Error(
+				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+			);
+		}
+
+		if (params.signatureData !== undefined && parsedFeeAmount !== undefined) {
+			return (this.zebecCard as ZebecCard).swapAndBuyV2(
+				executor,
+				description,
+				routeData,
+				parsedFeeAmount,
+				params.signatureData.validUntil,
+				cardType,
+				emailHash,
+				params.signatureData.signature,
+				{
+					value: ethers.parseEther(ether),
+					...overrides,
+				},
+			);
+		}
+
+		return (this.zebecCard as ZebecCard).swapAndBuy(
+			executor,
+			description,
+			routeData,
+			cardType,
+			emailHash,
+			{
+				value: ethers.parseEther(ether),
+				...overrides,
+			},
+		);
+	}
+
 	async buyCardDirect(params: {
 		amount: string;
 		cardType: CardType;
@@ -654,9 +984,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -674,9 +1004,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -757,9 +1087,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -777,9 +1107,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -854,9 +1184,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -874,9 +1204,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -981,9 +1311,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1001,9 +1331,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
@@ -1218,9 +1548,9 @@ export class ZebecCardService {
 		if (parsedAmount < minRange || parsedAmount > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, decimals) +
-				" - " +
-				ethers.formatUnits(maxRange, decimals),
+					ethers.formatUnits(minRange, decimals) +
+					" - " +
+					ethers.formatUnits(maxRange, decimals),
 			);
 		}
 
@@ -1239,9 +1569,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
-				" Today's purchase amount: " +
-				ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, decimals) +
+					" Today's purchase amount: " +
+					ethers.formatUnits(cardPurchaseInfo.totalCardBoughtPerDay, decimals),
 			);
 		}
 
@@ -1324,9 +1654,9 @@ export class ZebecCardService {
 		if (amountAfterFeeDeduction < minRange || amountAfterFeeDeduction > maxRange) {
 			throw new Error(
 				"Amount must be with range: " +
-				ethers.formatUnits(minRange, dstTokenDecimals) +
-				" - " +
-				ethers.formatUnits(maxRange, dstTokenDecimals),
+					ethers.formatUnits(minRange, dstTokenDecimals) +
+					" - " +
+					ethers.formatUnits(maxRange, dstTokenDecimals),
 			);
 		}
 
@@ -1345,9 +1675,9 @@ export class ZebecCardService {
 		if (cardPurchaseOfDay > cardConfig.dailyCardBuyLimit) {
 			throw new Error(
 				"Requested card purchase amount exceeds daily purchase limit. Daily limit: " +
-				ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
-				" Today's purchase amount will be: " +
-				ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
+					ethers.formatUnits(cardConfig.dailyCardBuyLimit, dstTokenDecimals) +
+					" Today's purchase amount will be: " +
+					ethers.formatUnits(cardPurchaseOfDay, dstTokenDecimals),
 			);
 		}
 
